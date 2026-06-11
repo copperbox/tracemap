@@ -1,0 +1,8 @@
+.claude/
+design_handoff_lattice_observability/
+prompt.txt
+node_modules/
+dist/
+*.log
+.env
+.env.local

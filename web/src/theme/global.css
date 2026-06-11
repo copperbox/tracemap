@@ -1,0 +1,129 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  --bg: #06090f;
+  --bg2: #0a0f18;
+  --panel: #0d131f;
+  --panel2: #111927;
+  --line: rgba(148, 170, 200, 0.12);
+  --line2: rgba(148, 170, 200, 0.26);
+  --text: #e8eef8;
+  --dim: #8b98ac;
+  --faint: #5a6678;
+  --dot: rgba(140, 165, 200, 0.17);
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --crit: #f87171;
+  --okbg: rgba(52, 211, 153, 0.1);
+  --warnbg: rgba(251, 191, 36, 0.1);
+  --critbg: rgba(248, 113, 113, 0.12);
+  --accent: #4ade80;
+  --accent-ink: #06230f;
+  --accent-dim: rgba(74, 222, 128, 0.14);
+  --hoverbg: rgba(148, 170, 200, 0.07);
+  --shadow: 0 18px 56px rgba(0, 0, 0, 0.5);
+  background: var(--bg);
+  color: var(--text);
+}
+
+body[data-theme='light'] {
+  --bg: #edf1f7;
+  --bg2: #f8fafd;
+  --panel: #ffffff;
+  --panel2: #f0f4f9;
+  --line: rgba(25, 45, 80, 0.12);
+  --line2: rgba(25, 45, 80, 0.25);
+  --text: #16202f;
+  --dim: #54647c;
+  --faint: #909db2;
+  --dot: rgba(25, 45, 80, 0.16);
+  --ok: #0fa573;
+  --warn: #c28304;
+  --crit: #dc4848;
+  --okbg: rgba(15, 165, 115, 0.1);
+  --warnbg: rgba(194, 131, 4, 0.1);
+  --critbg: rgba(220, 72, 72, 0.1);
+  --accent: #14a35c;
+  --accent-ink: #ffffff;
+  --accent-dim: rgba(20, 163, 92, 0.13);
+  --hoverbg: rgba(25, 45, 80, 0.05);
+  --shadow: 0 18px 56px rgba(30, 50, 90, 0.2);
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes critPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.3), 0 8px 28px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(248, 113, 113, 0), 0 8px 28px rgba(0, 0, 0, 0.3);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* Hover helpers (the design handoff expresses these as style-hover). */
+.hov-row:hover {
+  background: var(--hoverbg);
+}
+.hov-btn:hover {
+  background: var(--hoverbg);
+  color: var(--text);
+}
+.hov-accent:hover {
+  filter: brightness(1.1);
+}
+.hov-link:hover {
+  color: var(--accent);
+  background: var(--hoverbg);
+}

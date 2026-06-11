@@ -1,0 +1,48 @@
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    container_name: deptrace-db
+    environment:
+      POSTGRES_DB: deptrace
+      POSTGRES_USER: deptrace
+      POSTGRES_PASSWORD: deptrace
+    ports:
+      - "5433:5432"
+    volumes:
+      - deptrace-db-data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deptrace -d deptrace"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: deptrace-server
+    environment:
+      DATABASE_URL: postgres://deptrace:deptrace@db:5432/deptrace
+      PORT: "4000"
+      OTLP_PORT: "4318"
+    ports:
+      - "4000:4000"   # query API
+      - "4318:4318"   # OTLP/HTTP collector
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: deptrace-web
+    environment:
+      API_PROXY_TARGET: http://server:4000
+    ports:
+      - "5173:80"
+    depends_on:
+      - server
+
+volumes:
+  deptrace-db-data:
