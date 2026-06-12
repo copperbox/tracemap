@@ -94,6 +94,30 @@ describe('buildGraph', () => {
     expect(mega?.memberIds.sort()).toEqual(['checkout-svc', 'orders-svc']);
   });
 
+  it('passes edge staleness through when grouping is off', () => {
+    const stale = edges.map((e) =>
+      e.target === 'api.stripe.com' ? { ...e, metrics: { ...e.metrics, stale: true } } : e,
+    );
+    const g = buildGraph(topo(services, stale), { groupByTeam: false, expandedTeams: [] });
+    expect(g.edges.find((e) => e.targetKey === 'api.stripe.com')?.stale).toBe(true);
+    expect(g.edges.find((e) => e.targetKey === 'catalog-svc')?.stale).toBe(false);
+  });
+
+  it('aggregated edge is stale only when every underlying edge is stale', () => {
+    const markStale = (e: TopologyEdge, ids: string[]): TopologyEdge =>
+      ids.includes(e.source) ? { ...e, metrics: { ...e.metrics, stale: true } } : e;
+
+    // one of the two team1 -> team2 edges stale: still live
+    const partial = edges.map((e) => markStale(e, ['orders-svc']));
+    const g1 = buildGraph(topo(services, partial), { groupByTeam: true, expandedTeams: [] });
+    expect(g1.edges.find((e) => e.key === `${groupKey(1)}=>${groupKey(2)}`)?.stale).toBe(false);
+
+    // both stale: aggregate goes stale
+    const full = edges.map((e) => markStale(e, ['orders-svc', 'checkout-svc']));
+    const g2 = buildGraph(topo(services, full), { groupByTeam: true, expandedTeams: [] });
+    expect(g2.edges.find((e) => e.key === `${groupKey(1)}=>${groupKey(2)}`)?.stale).toBe(true);
+  });
+
   it('expanding a team restores its individual services', () => {
     const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [1] });
     const keys = g.nodes.map((n) => n.key);

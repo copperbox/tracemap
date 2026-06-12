@@ -62,10 +62,11 @@ body[data-theme='light'] {
     stroke-dashoffset: -24;
   }
 }
-/* One packet per cycle: travel the edge path for the first ~30% of the
-   cycle, then stay hidden. Pure CSS offset-path keeps it off the JS main
-   loop even with every edge animated (no per-frame rAF like the original
-   depsera implementation). */
+/* One traversal per cycle: travel the edge path for the first ~30% of the
+   cycle, then stay hidden. Edges render 1-4 of these staggered by
+   animation-delay so packet traffic scales with the measured call rate.
+   Pure CSS offset-path keeps it off the JS main loop even with every edge
+   animated (no per-frame rAF like the original depsera implementation). */
 @keyframes packet {
   0% {
     offset-distance: 0%;

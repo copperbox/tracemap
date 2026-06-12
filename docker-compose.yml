@@ -1,17 +1,17 @@
 services:
   db:
     image: timescale/timescaledb-ha:pg16
-    container_name: deptrace-db
+    container_name: tracemap-db
     environment:
-      POSTGRES_DB: deptrace
-      POSTGRES_USER: deptrace
-      POSTGRES_PASSWORD: deptrace
+      POSTGRES_DB: tracemap
+      POSTGRES_USER: tracemap
+      POSTGRES_PASSWORD: tracemap
     ports:
       - "5433:5432"
     volumes:
-      - deptrace-db-data:/home/postgres/pgdata/data
+      - tracemap-db-data:/home/postgres/pgdata/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U deptrace -d deptrace"]
+      test: ["CMD-SHELL", "pg_isready -U tracemap -d tracemap"]
       interval: 5s
       timeout: 5s
       retries: 12
@@ -20,9 +20,9 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
-    container_name: deptrace-server
+    container_name: tracemap-server
     environment:
-      DATABASE_URL: postgres://deptrace:deptrace@db:5432/deptrace
+      DATABASE_URL: postgres://tracemap:tracemap@db:5432/tracemap
       PORT: "4000"
       OTLP_PORT: "4318"
     ports:
@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
-    container_name: deptrace-web
+    container_name: tracemap-web
     environment:
       API_PROXY_TARGET: http://server:4000
     ports:
@@ -45,4 +45,4 @@ services:
       - server
 
 volumes:
-  deptrace-db-data:
+  tracemap-db-data:

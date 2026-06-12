@@ -23,8 +23,8 @@ async function main(): Promise<void> {
   await api.register(apiRoutes, { prefix: '/api' });
   await api.listen({ port: config.port, host: '0.0.0.0' });
 
-  console.log(`Deptrace collector listening on :${config.otlpPort} (OTLP/HTTP)`);
-  console.log(`Deptrace API listening on :${config.port}`);
+  console.log(`TraceMap collector listening on :${config.otlpPort} (OTLP/HTTP)`);
+  console.log(`TraceMap API listening on :${config.port}`);
 }
 
 main().catch((err) => {

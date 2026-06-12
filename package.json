@@ -1,8 +1,8 @@
 {
-  "name": "deptrace",
+  "name": "tracemap",
   "version": "0.1.0",
   "private": true,
-  "description": "Deptrace - OTEL-derived service topology and observability dashboard",
+  "description": "TraceMap - OTEL-derived service topology and observability dashboard",
   "workspaces": [
     "server",
     "web"

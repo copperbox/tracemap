@@ -4,7 +4,7 @@ import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/
 import { layoutGraph, GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
 import { computeGraphTransition, type GraphSnapshot, type GraphTransition, type Pos } from '../../lib/transition';
 import { computeEdgeGeometries } from '../../lib/edgeGeometry';
-import { flowDuration, packetCycle, packetDelay } from '../../lib/flow';
+import { flowDuration, packetCycle, packetDelays } from '../../lib/flow';
 import { fmtMs, fmtRps, fmtErr, jit } from '../../lib/format';
 import { stColor } from '../../lib/status';
 import { NodeCard } from './NodeCard';
@@ -21,7 +21,7 @@ interface Transform {
 
 type NodePositions = Record<string, { x: number; y: number }>;
 
-const POSITIONS_KEY = 'deptrace.nodePositions';
+const POSITIONS_KEY = 'tracemap.nodePositions';
 
 const ANIM_MS = 420;
 // keep the CSS bezier (viewport) in step with this JS easing (nodes)
@@ -350,6 +350,9 @@ export function MapView() {
     const fadeIn = animating && animRef.current?.newEdges.has(e.key) ? eased : 1;
     const stc = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--line2)';
     const flowC = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
+    // Flow dash + packets only animate while traces are actually arriving:
+    // an idle or stale edge keeps its base path but goes quiet.
+    const live = e.rps > 0 && !e.stale;
     return [
       {
         e,
@@ -365,7 +368,7 @@ export function MapView() {
         w: isSel ? 2 : isHov ? 1.8 : 1.1,
         op: (dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.4) * fadeIn,
         flowStroke: flowC,
-        flowOp: (dim ? 0 : e.status !== 'ok' ? 0.95 : 0.7) * fadeIn,
+        flowOp: (dim || !live ? 0 : e.status !== 'ok' ? 0.95 : 0.7) * fadeIn,
         dur: flowDuration(e.rps),
       },
     ];
@@ -446,7 +449,9 @@ export function MapView() {
           </svg>
 
           {/* glowing packets traveling each live edge (pure CSS offset-path;
-              the wrapper carries dim/fade so the keyframes own opacity) */}
+              the wrapper carries dim/fade so the keyframes own opacity).
+              Packet count per cycle scales with the edge's measured call
+              rate, so what you see tracks traces actually being received. */}
           {edgeViews
             .filter((v) => v.flowOp > 0)
             .map((v) => (
@@ -454,18 +459,24 @@ export function MapView() {
                 key={`packet:${v.e.key}`}
                 style={{ position: 'absolute', left: 0, top: 0, opacity: v.flowOp, pointerEvents: 'none' }}
               >
-                <div
-                  style={{
-                    width: 7,
-                    height: 7,
-                    borderRadius: '50%',
-                    background: v.flowStroke,
-                    boxShadow: `0 0 7px 1px ${v.flowStroke}`,
-                    offsetPath: `path("${v.d}")`,
-                    animation: `packet ${packetCycle(v.e.rps)} linear infinite`,
-                    animationDelay: packetDelay(v.e.key),
-                  }}
-                />
+                {packetDelays(v.e.key, v.e.rps).map((delay, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: v.flowStroke,
+                      boxShadow: `0 0 7px 1px ${v.flowStroke}`,
+                      offsetPath: `path("${v.d}")`,
+                      animation: `packet ${packetCycle(v.e.rps)} linear infinite`,
+                      animationDelay: delay,
+                    }}
+                  />
+                ))}
               </div>
             ))}
 

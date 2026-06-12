@@ -70,7 +70,7 @@ export function TopBar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <LogoIcon />
         <div>
-          <div style={{ font: "700 13px 'Space Grotesk'", letterSpacing: '.22em' }}>DEPTRACE</div>
+          <div style={{ font: "700 13px 'Space Grotesk'", letterSpacing: '.22em' }}>TRACEMAP</div>
           <div style={{ font: mono(8.5), letterSpacing: '.12em', color: 'var(--faint)', marginTop: 1 }}>
             {'TOPOLOGY \u00B7 DERIVED FROM OTEL'}
           </div>

@@ -1,14 +1,20 @@
 /**
- * Deptrace demo traffic generator.
+ * TraceMap demo traffic generator.
  *
  * Replays the 40-service e-commerce topology as real OTLP/JSON trace exports
  * against the collector, exactly the way instrumented services would:
  *  - internal calls produce a CLIENT span (caller) and a SERVER span (callee)
  *  - databases / queues / SaaS APIs produce only the caller's CLIENT span with
  *    semantic-convention attributes, so the collector has to infer the peer
+ *  - every resource carries a `team.name` attribute, which the collector uses
+ *    to auto-create teams and assign ownership on first sight
  *
  * Usage: npm run simulate [-- --otlp http://localhost:4318 --api http://localhost:4000 --tps 6]
+ *
+ * While running (attached to a TTY), the trace rate can be dialed live:
+ *   [+] double rate, [-] halve rate, [0]/[space]/[p] pause/resume, [q] quit.
  */
+import { applyKey, RateControl } from './rate.js';
 import {
   BASE_LATENCY,
   byId,
@@ -199,6 +205,7 @@ function exportPayload(traceId: string, spans: SimSpan[]): unknown {
         resource: {
           attributes: [
             { key: 'service.name', value: { stringValue: svcId } },
+            { key: 'team.name', value: { stringValue: svc.team } },
             { key: 'telemetry.sdk.language', value: { stringValue: svc.lang ?? 'unknown' } },
             { key: 'telemetry.sdk.name', value: { stringValue: 'opentelemetry' } },
             { key: 'telemetry.sdk.version', value: { stringValue: '1.30.0' } },
@@ -207,7 +214,7 @@ function exportPayload(traceId: string, spans: SimSpan[]): unknown {
         },
         scopeSpans: [
           {
-            scope: { name: 'deptrace-sim', version: '1.0.0' },
+            scope: { name: 'tracemap-sim', version: '1.0.0' },
             spans: svcSpans.map((s) => ({
               traceId,
               spanId: s.spanId,
@@ -257,9 +264,14 @@ function makeTrace(atMs = Date.now()): { traceId: string; spans: SimSpan[] } {
   return { traceId: hex(32), spans };
 }
 
-/** Assign teams/types via the management API, like an operator would. */
+/**
+ * Assign teams/types for inferred peers (databases, queues, SaaS APIs) via the
+ * management API, like an operator would. Instrumented services do not need
+ * this: they declare their owner through the `team.name` resource attribute
+ * on their traces.
+ */
 async function seedOwnership(): Promise<void> {
-  for (const svc of SERVICES) {
+  for (const svc of SERVICES.filter((s) => INFRA_TYPES.includes(s.type))) {
     try {
       const res = await fetch(`${API}/api/services/${encodeURIComponent(svc.id)}`, {
         method: 'PATCH',
@@ -271,7 +283,7 @@ async function seedOwnership(): Promise<void> {
       console.warn(`seed ${svc.id} failed:`, (err as Error).message);
     }
   }
-  console.log('Ownership seeded (teams + types).');
+  console.log('Ownership seeded for inferred peers (teams + types).');
 }
 
 async function sendMetricsSample(): Promise<void> {
@@ -283,7 +295,7 @@ async function sendMetricsSample(): Promise<void> {
         resource: { attributes: [{ key: 'service.name', value: { stringValue: svc.id } }] },
         scopeMetrics: [
           {
-            scope: { name: 'deptrace-sim' },
+            scope: { name: 'tracemap-sim' },
             metrics: [
               {
                 name: 'process.runtime.memory.heap_used',
@@ -298,10 +310,28 @@ async function sendMetricsSample(): Promise<void> {
   });
 }
 
-async function main(): Promise<void> {
-  console.log(`Deptrace simulator: ${TPS} traces/s -> ${OTLP} (api ${API})`);
+const rate = new RateControl(TPS);
 
-  // Send one warm-up trace so services exist, then assign ownership.
+/** Live rate dial: only active when stdin is an interactive terminal. */
+function attachKeyboard(): void {
+  if (!process.stdin.isTTY) return;
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', (key: string) => {
+    if (key === 'q' || key === '\u0003' /* Ctrl+C; raw mode swallows SIGINT */) process.exit(0);
+    const msg = applyKey(rate, key);
+    if (msg) console.log(msg);
+  });
+  console.log('Keys: [+] double rate, [-] halve rate, [0/space/p] pause, [q] quit');
+}
+
+async function main(): Promise<void> {
+  console.log(`TraceMap simulator: ${rate.label()} -> ${OTLP} (api ${API})`);
+  attachKeyboard();
+
+  // Send one warm-up trace so services start registering (team.name on each
+  // resource assigns instrumented services), then seed the inferred peers.
   const warm = makeTrace();
   await post('/v1/traces', exportPayload(warm.traceId, warm.spans));
   await new Promise((r) => setTimeout(r, 1500));
@@ -311,19 +341,29 @@ async function main(): Promise<void> {
   setTimeout(() => seedOwnership().catch(() => undefined), 20_000);
 
   let sent = 0;
-  const intervalMs = 1000 / TPS;
-  // Fire traces on a jittered cadence approximating TPS.
+  let windowSent = 0;
+  // Report throughput per window rather than a running total, so the log
+  // doubles as feedback for the [+]/[-] rate dial.
+  const REPORT_MS = 10_000;
+  setInterval(() => {
+    if (windowSent > 0) console.log(`${windowSent} traces sent in the last ${REPORT_MS / 1000}s`);
+    windowSent = 0;
+  }, REPORT_MS).unref();
+  // Fire traces on a jittered cadence approximating the current dial; the
+  // interval is re-read every iteration so [+]/[-] take effect immediately.
   const loop = async (): Promise<void> => {
-    const t = makeTrace();
-    try {
-      await post('/v1/traces', exportPayload(t.traceId, t.spans));
-      sent += 1;
-      if (sent % 100 === 0) console.log(`${sent} traces sent`);
-      if (sent % 25 === 0) await sendMetricsSample().catch(() => undefined);
-    } catch (err) {
-      console.warn('send failed:', (err as Error).message);
+    if (!rate.paused) {
+      const t = makeTrace();
+      try {
+        await post('/v1/traces', exportPayload(t.traceId, t.spans));
+        sent += 1;
+        windowSent += 1;
+        if (sent % 25 === 0) await sendMetricsSample().catch(() => undefined);
+      } catch (err) {
+        console.warn('send failed:', (err as Error).message);
+      }
     }
-    setTimeout(loop, intervalMs * rand(0.5, 1.5));
+    setTimeout(loop, rate.paused ? 250 : rate.intervalMs() * rand(0.5, 1.5));
   };
   for (let i = 0; i < Math.max(1, Math.min(4, Math.round(TPS / 3))); i++) {
     setTimeout(loop, i * 120);

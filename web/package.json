@@ -1,5 +1,5 @@
 {
-  "name": "@deptrace/web",
+  "name": "@tracemap/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",

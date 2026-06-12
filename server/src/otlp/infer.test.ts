@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hostLabel, inferOwnType, inferPeer, runtimeOf } from './infer.js';
+import { hostLabel, inferOwnType, inferPeer, runtimeOf, teamOf } from './infer.js';
 
 const noInternal = () => false;
 
@@ -63,6 +63,13 @@ describe('helpers', () => {
     expect(inferOwnType('api-gateway')).toBe('gateway');
     expect(inferOwnType('storefront-bff')).toBe('bff');
     expect(inferOwnType('orders-svc')).toBe('service');
+  });
+
+  it('teamOf reads the team.name resource attribute', () => {
+    expect(teamOf({ 'team.name': 'Checkout' })).toBe('Checkout');
+    expect(teamOf({ 'team.name': '  Checkout  ' })).toBe('Checkout');
+    expect(teamOf({ 'team.name': '   ' })).toBeNull();
+    expect(teamOf({})).toBeNull();
   });
 
   it('runtimeOf builds a readable runtime string', () => {

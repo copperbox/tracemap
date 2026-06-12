@@ -34,6 +34,7 @@ export interface GraphEdge {
   rps: number;
   p95: number | null;
   errPct: number;
+  stale: boolean;
   confidence: number;
   samples: number;
   underlying: TopologyEdge[];
@@ -131,6 +132,7 @@ export function buildGraph(
         rps: e.metrics.rps,
         p95: e.metrics.p95,
         errPct: e.metrics.errPct,
+        stale: e.metrics.stale,
         confidence: e.confidence,
         samples: e.samples,
         underlying: [e],
@@ -143,6 +145,7 @@ export function buildGraph(
       cur.p95 =
         cur.p95 == null ? e.metrics.p95 : e.metrics.p95 == null ? cur.p95 : Math.max(cur.p95, e.metrics.p95);
       cur.status = worst([cur.status, e.status]);
+      cur.stale = cur.stale && e.metrics.stale;
       cur.confidence = Math.min(cur.confidence, e.confidence);
       cur.samples += e.samples;
       cur.underlying.push(e);

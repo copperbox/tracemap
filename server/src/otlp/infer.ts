@@ -165,6 +165,15 @@ export function runtimeOf(resourceAttrs: Record<string, unknown>): string | null
   return parts.length ? parts.join(' \u00B7 ') : null;
 }
 
+/**
+ * Owning team a service declares for itself via the `team.name` resource
+ * attribute (set with OTEL_RESOURCE_ATTRIBUTES or a collector processor).
+ */
+export function teamOf(resourceAttrs: Record<string, unknown>): string | null {
+  const name = attrStr(resourceAttrs, 'team.name')?.trim();
+  return name || null;
+}
+
 export function regionOf(resourceAttrs: Record<string, unknown>): string | null {
   return attrStr(
     resourceAttrs,

@@ -1,6 +1,6 @@
-# Deptrace
+# TraceMap
 
-Deptrace is an observability service for incident response. It acts as an OTLP
+TraceMap is an observability service for incident response. It acts as an OTLP
 collector, learns your company's entire service topology from the traces and
 metrics your services already emit, and renders it as a live interactive
 dependency map -- so you can spot an incident at its *source* instead of
@@ -12,9 +12,11 @@ working backwards from symptoms team by team.
   (internal and external) and every learned caller -> dependency edge. Health
   is encoded as heat (green/amber/red) on node borders and edges. Edges show
   the direction of data flow: an animated dash flow (speed tracks call rate)
-  plus occasional glowing packets (pure CSS offset-path, no per-frame JS)
-  travel from each dependency into the service that depends on it, ending in
-  an arrowhead at the dependent's edge. Edge anchors are direction-aware:
+  plus glowing packets (pure CSS offset-path, no per-frame JS) travel from
+  each dependency into the service that depends on it, ending in an arrowhead
+  at the dependent's edge. The animation reflects traces actually being
+  received: edges with no current traffic (or only stale metrics) go quiet,
+  and busier edges carry more packets per cycle. Edge anchors are direction-aware:
   each edge attaches to the side of a node that faces its counterpart, and
   edges sharing a side fan out instead of converging on one point, so
   dependency direction stays readable even in cyclic graphs or after manual
@@ -24,7 +26,9 @@ working backwards from symptoms team by team.
   the map always
   shows the current (or last-known) state of everything, even services with
   no recent traffic.
-- **Team grouping (meganodes)** - services are assigned to owning teams.
+- **Team grouping (meganodes)** - services are assigned to owning teams,
+  automatically from the `team.name` OTEL resource attribute when present
+  (teams are created on the fly) or manually through the UI/API.
   Toggle "Group by team" and each team collapses into a single meganode,
   turning hundreds of nodes into a clean "team depends on team" view. Any
   single meganode can be ungrouped back into its services (and regrouped)
@@ -106,17 +110,54 @@ npm run simulate
 Open http://localhost:5173. Point real services at
 `http://<host>:4318/v1/traces` (standard OTLP/HTTP exporter settings).
 
+## Onboarding your services
+
+The optimal path from zero to a curated live map:
+
+1. **Run TraceMap** (`docker compose up -d --build`) and open the UI.
+2. **Point OTLP exporters at the collector.** Any OTEL SDK or collector works:
+   set the OTLP/HTTP endpoint to `http://<host>:4318`. `service.name` is the
+   only required resource attribute -- each unique name becomes a map node on
+   its first trace, and caller -> dependency edges are learned automatically.
+3. **Declare ownership with the `team.name` resource attribute.** The
+   lowest-friction way is the standard environment variable -- no code changes:
+
+   ```sh
+   OTEL_SERVICE_NAME=checkout-svc
+   OTEL_RESOURCE_ATTRIBUTES=team.name=Checkout
+   ```
+
+   When the first trace from a service arrives, TraceMap creates the team if
+   it does not exist yet and assigns the service to it. The attribute only
+   fills a *missing* assignment -- it never overwrites a team set through the
+   UI or API, so manual curation stays authoritative. At scale, inject the
+   attribute centrally from an OTel Collector processor (`k8sattributes`
+   pulling a pod label, or a `resource` processor) instead of per service.
+4. **Curate the inferred dependencies.** Databases, queues, and external SaaS
+   APIs never emit their own telemetry, so they appear as inferred nodes with
+   no team. Assign their team and type in the UI (or
+   `PATCH /api/services/:id` with `{"teamName": "...", "type": "..."}`).
+5. **Tidy duplicates.** If the same service reports under different names,
+   merge them -- history is re-pointed and the old name becomes an alias.
+
+The bundled simulator (`npm run simulate`) demonstrates this exact flow: its
+instrumented services carry `team.name` on every trace, while its databases
+and SaaS peers get their ownership seeded through the management API.
+
 ## Configuration
 
 | Env var (server)       | Default                                                 | Purpose                          |
 | ---------------------- | ------------------------------------------------------- | -------------------------------- |
-| `DATABASE_URL`         | `postgres://deptrace:deptrace@localhost:5433/deptrace`  | TimescaleDB connection           |
+| `DATABASE_URL`         | `postgres://tracemap:tracemap@localhost:5433/tracemap`  | TimescaleDB connection           |
 | `PORT`                 | `4000`                                                  | Query/management API             |
 | `OTLP_PORT`            | `4318`                                                  | OTLP/HTTP collector              |
 | `EDGE_RESOLVE_TTL_MS`  | `90000`                                                 | Cross-batch span join window     |
 | `LIVE_WINDOW_MINUTES`  | `5`                                                     | "Current" window for map metrics |
 
 Simulator flags: `npm run simulate -- --otlp http://127.0.0.1:4318 --api http://127.0.0.1:4000 --tps 6`.
+While the simulator runs in a terminal, dial the trace rate live: `+` doubles
+it, `-` halves it (clamped to 0.25-96 traces/s), `0`/space/`p` pauses and
+resumes, `q` quits.
 
 ## API overview
 

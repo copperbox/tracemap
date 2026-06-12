@@ -1,5 +1,5 @@
 export const config = {
-  databaseUrl: process.env.DATABASE_URL ?? 'postgres://deptrace:deptrace@localhost:5433/deptrace',
+  databaseUrl: process.env.DATABASE_URL ?? 'postgres://tracemap:tracemap@localhost:5433/tracemap',
   /** Query/UI API port. */
   port: Number(process.env.PORT ?? 4000),
   /** OTLP/HTTP collector port (standard OTLP/HTTP port is 4318). */

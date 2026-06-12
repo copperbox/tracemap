@@ -1,4 +1,4 @@
--- Deptrace initial schema (TimescaleDB)
+-- TraceMap initial schema (TimescaleDB)
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit;
 
