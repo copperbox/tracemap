@@ -15,6 +15,8 @@ export function NodeCard({
   dim,
   selected,
   expandedTeam,
+  fade,
+  ghost,
   onClick,
   onOpen,
   onToggleGroup,
@@ -28,6 +30,10 @@ export function NodeCard({
   selected: boolean;
   /** True when this service's team is currently expanded (grouping on). */
   expandedTeam: boolean;
+  /** Opacity multiplier driven per-frame by graph transitions (disables the CSS opacity transition). */
+  fade?: number;
+  /** Non-interactive leftover of a removed node, shown only while a transition runs. */
+  ghost?: boolean;
   onClick: (e: MouseEvent) => void;
   onOpen: () => void;
   onToggleGroup?: () => void;
@@ -58,8 +64,9 @@ export function NodeCard({
         width: isGroup ? GROUP_W : NODE_W,
         cursor: 'pointer',
         transform: `translate(${x}px, ${y}px)`,
-        opacity: dim ? 0.13 : 1,
-        transition: 'opacity .25s',
+        opacity: (dim ? 0.13 : 1) * (fade ?? 1),
+        transition: fade == null ? 'opacity .25s' : 'none',
+        pointerEvents: ghost ? 'none' : undefined,
       }}
     >
       <div

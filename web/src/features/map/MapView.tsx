@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../state/store';
 import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
 import { layoutGraph, GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
+import { computeGraphTransition, type GraphSnapshot, type GraphTransition, type Pos } from '../../lib/transition';
 import { flowDuration } from '../../lib/flow';
 import { fmtMs, fmtRps, fmtErr, jit } from '../../lib/format';
 import { stColor } from '../../lib/status';
@@ -20,6 +21,11 @@ interface Transform {
 type NodePositions = Record<string, { x: number; y: number }>;
 
 const POSITIONS_KEY = 'deptrace.nodePositions';
+
+const ANIM_MS = 420;
+// keep the CSS bezier (viewport) in step with this JS easing (nodes)
+const ANIM_EASE_CSS = 'cubic-bezier(.33,1,.68,1)';
+const easeOut = (t: number): number => 1 - Math.pow(1 - t, 3);
 
 function loadPinnedPositions(): NodePositions {
   try {
@@ -122,6 +128,75 @@ export function MapView() {
     (key: string): { x: number; y: number } | undefined => pinned[key] ?? layout.pos.get(key),
     [pinned, layout],
   );
+
+  // ---- structural transition animation ----
+  // When grouping/ungrouping (or any structure change) swaps the node set,
+  // animate instead of snapping: survivors glide, revealed members fly out of
+  // their old group, and collapsed members converge on it as fading ghosts.
+  const [animT, setAnimT] = useState(1);
+  const animRef = useRef<GraphTransition | null>(null);
+  const animRafRef = useRef(0);
+  const prevSnapRef = useRef<{ sig: string; snap: GraphSnapshot } | null>(null);
+
+  const finishAnim = useCallback(() => {
+    cancelAnimationFrame(animRafRef.current);
+    animRef.current = null;
+    setAnimT(1);
+  }, []);
+
+  const startAnim = useCallback((tr: GraphTransition) => {
+    cancelAnimationFrame(animRafRef.current);
+    animRef.current = tr;
+    setAnimT(0);
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / ANIM_MS);
+      setAnimT(t);
+      if (t < 1) animRafRef.current = requestAnimationFrame(step);
+      else animRef.current = null;
+    };
+    animRafRef.current = requestAnimationFrame(step);
+  }, []);
+
+  useEffect(() => () => cancelAnimationFrame(animRafRef.current), []);
+
+  const eased = easeOut(animT);
+  const animating = animT < 1 && animRef.current != null;
+
+  /** Render position: the target, or mid-flight interpolation while animating. */
+  const displayPos = useCallback(
+    (key: string): Pos | undefined => {
+      const target = posOf(key);
+      if (!target) return undefined;
+      const f = animT < 1 ? animRef.current?.from.get(key) : undefined;
+      if (!f) return target;
+      const e = easeOut(animT);
+      return { x: f.x + (target.x - f.x) * e, y: f.y + (target.y - f.y) * e };
+    },
+    [posOf, animT],
+  );
+
+  // Snapshot what is on screen every render; when the structural signature
+  // changes, diff the previous snapshot against the new targets and animate.
+  useLayoutEffect(() => {
+    const shown = new Map<string, Pos>();
+    for (const n of graph.nodes) {
+      const p = displayPos(n.key);
+      if (p) shown.set(n.key, p);
+    }
+    const edgeKeys = new Set(graph.edges.map((e) => e.key));
+    const prev = prevSnapRef.current;
+    prevSnapRef.current = { sig: layoutSig, snap: { nodes: graph.nodes, pos: shown, edgeKeys } };
+    if (prev && prev.sig !== layoutSig && prev.snap.nodes.length && graph.nodes.length) {
+      const targets = new Map<string, Pos>();
+      for (const n of graph.nodes) {
+        const p = posOf(n.key);
+        if (p) targets.set(n.key, p);
+      }
+      const tr = computeGraphTransition(prev.snap, { nodes: graph.nodes, pos: targets, edgeKeys });
+      if (tr.from.size || tr.appear.size || tr.ghosts.length) startAnim(tr);
+    }
+  });
 
   // Fit on first data + when grouping changes the graph shape.
   const fittedRef = useRef('');
@@ -253,8 +328,8 @@ export function MapView() {
 
   // ---- edge geometry + labels ----
   const edgeViews = graph.edges.flatMap((e) => {
-    const a = posOf(e.sourceKey);
-    const b = posOf(e.targetKey);
+    const a = displayPos(e.sourceKey);
+    const b = displayPos(e.targetKey);
     const sn = nodeById.get(e.sourceKey);
     const tn = nodeById.get(e.targetKey);
     if (!a || !b || !sn || !tn) return [];
@@ -270,6 +345,7 @@ export function MapView() {
     const dim = dimmed(e.sourceKey) || dimmed(e.targetKey);
     const isSel = selEdgeKey === e.key;
     const isHov = hoverEdge === e.key;
+    const fadeIn = animating && animRef.current?.newEdges.has(e.key) ? eased : 1;
     const stc = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--line2)';
     const flowC = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
     return [
@@ -282,13 +358,13 @@ export function MapView() {
         // Arrowhead at the dependent's top edge, pointing down into the node.
         arrow: `${sx},${sy} ${sx - 4.5},${sy - 8} ${sx + 4.5},${sy - 8}`,
         arrowFill: isSel || isHov ? 'var(--accent)' : e.status !== 'ok' ? stc : 'var(--accent)',
-        arrowOp: dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.55,
+        arrowOp: (dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.55) * fadeIn,
         mid: { x: (sx + ex) / 2, y: (sy + ey) / 2 },
         stroke: isSel || isHov ? 'var(--accent)' : stc,
         w: isSel ? 2 : isHov ? 1.8 : 1.1,
-        op: dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.4,
+        op: (dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.4) * fadeIn,
         flowStroke: flowC,
-        flowOp: dim ? 0 : e.status !== 'ok' ? 0.95 : 0.7,
+        flowOp: (dim ? 0 : e.status !== 'ok' ? 0.95 : 0.7) * fadeIn,
         dur: flowDuration(e.rps),
       },
     ];
@@ -318,6 +394,10 @@ export function MapView() {
           backgroundImage: 'radial-gradient(var(--dot) 1px, transparent 1.4px)',
           backgroundSize: `${22 * tf.k}px ${22 * tf.k}px`,
           backgroundPosition: `${tf.tx}px ${tf.ty}px`,
+          transition:
+            animating && !dragging
+              ? `background-size ${ANIM_MS}ms ${ANIM_EASE_CSS}, background-position ${ANIM_MS}ms ${ANIM_EASE_CSS}`
+              : 'none',
         }}
       >
         <div
@@ -329,6 +409,7 @@ export function MapView() {
             height: 0,
             transform: `translate(${tf.tx}px, ${tf.ty}px) scale(${tf.k})`,
             transformOrigin: '0 0',
+            transition: animating && !dragging ? `transform ${ANIM_MS}ms ${ANIM_EASE_CSS}` : 'none',
           }}
         >
           <svg width="8000" height="3000" style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}>
@@ -364,7 +445,7 @@ export function MapView() {
           </svg>
 
           {graph.nodes.map((n) => {
-            const p = posOf(n.key);
+            const p = displayPos(n.key);
             if (!p) return null;
             return (
               <NodeCard
@@ -375,15 +456,20 @@ export function MapView() {
                 tick={tick}
                 dim={dimmed(n.key)}
                 selected={selNodeKey === n.key}
+                fade={animating && animRef.current?.appear.has(n.key) ? eased : undefined}
                 onDragStart={(ev) => {
                   if (ev.button !== 0) return;
                   ev.stopPropagation();
+                  // Grabbing a mid-flight node settles the animation first so
+                  // the pinned position is measured from the real target.
+                  finishAnim();
+                  const tp = posOf(n.key) ?? p;
                   nodeDragRef.current = {
                     key: n.key,
                     clientX: ev.clientX,
                     clientY: ev.clientY,
-                    origX: p.x,
-                    origY: p.y,
+                    origX: tp.x,
+                    origY: tp.y,
                     moved: false,
                   };
                 }}
@@ -407,6 +493,25 @@ export function MapView() {
               />
             );
           })}
+
+          {/* fading leftovers of removed nodes (e.g. members converging on a new group) */}
+          {animating &&
+            animRef.current?.ghosts.map((g) => (
+              <NodeCard
+                key={`ghost:${g.node.key}`}
+                node={g.node}
+                x={g.from.x + (g.to.x - g.from.x) * eased}
+                y={g.from.y + (g.to.y - g.from.y) * eased}
+                tick={tick}
+                dim={false}
+                selected={false}
+                expandedTeam={false}
+                ghost
+                fade={1 - eased}
+                onClick={() => {}}
+                onOpen={() => {}}
+              />
+            ))}
 
           {edgeViews
             .filter((v) => !v.dim && (v.isSel || v.isHov || v.e.status !== 'ok'))

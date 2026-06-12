@@ -24,7 +24,9 @@ working backwards from symptoms team by team.
   turning hundreds of nodes into a clean "team depends on team" view. Any
   single meganode can be ungrouped back into its services (and regrouped)
   for selective deep dives. External dependencies stay individual until you
-  manually assign them to a group.
+  manually assign them to a group. Grouping changes animate -- merged
+  services visibly converge into their meganode, ungrouped services fly
+  back out of it -- so it is always clear which nodes just merged or split.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines, callers/dependencies, and
   for edges: the learned relationship (first observed, supporting spans,
