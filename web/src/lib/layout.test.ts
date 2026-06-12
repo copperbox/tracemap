@@ -59,6 +59,63 @@ describe('layoutGraph', () => {
     expect(pos.size).toBe(0);
   });
 
+  it('separates a mutually dependent pair into distinct layers', () => {
+    const { pos } = layoutGraph({
+      keys: ['a', 'b'],
+      deps: new Map([
+        ['a', ['b']],
+        ['b', ['a']],
+      ]),
+    });
+    expect(pos.get('a')?.y).not.toBe(pos.get('b')?.y);
+  });
+
+  it('keeps the dominant flow downward when one feedback edge closes a cycle', () => {
+    // chain leaf <- s1 <- s2 <- gw, plus leaf depending back on gw
+    const deps = new Map([
+      ['s1', ['leaf']],
+      ['s2', ['s1']],
+      ['gw', ['s2']],
+      ['leaf', ['gw']],
+    ]);
+    const { pos } = layoutGraph({ keys: ['gw', 'leaf', 's1', 's2'], deps });
+    const y = (k: string): number => pos.get(k)?.y as number;
+    let down = 0;
+    let up = 0;
+    for (const [k, ds] of deps) {
+      for (const d of ds) {
+        if (y(d) < y(k)) down++;
+        else up++;
+      }
+    }
+    expect(down).toBe(3);
+    expect(up).toBe(1);
+  });
+
+  it('layers a dense cyclic graph with most edges pointing downward', () => {
+    // shaped like the team-grouped map: a hub both feeds and consumes others
+    const deps = new Map([
+      ['hub', ['t1', 't2', 't3']],
+      ['t1', ['hub', 'leaf']],
+      ['t2', ['hub', 't1']],
+      ['t3', ['t2']],
+      ['leaf', []],
+    ]);
+    const keys = ['hub', 'leaf', 't1', 't2', 't3'];
+    const { pos } = layoutGraph({ keys, deps });
+    expect(pos.size).toBe(keys.length);
+    const y = (k: string): number => pos.get(k)?.y as number;
+    let down = 0;
+    let total = 0;
+    for (const [k, ds] of deps) {
+      for (const d of ds) {
+        total++;
+        if (y(d) < y(k)) down++;
+      }
+    }
+    expect(down / total).toBeGreaterThan(0.6);
+  });
+
   it('is deterministic regardless of dependency list ordering', () => {
     // The API may return edges in any row order; positions must not drift.
     const keys = ['gw', 'bff1', 'bff2', 'svc1', 'svc2', 'db1', 'db2'];

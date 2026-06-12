@@ -62,6 +62,30 @@ body[data-theme='light'] {
     stroke-dashoffset: -24;
   }
 }
+/* One packet per cycle: travel the edge path for the first ~30% of the
+   cycle, then stay hidden. Pure CSS offset-path keeps it off the JS main
+   loop even with every edge animated (no per-frame rAF like the original
+   depsera implementation). */
+@keyframes packet {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  2% {
+    opacity: 1;
+  }
+  26% {
+    opacity: 1;
+  }
+  30% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
 @keyframes pulseDot {
   0%,
   100% {

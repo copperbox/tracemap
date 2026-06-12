@@ -11,9 +11,14 @@ working backwards from symptoms team by team.
 - **Service map** - a live, pannable/zoomable graph of every known service
   (internal and external) and every learned caller -> dependency edge. Health
   is encoded as heat (green/amber/red) on node borders and edges. Edges show
-  the direction of data flow: animated particles (speed tracks call rate)
-  travel from each dependency down into the service that depends on it,
-  ending in an arrowhead at the dependent's edge. Nodes can be
+  the direction of data flow: an animated dash flow (speed tracks call rate)
+  plus occasional glowing packets (pure CSS offset-path, no per-frame JS)
+  travel from each dependency into the service that depends on it, ending in
+  an arrowhead at the dependent's edge. Edge anchors are direction-aware:
+  each edge attaches to the side of a node that faces its counterpart, and
+  edges sharing a side fan out instead of converging on one point, so
+  dependency direction stays readable even in cyclic graphs or after manual
+  drags. Nodes can be
   dragged to custom positions (edges follow; positions persist locally and a
   reset-layout button restores the default layout). No date selection needed:
   the map always
@@ -27,6 +32,10 @@ working backwards from symptoms team by team.
   manually assign them to a group. Grouping changes animate -- merged
   services visibly converge into their meganode, ungrouped services fly
   back out of it -- so it is always clear which nodes just merged or split.
+  Aggregating teams usually makes the graph cyclic (most teams end up
+  mutually dependent); the layout breaks those cycles with a greedy
+  feedback-arc ordering so the dominant flow still runs top-to-bottom and
+  only a minimal set of backward edges points up.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines, callers/dependencies, and
   for edges: the learned relationship (first observed, supporting spans,

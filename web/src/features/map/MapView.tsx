@@ -3,7 +3,8 @@ import { useStore } from '../../state/store';
 import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
 import { layoutGraph, GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
 import { computeGraphTransition, type GraphSnapshot, type GraphTransition, type Pos } from '../../lib/transition';
-import { flowDuration } from '../../lib/flow';
+import { computeEdgeGeometries } from '../../lib/edgeGeometry';
+import { flowDuration, packetCycle, packetDelay } from '../../lib/flow';
 import { fmtMs, fmtRps, fmtErr, jit } from '../../lib/format';
 import { stColor } from '../../lib/status';
 import { NodeCard } from './NodeCard';
@@ -327,21 +328,22 @@ export function MapView() {
   const heightOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_H : NODE_H);
 
   // ---- edge geometry + labels ----
+  // Anchor sides come from the nodes' actual relative positions (the grouped
+  // graph is cyclic and users can drag nodes anywhere, so fixed bottom->top
+  // anchoring would lie about direction). The path runs dependency ->
+  // dependent so the dash/packet animations show data flowing INTO the
+  // dependent, where the arrowhead sits.
+  const geoms = computeEdgeGeometries(
+    graph.edges.map((e) => ({ key: e.key, fromKey: e.targetKey, toKey: e.sourceKey })),
+    (key) => {
+      const p = displayPos(key);
+      const n = nodeById.get(key);
+      return p && n ? { x: p.x, y: p.y, w: widthOf(n), h: heightOf(n) } : undefined;
+    },
+  );
   const edgeViews = graph.edges.flatMap((e) => {
-    const a = displayPos(e.sourceKey);
-    const b = displayPos(e.targetKey);
-    const sn = nodeById.get(e.sourceKey);
-    const tn = nodeById.get(e.targetKey);
-    if (!a || !b || !sn || !tn) return [];
-    // sx/sy: dependent's top edge (where data arrives); ex/ey: dependency's
-    // bottom edge (where data originates). The path runs dependency -> dependent
-    // so the dash animation shows data flowing DOWN into the dependent.
-    const sx = a.x + widthOf(sn) / 2;
-    const sy = a.y;
-    const ex = b.x + widthOf(tn) / 2;
-    const ey = b.y + heightOf(tn);
-    const dy = Math.max(46, sy - ey);
-    const d = `M ${ex} ${ey} C ${ex} ${ey + dy * 0.45}, ${sx} ${sy - dy * 0.45}, ${sx} ${sy}`;
+    const g = geoms.get(e.key);
+    if (!g) return [];
     const dim = dimmed(e.sourceKey) || dimmed(e.targetKey);
     const isSel = selEdgeKey === e.key;
     const isHov = hoverEdge === e.key;
@@ -351,15 +353,14 @@ export function MapView() {
     return [
       {
         e,
-        d,
+        d: g.d,
         dim,
         isSel,
         isHov,
-        // Arrowhead at the dependent's top edge, pointing down into the node.
-        arrow: `${sx},${sy} ${sx - 4.5},${sy - 8} ${sx + 4.5},${sy - 8}`,
+        arrow: g.arrow,
         arrowFill: isSel || isHov ? 'var(--accent)' : e.status !== 'ok' ? stc : 'var(--accent)',
         arrowOp: (dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.55) * fadeIn,
-        mid: { x: (sx + ex) / 2, y: (sy + ey) / 2 },
+        mid: g.mid,
         stroke: isSel || isHov ? 'var(--accent)' : stc,
         w: isSel ? 2 : isHov ? 1.8 : 1.1,
         op: (dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.4) * fadeIn,
@@ -443,6 +444,30 @@ export function MapView() {
               </g>
             ))}
           </svg>
+
+          {/* glowing packets traveling each live edge (pure CSS offset-path;
+              the wrapper carries dim/fade so the keyframes own opacity) */}
+          {edgeViews
+            .filter((v) => v.flowOp > 0)
+            .map((v) => (
+              <div
+                key={`packet:${v.e.key}`}
+                style={{ position: 'absolute', left: 0, top: 0, opacity: v.flowOp, pointerEvents: 'none' }}
+              >
+                <div
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    background: v.flowStroke,
+                    boxShadow: `0 0 7px 1px ${v.flowStroke}`,
+                    offsetPath: `path("${v.d}")`,
+                    animation: `packet ${packetCycle(v.e.rps)} linear infinite`,
+                    animationDelay: packetDelay(v.e.key),
+                  }}
+                />
+              </div>
+            ))}
 
           {graph.nodes.map((n) => {
             const p = displayPos(n.key);

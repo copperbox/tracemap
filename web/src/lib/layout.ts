@@ -3,7 +3,13 @@
  * edges) at the TOP (layer 0), callers below, funneling down to the gateway.
  * Within a layer nodes sit at the mean x of their dependencies, with one
  * refinement pass re-ordering layer 0 by the mean x of its callers.
- * Cycle-safe: an edge that closes a cycle is ignored for layering.
+ *
+ * Cycles (common in the team-grouped graph, where aggregation makes most
+ * teams mutually dependent) are handled with a greedy feedback-arc ordering
+ * (Eades-Lin-Smyth): layers come from the longest path over the FORWARD
+ * edges only, so the dominant flow still runs top-to-bottom and only a
+ * minimal set of backward edges points up -- the renderer's direction-aware
+ * anchors keep those readable.
  */
 
 export interface LayoutInput {
@@ -30,22 +36,88 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
     return { pos: new Map(), bbox: { x0: 0, y0: 0, x1: 0, y1: 0 } };
   }
 
-  // Cycle-safe layer assignment.
+  // "feed" graph: dependency -> dependent (data flows down the screen)
   const keySet = new Set(keys);
-  const layer = new Map<string, number>();
-  const visiting = new Set<string>();
-  const layerOf = (key: string): number => {
-    const cached = layer.get(key);
-    if (cached != null) return cached;
-    if (visiting.has(key)) return 0; // cycle: break here
-    visiting.add(key);
-    const ds = (deps.get(key) ?? []).filter((d) => d !== key && keySet.has(d));
-    const l = ds.length ? 1 + Math.max(...ds.map(layerOf)) : 0;
-    visiting.delete(key);
-    layer.set(key, l);
-    return l;
+  const feeds = new Map<string, Set<string>>();
+  const fedBy = new Map<string, Set<string>>();
+  for (const k of keys) {
+    feeds.set(k, new Set());
+    fedBy.set(k, new Set());
+  }
+  for (const k of keys) {
+    for (const d of deps.get(k) ?? []) {
+      if (d === k || !keySet.has(d)) continue;
+      (feeds.get(d) as Set<string>).add(k);
+      (fedBy.get(k) as Set<string>).add(d);
+    }
+  }
+
+  // Greedy feedback-arc ordering (Eades-Lin-Smyth): peel sinks to the tail
+  // and sources to the head; when neither exists (a cycle), take the node
+  // with the best out-minus-in degree. Ties resolve in key order, keeping
+  // the layout deterministic. On a DAG this is a plain topological order,
+  // so acyclic graphs lay out exactly as before.
+  const remaining = new Set(keys);
+  const outdeg = new Map(keys.map((k) => [k, (feeds.get(k) as Set<string>).size]));
+  const indeg = new Map(keys.map((k) => [k, (fedBy.get(k) as Set<string>).size]));
+  const head: string[] = [];
+  const tail: string[] = [];
+  const removeNode = (k: string): void => {
+    remaining.delete(k);
+    for (const v of feeds.get(k) as Set<string>) {
+      if (remaining.has(v)) indeg.set(v, (indeg.get(v) as number) - 1);
+    }
+    for (const v of fedBy.get(k) as Set<string>) {
+      if (remaining.has(v)) outdeg.set(v, (outdeg.get(v) as number) - 1);
+    }
   };
-  keys.forEach(layerOf);
+  while (remaining.size) {
+    let moved = true;
+    while (moved) {
+      moved = false;
+      for (const k of [...remaining]) {
+        if (remaining.has(k) && outdeg.get(k) === 0) {
+          removeNode(k);
+          tail.unshift(k);
+          moved = true;
+        }
+      }
+      for (const k of [...remaining]) {
+        if (remaining.has(k) && indeg.get(k) === 0) {
+          removeNode(k);
+          head.push(k);
+          moved = true;
+        }
+      }
+    }
+    if (remaining.size) {
+      let best: string | null = null;
+      let bestScore = -Infinity;
+      for (const k of remaining) {
+        const score = (outdeg.get(k) as number) - (indeg.get(k) as number);
+        if (score > bestScore) {
+          best = k;
+          bestScore = score;
+        }
+      }
+      removeNode(best as string);
+      head.push(best as string);
+    }
+  }
+  const order = new Map([...head, ...tail].map((k, i) => [k, i]));
+
+  // Longest path over forward feed edges only (backward edges are the
+  // feedback arcs and place no layer constraint).
+  const layer = new Map<string, number>();
+  for (const k of [...keys].sort((a, b) => (order.get(a) as number) - (order.get(b) as number))) {
+    let l = 0;
+    for (const d of fedBy.get(k) as Set<string>) {
+      if ((order.get(d) as number) < (order.get(k) as number)) {
+        l = Math.max(l, (layer.get(d) ?? 0) + 1);
+      }
+    }
+    layer.set(k, l);
+  }
 
   const maxL = Math.max(...keys.map((k) => layer.get(k) ?? 0));
   const layers: string[][] = Array.from({ length: maxL + 1 }, () => []);
