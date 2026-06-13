@@ -14,7 +14,6 @@ export function NodeCard({
   tick,
   dim,
   selected,
-  expandedTeam,
   fade,
   ghost,
   onClick,
@@ -28,8 +27,6 @@ export function NodeCard({
   tick: number;
   dim: boolean;
   selected: boolean;
-  /** True when this service's team is currently expanded (grouping on). */
-  expandedTeam: boolean;
   /** Opacity multiplier driven per-frame by graph transitions (disables the CSS opacity transition). */
   fade?: number;
   /** Non-interactive leftover of a removed node, shown only while a transition runs. */
@@ -50,7 +47,7 @@ export function NodeCard({
         ? 'rgba(251,191,36,.5)'
         : 'var(--line2)';
 
-  const showToggle = isGroup || (expandedTeam && onToggleGroup);
+  const showToggle = isGroup && onToggleGroup;
 
   return (
     <div
@@ -92,7 +89,7 @@ export function NodeCard({
           {showToggle && (
             <span
               className="hov-btn"
-              title={isGroup ? 'Ungroup team' : 'Regroup team'}
+              title="Unmerge team"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleGroup?.();
@@ -108,7 +105,7 @@ export function NodeCard({
                 flex: 'none',
               }}
             >
-              <GroupExpandIcon expanded={!isGroup} />
+              <GroupExpandIcon expanded={false} />
             </span>
           )}
           <span

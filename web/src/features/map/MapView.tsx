@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../state/store';
 import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
-import { layoutGraph, GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
+import { GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
+import { FRAME_PAD, FRAME_TITLE_H, layoutClusteredGraph } from '../../lib/clusterLayout';
 import { computeGraphTransition, type GraphSnapshot, type GraphTransition, type Pos } from '../../lib/transition';
 import { computeEdgeGeometries } from '../../lib/edgeGeometry';
 import { flowDuration, packetCycle, packetDelays } from '../../lib/flow';
 import { fmtMs, fmtRps, fmtErr, jit } from '../../lib/format';
 import { stColor } from '../../lib/status';
 import { NodeCard } from './NodeCard';
+import { TeamFrameBar, TeamFrameBox } from './TeamFrame';
 import { MapDrawer } from './MapDrawer';
 import { FitIcon, ResetLayoutIcon } from '../../components/Icon';
 
@@ -47,10 +49,9 @@ export function MapView() {
   const search = useStore((s) => s.search);
   const teamFilter = useStore((s) => s.teamFilter);
   const setTeamFilter = useStore((s) => s.setTeamFilter);
-  const groupByTeam = useStore((s) => s.groupByTeam);
-  const setGroupByTeam = useStore((s) => s.setGroupByTeam);
-  const expandedTeams = useStore((s) => s.expandedTeams);
-  const toggleTeamExpanded = useStore((s) => s.toggleTeamExpanded);
+  const mergedTeams = useStore((s) => s.mergedTeams);
+  const toggleTeamMerged = useStore((s) => s.toggleTeamMerged);
+  const setMergedTeams = useStore((s) => s.setMergedTeams);
   const navigate = useStore((s) => s.navigate);
   const tick = useStore((s) => s.tick);
 
@@ -60,14 +61,13 @@ export function MapView() {
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
 
   // User-pinned node positions (dragging a node overrides the auto-layout;
-  // "fit" resets). Edges always follow the effective position.
+  // "fit" resets). Edges always follow the effective position. A drag moves
+  // one node, or every member of a team when grabbed by its frame.
   const [pinned, setPinned] = useState<NodePositions>(loadPinnedPositions);
   const nodeDragRef = useRef<{
-    key: string;
+    items: { key: string; origX: number; origY: number }[];
     clientX: number;
     clientY: number;
-    origX: number;
-    origY: number;
     moved: boolean;
   } | null>(null);
   const tfRef = useRef(tf);
@@ -76,9 +76,9 @@ export function MapView() {
   const graph = useMemo(
     () =>
       topology
-        ? buildGraph(topology, { groupByTeam, expandedTeams })
+        ? buildGraph(topology, { mergedTeams })
         : { nodes: [] as GraphNode[], edges: [] as GraphEdge[], nodeKeyOf: (id: string) => id },
-    [topology, groupByTeam, expandedTeams],
+    [topology, mergedTeams],
   );
 
   // The layout must only depend on the graph's STRUCTURE. Metrics refresh
@@ -93,13 +93,7 @@ export function MapView() {
   );
 
   const layout = useMemo(() => {
-    const deps = new Map<string, string[]>();
-    for (const e of [...graph.edges].sort((a, b) => a.key.localeCompare(b.key))) {
-      const arr = deps.get(e.sourceKey) ?? [];
-      arr.push(e.targetKey);
-      deps.set(e.sourceKey, arr);
-    }
-    return layoutGraph({ keys: [...graph.nodes.map((n) => n.key)].sort(), deps });
+    return layoutClusteredGraph(graph.nodes, graph.edges);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- structure-only dependency by design
   }, [layoutSig]);
 
@@ -129,6 +123,94 @@ export function MapView() {
     (key: string): { x: number; y: number } | undefined => pinned[key] ?? layout.pos.get(key),
     [pinned, layout],
   );
+
+  const persistPins = (next: NodePositions): NodePositions => {
+    localStorage.setItem(POSITIONS_KEY, JSON.stringify(next));
+    return next;
+  };
+
+  // ---- in-place merge/unmerge for dragged teams ----
+  // The cluster layout already keeps an untouched team in the same slot when
+  // it merges/unmerges. But once a team has been dragged (pinned), the layout
+  // slot no longer matches where it sits, so hand the position across the
+  // toggle: merging pins the meganode at the frame's center (consuming the
+  // member pins), and unmerging re-pins the members around the meganode.
+  const pendingUnmergeRef = useRef<{ teamId: number; cx: number; cy: number } | null>(null);
+
+  const toggleMerge = useCallback(
+    (teamId: number) => {
+      if (!mergedTeams.includes(teamId)) {
+        const members = graph.nodes.filter((n) => n.kind === 'service' && n.teamId === teamId);
+        if (members.some((m) => pinned[m.key])) {
+          let x0 = Infinity;
+          let y0 = Infinity;
+          let x1 = -Infinity;
+          let y1 = -Infinity;
+          for (const m of members) {
+            const p = posOf(m.key);
+            if (!p) continue;
+            x0 = Math.min(x0, p.x);
+            y0 = Math.min(y0, p.y);
+            x1 = Math.max(x1, p.x + NODE_W);
+            y1 = Math.max(y1, p.y + NODE_H);
+          }
+          if (x0 !== Infinity) {
+            setPinned((prev) => {
+              const next = { ...prev };
+              for (const m of members) delete next[m.key];
+              next[groupKey(teamId)] = { x: (x0 + x1) / 2 - GROUP_W / 2, y: (y0 + y1) / 2 - GROUP_H / 2 };
+              return persistPins(next);
+            });
+          }
+        }
+      } else {
+        const gk = groupKey(teamId);
+        const gp = pinned[gk];
+        if (gp) {
+          pendingUnmergeRef.current = { teamId, cx: gp.x + GROUP_W / 2, cy: gp.y + GROUP_H / 2 };
+          setPinned((prev) => {
+            const next = { ...prev };
+            delete next[gk];
+            return persistPins(next);
+          });
+        }
+      }
+      toggleTeamMerged(teamId);
+    },
+    [mergedTeams, graph, pinned, posOf, toggleTeamMerged],
+  );
+
+  // After an unmerge of a dragged team, the new layout is known: shift the
+  // members' layout positions so their frame is centered where the meganode
+  // sat, and pin them there.
+  useLayoutEffect(() => {
+    const pend = pendingUnmergeRef.current;
+    if (!pend) return;
+    const members = graph.nodes.filter((n) => n.kind === 'service' && n.teamId === pend.teamId);
+    const pts = members.map((m) => layout.pos.get(m.key));
+    if (!members.length || pts.some((p) => !p)) return; // layout not updated yet
+    pendingUnmergeRef.current = null;
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const p of pts as { x: number; y: number }[]) {
+      x0 = Math.min(x0, p.x);
+      y0 = Math.min(y0, p.y);
+      x1 = Math.max(x1, p.x + NODE_W);
+      y1 = Math.max(y1, p.y + NODE_H);
+    }
+    const dx = pend.cx - (x0 + x1) / 2;
+    const dy = pend.cy - (y0 + y1) / 2;
+    setPinned((prev) => {
+      const next = { ...prev };
+      members.forEach((m, i) => {
+        const p = pts[i] as { x: number; y: number };
+        next[m.key] = { x: p.x + dx, y: p.y + dy };
+      });
+      return persistPins(next);
+    });
+  }, [graph, layout]);
 
   // ---- structural transition animation ----
   // When grouping/ungrouping (or any structure change) swaps the node set,
@@ -199,15 +281,19 @@ export function MapView() {
     }
   });
 
-  // Fit on first data + when grouping changes the graph shape.
-  const fittedRef = useRef('');
+  // Fit on first data, and after the merge-all/unmerge-all shortcut (whose
+  // graph change is too big to stay oriented without one). Individual team
+  // toggles deliberately do NOT re-fit: they expand/collapse in place.
+  const fittedRef = useRef(false);
+  const fitPendingRef = useRef(false);
   useEffect(() => {
-    const sig = `${graph.nodes.length ? 1 : 0}:${groupByTeam}:${expandedTeams.join(',')}`;
-    if (graph.nodes.length && fittedRef.current !== sig) {
-      fittedRef.current = sig;
+    if (!graph.nodes.length) return;
+    if (!fittedRef.current || fitPendingRef.current) {
+      fittedRef.current = true;
+      fitPendingRef.current = false;
       fitView();
     }
-  }, [graph, groupByTeam, expandedTeams, fitView]);
+  }, [graph, fitView]);
 
   // Wheel zoom (non-passive listener so preventDefault works).
   useEffect(() => {
@@ -236,7 +322,11 @@ export function MapView() {
         const dy = (e.clientY - nd.clientY) / tfRef.current.k;
         if (Math.abs(e.clientX - nd.clientX) + Math.abs(e.clientY - nd.clientY) > 4) nd.moved = true;
         if (nd.moved) {
-          setPinned((prev) => ({ ...prev, [nd.key]: { x: nd.origX + dx, y: nd.origY + dy } }));
+          setPinned((prev) => {
+            const next = { ...prev };
+            for (const it of nd.items) next[it.key] = { x: it.origX + dx, y: it.origY + dy };
+            return next;
+          });
         }
         return;
       }
@@ -375,6 +465,40 @@ export function MapView() {
   });
 
   const teams = topology?.teams ?? [];
+  const allMerged = teams.length > 0 && teams.every((t) => mergedTeams.includes(t.id));
+
+  // Ownership frames around each unmerged team's nodes. Bounds follow the
+  // members' effective positions, so frames stretch during drags and glide
+  // along with merge/unmerge animations.
+  const frameViews = teams.flatMap((t) => {
+    const members = graph.nodes.filter((n) => n.kind === 'service' && n.teamId === t.id);
+    if (!members.length) return [];
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const m of members) {
+      const p = displayPos(m.key);
+      if (!p) continue;
+      x0 = Math.min(x0, p.x);
+      y0 = Math.min(y0, p.y);
+      x1 = Math.max(x1, p.x + NODE_W);
+      y1 = Math.max(y1, p.y + NODE_H);
+    }
+    if (x0 === Infinity) return [];
+    return [
+      {
+        teamId: t.id,
+        name: t.name,
+        memberKeys: members.map((m) => m.key),
+        x: x0 - FRAME_PAD,
+        y: y0 - FRAME_TITLE_H,
+        w: x1 - x0 + 2 * FRAME_PAD,
+        h: y1 - y0 + FRAME_TITLE_H + FRAME_PAD,
+        dim: members.every((m) => dimmed(m.key)),
+      },
+    ];
+  });
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
@@ -416,6 +540,10 @@ export function MapView() {
             transition: animating && !dragging ? `transform ${ANIM_MS}ms ${ANIM_EASE_CSS}` : 'none',
           }}
         >
+          {frameViews.map((f) => (
+            <TeamFrameBox key={f.teamId} x={f.x} y={f.y} w={f.w} h={f.h} dim={f.dim} />
+          ))}
+
           <svg width="8000" height="3000" style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}>
             {edgeViews.map((v) => (
               <g key={v.e.key}>
@@ -480,6 +608,35 @@ export function MapView() {
               </div>
             ))}
 
+          {/* frame title bars render above the edges so their drag/merge
+              interactions cannot be stolen by an edge's invisible hit path */}
+          {frameViews.map((f) => (
+            <TeamFrameBar
+              key={`bar:${f.teamId}`}
+              name={f.name}
+              memberCount={f.memberKeys.length}
+              x={f.x}
+              y={f.y}
+              w={f.w}
+              dim={f.dim}
+              onMerge={() => toggleMerge(f.teamId)}
+              onDragStart={(ev) => {
+                if (ev.button !== 0) return;
+                ev.stopPropagation();
+                finishAnim();
+                nodeDragRef.current = {
+                  items: f.memberKeys.map((k) => {
+                    const p = posOf(k) ?? { x: 0, y: 0 };
+                    return { key: k, origX: p.x, origY: p.y };
+                  }),
+                  clientX: ev.clientX,
+                  clientY: ev.clientY,
+                  moved: false,
+                };
+              }}
+            />
+          ))}
+
           {graph.nodes.map((n) => {
             const p = displayPos(n.key);
             if (!p) return null;
@@ -501,31 +658,22 @@ export function MapView() {
                   finishAnim();
                   const tp = posOf(n.key) ?? p;
                   nodeDragRef.current = {
-                    key: n.key,
+                    items: [{ key: n.key, origX: tp.x, origY: tp.y }],
                     clientX: ev.clientX,
                     clientY: ev.clientY,
-                    origX: tp.x,
-                    origY: tp.y,
                     moved: false,
                   };
                 }}
-                expandedTeam={n.kind === 'group' ? false : groupByTeam && n.teamId != null && expandedTeams.includes(n.teamId)}
                 onClick={(ev) => {
                   ev.stopPropagation();
                   if (wasDrag()) return;
                   select(n.kind === 'group' ? { kind: 'group', teamId: n.teamId as number } : { kind: 'node', id: n.key });
                 }}
                 onOpen={() => {
-                  if (n.kind === 'group') toggleTeamExpanded(n.teamId as number);
+                  if (n.kind === 'group') toggleMerge(n.teamId as number);
                   else navigate('service', n.key);
                 }}
-                onToggleGroup={
-                  n.kind === 'group'
-                    ? () => toggleTeamExpanded(n.teamId as number)
-                    : groupByTeam && n.teamId != null
-                      ? () => toggleTeamExpanded(n.teamId as number)
-                      : undefined
-                }
+                onToggleGroup={n.kind === 'group' ? () => toggleMerge(n.teamId as number) : undefined}
               />
             );
           })}
@@ -541,7 +689,6 @@ export function MapView() {
                 tick={tick}
                 dim={false}
                 selected={false}
-                expandedTeam={false}
                 ghost
                 fade={1 - eased}
                 onClick={() => {}}
@@ -585,21 +732,22 @@ export function MapView() {
           <div
             onClick={(e) => {
               e.stopPropagation();
-              setGroupByTeam(!groupByTeam);
+              fitPendingRef.current = true;
+              setMergedTeams(allMerged ? [] : teams.map((t) => t.id));
             }}
             style={{
               padding: '5px 11px',
               borderRadius: 999,
-              border: `1px solid ${groupByTeam ? 'var(--accent)' : 'var(--line)'}`,
-              background: groupByTeam ? 'var(--accent-dim)' : 'var(--bg2)',
-              color: groupByTeam ? 'var(--accent)' : 'var(--dim)',
+              border: `1px solid ${allMerged ? 'var(--accent)' : 'var(--line)'}`,
+              background: allMerged ? 'var(--accent-dim)' : 'var(--bg2)',
+              color: allMerged ? 'var(--accent)' : 'var(--dim)',
               font: monoCss(10.5, 600),
               letterSpacing: '.03em',
               cursor: 'pointer',
               backdropFilter: 'blur(6px)',
             }}
           >
-            {groupByTeam ? 'Grouped by team' : 'Group by team'}
+            {allMerged ? 'Unmerge all teams' : 'Merge all teams'}
           </div>
           <div style={{ width: 1, height: 24, background: 'var(--line)', margin: '1px 2px' }} />
           {[{ id: 'all' as const, name: 'All teams' }, ...teams].map((t) => {
@@ -670,7 +818,7 @@ export function MapView() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, font: monoCss(10), color: 'var(--dim)' }}>
             <span style={{ width: 14, height: 8, border: '1.4px solid var(--line2)', borderRadius: 3, boxSizing: 'border-box' }} />
-            team group
+            team frame
           </div>
         </div>
 
@@ -763,7 +911,7 @@ export function MapView() {
         </div>
       </div>
 
-      <MapDrawer graph={graph} />
+      <MapDrawer graph={graph} onToggleMerge={toggleMerge} />
     </div>
   );
 }

@@ -18,8 +18,8 @@ interface AppState {
   focusId: string | null; // node id or "group:<teamId>"
   search: string;
   teamFilter: number | 'all';
-  groupByTeam: boolean;
-  expandedTeams: number[];
+  /** Teams currently collapsed into a single meganode on the map. */
+  mergedTeams: number[];
   theme: 'dark' | 'light';
   tick: number;
   range: TimeRange;
@@ -33,9 +33,8 @@ interface AppState {
   setFocus: (id: string | null) => void;
   setSearch: (s: string) => void;
   setTeamFilter: (t: number | 'all') => void;
-  setGroupByTeam: (on: boolean) => void;
-  toggleTeamExpanded: (teamId: number) => void;
-  collapseAllTeams: () => void;
+  toggleTeamMerged: (teamId: number) => void;
+  setMergedTeams: (teamIds: number[]) => void;
   setTheme: (t: 'dark' | 'light') => void;
   bumpTick: () => void;
   setRange: (r: TimeRange) => void;
@@ -52,8 +51,7 @@ export const useStore = create<AppState>((set) => ({
   focusId: null,
   search: '',
   teamFilter: 'all',
-  groupByTeam: false,
-  expandedTeams: [],
+  mergedTeams: [],
   theme: 'dark',
   tick: 0,
   range: DEFAULT_RANGE,
@@ -68,14 +66,13 @@ export const useStore = create<AppState>((set) => ({
   setFocus: (focusId) => set({ focusId }),
   setSearch: (search) => set({ search }),
   setTeamFilter: (teamFilter) => set({ teamFilter }),
-  setGroupByTeam: (groupByTeam) => set({ groupByTeam, expandedTeams: [] }),
-  toggleTeamExpanded: (teamId) =>
+  toggleTeamMerged: (teamId) =>
     set((s) => ({
-      expandedTeams: s.expandedTeams.includes(teamId)
-        ? s.expandedTeams.filter((t) => t !== teamId)
-        : [...s.expandedTeams, teamId],
+      mergedTeams: s.mergedTeams.includes(teamId)
+        ? s.mergedTeams.filter((t) => t !== teamId)
+        : [...s.mergedTeams, teamId],
     })),
-  collapseAllTeams: () => set({ expandedTeams: [] }),
+  setMergedTeams: (mergedTeams) => set({ mergedTeams }),
   setTheme: (theme) => {
     document.body.setAttribute('data-theme', theme);
     set({ theme });

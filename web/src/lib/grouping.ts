@@ -3,10 +3,11 @@ import { worst } from './status';
 
 /**
  * Transforms the raw topology into the graph actually rendered on the map.
- * When team grouping is on, every service owned by a collapsed team folds
- * into one "meganode"; edges crossing a group boundary are aggregated.
- * Services without a team (often external dependencies) stay individual
- * until someone assigns them to a group.
+ * Merging is per-team: every service owned by a merged team folds into one
+ * "meganode"; edges crossing a group boundary are aggregated. Unmerged
+ * teams keep their individual services (the map draws a team frame around
+ * them). Services without a team (often external dependencies) stay
+ * individual until someone assigns them to a team.
  */
 
 export interface GraphNode {
@@ -50,16 +51,10 @@ export function groupKey(teamId: number): string {
   return `group:${teamId}`;
 }
 
-export function buildGraph(
-  topo: Topology,
-  opts: { groupByTeam: boolean; expandedTeams: number[] },
-): Graph {
+export function buildGraph(topo: Topology, opts: { mergedTeams: number[] }): Graph {
   const teamName = new Map(topo.teams.map((t) => [t.id, t.name]));
   const collapsed = (svc: TopologyService): boolean =>
-    opts.groupByTeam &&
-    svc.teamId != null &&
-    teamName.has(svc.teamId) &&
-    !opts.expandedTeams.includes(svc.teamId);
+    svc.teamId != null && teamName.has(svc.teamId) && opts.mergedTeams.includes(svc.teamId);
 
   const byId = new Map(topo.services.map((s) => [s.id, s]));
   const nodeKeyOf = (serviceId: string): string => {

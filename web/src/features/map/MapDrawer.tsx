@@ -274,14 +274,20 @@ function FooterButton({
 
 // ---------------------------------------------------------------------------
 
-export function MapDrawer({ graph }: { graph: Graph }) {
+export function MapDrawer({
+  graph,
+  onToggleMerge,
+}: {
+  graph: Graph;
+  /** Merge/unmerge a team in place (owned by the map so positions carry over). */
+  onToggleMerge: (teamId: number) => void;
+}) {
   const topology = useStore((s) => s.topology);
   const selection = useStore((s) => s.selection);
   const select = useStore((s) => s.select);
   const focusId = useStore((s) => s.focusId);
   const setFocus = useStore((s) => s.setFocus);
   const navigate = useStore((s) => s.navigate);
-  const toggleTeamExpanded = useStore((s) => s.toggleTeamExpanded);
   const tick = useStore((s) => s.tick);
 
   const open = selection != null;
@@ -457,7 +463,7 @@ export function MapDrawer({ graph }: { graph: Graph }) {
                     statusColor={stColor(m.status)}
                     right={`${fmtRps(m.metrics.rps)}/s ${DOT} ${fmtMs(m.metrics.p95)}`}
                     onClick={() => {
-                      toggleTeamExpanded(selection.teamId);
+                      onToggleMerge(selection.teamId);
                       select({ kind: 'node', id: m.id });
                     }}
                   />
@@ -465,12 +471,12 @@ export function MapDrawer({ graph }: { graph: Graph }) {
               </div>
             </div>
             <div style={{ font: mono(9.5), color: 'var(--faint)' }}>
-              ungrouping separates this meganode back into its individual services
+              unmerging separates this meganode back into its individual services
             </div>
           </div>
           <div style={{ padding: '13px 18px', borderTop: '1px solid var(--line)', display: 'flex', gap: 8, flex: 'none' }}>
-            <FooterButton primary onClick={() => toggleTeamExpanded(selection.teamId)}>
-              Ungroup team
+            <FooterButton primary onClick={() => onToggleMerge(selection.teamId)}>
+              Unmerge team
             </FooterButton>
             <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : gNode.key)}>
               {focusActive ? 'Unfocus' : 'Focus'}
@@ -492,7 +498,7 @@ export function MapDrawer({ graph }: { graph: Graph }) {
     const openSide = (key: string) => {
       const n = graph.nodes.find((x) => x.key === key);
       if (!n) return;
-      if (n.kind === 'group') toggleTeamExpanded(n.teamId as number);
+      if (n.kind === 'group') onToggleMerge(n.teamId as number);
       else navigate('service', n.key);
     };
 

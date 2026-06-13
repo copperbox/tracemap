@@ -16,6 +16,8 @@ export interface LayoutInput {
   keys: string[];
   /** outgoing dependency lists: key -> keys it depends on */
   deps: Map<string, string[]>;
+  /** per-node dimensions; nodes default to the service card size */
+  dims?: Map<string, { w: number; h: number }>;
 }
 
 export interface LayoutResult {
@@ -27,14 +29,17 @@ export const NODE_W = 188;
 export const NODE_H = 74;
 export const GROUP_W = 206;
 export const GROUP_H = 96;
-const PX = 216;
-const PY = 196;
+// gaps between neighboring nodes; with default dims these reproduce the
+// original fixed 216x196 grid pitch
+const GAP_X = 28;
+const GAP_Y = 122;
 
 export function layoutGraph(input: LayoutInput): LayoutResult {
   const { keys, deps } = input;
   if (!keys.length) {
     return { pos: new Map(), bbox: { x0: 0, y0: 0, x1: 0, y1: 0 } };
   }
+  const dimOf = (k: string): { w: number; h: number } => input.dims?.get(k) ?? { w: NODE_W, h: NODE_H };
 
   // "feed" graph: dependency -> dependent (data flows down the screen)
   const keySet = new Set(keys);
@@ -134,8 +139,24 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
     }
   }
 
+  // y of each layer: rows are as tall as their tallest node
+  const layerY: number[] = [];
+  {
+    let y = 0;
+    for (let l = 0; l <= maxL; l++) {
+      layerY[l] = y;
+      y += Math.max(NODE_H, ...layers[l].map((k) => dimOf(k).h)) + GAP_Y;
+    }
+  }
+
   const pos = new Map<string, { x: number; y: number }>();
-  layers[0].forEach((k, i) => pos.set(k, { x: i * PX, y: 0 }));
+  {
+    let x = 0;
+    for (const k of layers[0]) {
+      pos.set(k, { x, y: layerY[0] });
+      x += dimOf(k).w + GAP_X;
+    }
+  }
 
   const placeLower = (): void => {
     for (let l = 1; l <= maxL; l++) {
@@ -147,11 +168,11 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
       });
       prov.sort((a, b) => a.p - b.p);
       const xs = prov.map((p) => p.p);
-      for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i], xs[i - 1] + PX);
-      for (let i = xs.length - 2; i >= 0; i--) xs[i] = Math.min(xs[i], xs[i + 1] - PX);
+      for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i], xs[i - 1] + dimOf(prov[i - 1].k).w + GAP_X);
+      for (let i = xs.length - 2; i >= 0; i--) xs[i] = Math.min(xs[i], xs[i + 1] - dimOf(prov[i].k).w - GAP_X);
       const meanP = prov.reduce((a, b) => a + b.p, 0) / (prov.length || 1);
       const meanX = xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-      prov.forEach((p, i) => pos.set(p.k, { x: xs[i] + (meanP - meanX), y: l * PY }));
+      prov.forEach((p, i) => pos.set(p.k, { x: xs[i] + (meanP - meanX), y: layerY[l] }));
     }
   };
   placeLower();
@@ -161,21 +182,26 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
     return { k, p: cs.length ? cs.reduce((a, b) => a + b, 0) / cs.length : (pos.get(k) as { x: number }).x };
   });
   targ0.sort((a, b) => a.p - b.p);
-  targ0.forEach((t, i) => {
-    const p = pos.get(t.k) as { x: number; y: number };
-    pos.set(t.k, { x: i * PX, y: p.y });
-  });
+  {
+    let x = 0;
+    for (const t of targ0) {
+      const p = pos.get(t.k) as { x: number; y: number };
+      pos.set(t.k, { x, y: p.y });
+      x += dimOf(t.k).w + GAP_X;
+    }
+  }
   placeLower();
 
-  const xs = [...pos.values()].map((p) => p.x);
-  const ys = [...pos.values()].map((p) => p.y);
-  return {
-    pos,
-    bbox: {
-      x0: Math.min(...xs),
-      y0: Math.min(...ys),
-      x1: Math.max(...xs) + GROUP_W,
-      y1: Math.max(...ys) + GROUP_H,
-    },
-  };
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const [k, p] of pos) {
+    const d = dimOf(k);
+    x0 = Math.min(x0, p.x);
+    y0 = Math.min(y0, p.y);
+    x1 = Math.max(x1, p.x + d.w);
+    y1 = Math.max(y1, p.y + d.h);
+  }
+  return { pos, bbox: { x0, y0, x1, y1 } };
 }

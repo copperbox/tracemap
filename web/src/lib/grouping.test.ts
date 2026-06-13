@@ -57,16 +57,16 @@ describe('buildGraph', () => {
     edge('orders-svc', 'catalog-svc', { metrics: { rps: 20, p50: 5, p95: 30, p99: 60, errPct: 0.5, stale: false } }),
   ];
 
-  it('passes services through untouched when grouping is off', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: false, expandedTeams: [] });
+  it('passes services through untouched when no teams are merged', () => {
+    const g = buildGraph(topo(services, edges), { mergedTeams: [] });
     expect(g.nodes.map((n) => n.key).sort()).toEqual(
       ['api.stripe.com', 'catalog-svc', 'checkout-svc', 'orders-svc'].sort(),
     );
     expect(g.edges).toHaveLength(4);
   });
 
-  it('collapses teams into meganodes and drops intra-group edges', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [] });
+  it('collapses merged teams into meganodes and drops intra-group edges', () => {
+    const g = buildGraph(topo(services, edges), { mergedTeams: [1, 2] });
     const keys = g.nodes.map((n) => n.key).sort();
     expect(keys).toEqual([groupKey(1), groupKey(2), 'api.stripe.com'].sort());
     // checkout-svc -> orders-svc is internal to team 1 and disappears
@@ -76,7 +76,7 @@ describe('buildGraph', () => {
   });
 
   it('aggregates edges crossing a group boundary', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [] });
+    const g = buildGraph(topo(services, edges), { mergedTeams: [1, 2] });
     const agg = g.edges.find((e) => e.key === `${groupKey(1)}=>${groupKey(2)}`);
     expect(agg).toBeDefined();
     expect(agg?.underlying).toHaveLength(2); // checkout->catalog + orders->catalog
@@ -85,7 +85,7 @@ describe('buildGraph', () => {
   });
 
   it('meganode carries worst status and weighted error rate', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [] });
+    const g = buildGraph(topo(services, edges), { mergedTeams: [1, 2] });
     const mega = g.nodes.find((n) => n.key === groupKey(1));
     expect(mega?.status).toBe('crit');
     expect(mega?.rps).toBeCloseTo(150);
@@ -94,11 +94,11 @@ describe('buildGraph', () => {
     expect(mega?.memberIds.sort()).toEqual(['checkout-svc', 'orders-svc']);
   });
 
-  it('passes edge staleness through when grouping is off', () => {
+  it('passes edge staleness through when no teams are merged', () => {
     const stale = edges.map((e) =>
       e.target === 'api.stripe.com' ? { ...e, metrics: { ...e.metrics, stale: true } } : e,
     );
-    const g = buildGraph(topo(services, stale), { groupByTeam: false, expandedTeams: [] });
+    const g = buildGraph(topo(services, stale), { mergedTeams: [] });
     expect(g.edges.find((e) => e.targetKey === 'api.stripe.com')?.stale).toBe(true);
     expect(g.edges.find((e) => e.targetKey === 'catalog-svc')?.stale).toBe(false);
   });
@@ -109,17 +109,17 @@ describe('buildGraph', () => {
 
     // one of the two team1 -> team2 edges stale: still live
     const partial = edges.map((e) => markStale(e, ['orders-svc']));
-    const g1 = buildGraph(topo(services, partial), { groupByTeam: true, expandedTeams: [] });
+    const g1 = buildGraph(topo(services, partial), { mergedTeams: [1, 2] });
     expect(g1.edges.find((e) => e.key === `${groupKey(1)}=>${groupKey(2)}`)?.stale).toBe(false);
 
     // both stale: aggregate goes stale
     const full = edges.map((e) => markStale(e, ['orders-svc', 'checkout-svc']));
-    const g2 = buildGraph(topo(services, full), { groupByTeam: true, expandedTeams: [] });
+    const g2 = buildGraph(topo(services, full), { mergedTeams: [1, 2] });
     expect(g2.edges.find((e) => e.key === `${groupKey(1)}=>${groupKey(2)}`)?.stale).toBe(true);
   });
 
-  it('expanding a team restores its individual services', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [1] });
+  it('unmerging a team restores its individual services', () => {
+    const g = buildGraph(topo(services, edges), { mergedTeams: [2] });
     const keys = g.nodes.map((n) => n.key);
     expect(keys).toContain('checkout-svc');
     expect(keys).toContain('orders-svc');
@@ -130,13 +130,13 @@ describe('buildGraph', () => {
   });
 
   it('ungrouped (teamless) external services always stay individual', () => {
-    const g = buildGraph(topo(services, edges), { groupByTeam: true, expandedTeams: [] });
+    const g = buildGraph(topo(services, edges), { mergedTeams: [1, 2] });
     expect(g.nodes.some((n) => n.key === 'api.stripe.com' && n.kind === 'service')).toBe(true);
   });
 
   it('externals assigned to a team fold into that meganode', () => {
     const withTeam = services.map((s) => (s.id === 'api.stripe.com' ? { ...s, teamId: 1 } : s));
-    const g = buildGraph(topo(withTeam, edges), { groupByTeam: true, expandedTeams: [] });
+    const g = buildGraph(topo(withTeam, edges), { mergedTeams: [1, 2] });
     expect(g.nodes.some((n) => n.key === 'api.stripe.com')).toBe(false);
     const mega = g.nodes.find((n) => n.key === groupKey(1));
     expect(mega?.memberIds).toContain('api.stripe.com');

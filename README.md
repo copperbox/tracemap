@@ -26,20 +26,26 @@ working backwards from symptoms team by team.
   the map always
   shows the current (or last-known) state of everything, even services with
   no recent traffic.
-- **Team grouping (meganodes)** - services are assigned to owning teams,
+- **Team frames and meganodes** - services are assigned to owning teams,
   automatically from the `team.name` OTEL resource attribute when present
-  (teams are created on the fly) or manually through the UI/API.
-  Toggle "Group by team" and each team collapses into a single meganode,
-  turning hundreds of nodes into a clean "team depends on team" view. Any
-  single meganode can be ungrouped back into its services (and regrouped)
-  for selective deep dives. External dependencies stay individual until you
-  manually assign them to a group. Grouping changes animate -- merged
-  services visibly converge into their meganode, ungrouped services fly
-  back out of it -- so it is always clear which nodes just merged or split.
-  Aggregating teams usually makes the graph cyclic (most teams end up
-  mutually dependent); the layout breaks those cycles with a greedy
-  feedback-arc ordering so the dominant flow still runs top-to-bottom and
-  only a minimal set of backward edges points up.
+  (teams are created on the fly) or manually through the UI/API. Each
+  unmerged team's services are laid out together inside a labeled "frame"
+  (like a box on an infrastructure diagram), so node ownership is always
+  visible. The frame's title bar carries the team name, member count, and a
+  merge button that collapses the team into a single meganode; dragging the
+  title bar moves the whole team at once. Merging every team (the
+  "Merge all teams" shortcut) turns hundreds of nodes into a clean
+  "team depends on team" view, and any single meganode can be unmerged back
+  into its framed services for selective deep dives. External dependencies
+  stay individual until you manually assign them to a team. Merge changes
+  happen in place: a team keeps its spot on the map when toggled (including
+  teams you have dragged elsewhere), with other frames shifting just enough
+  to avoid overlap. The changes animate -- merged services visibly converge
+  into their meganode, unmerged services fly back out of it -- so it is
+  always clear which nodes just merged or split. Aggregating teams usually makes the graph cyclic (most
+  teams end up mutually dependent); the layout breaks those cycles with a
+  greedy feedback-arc ordering so the dominant flow still runs top-to-bottom
+  and only a minimal set of backward edges points up.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines, callers/dependencies, and
   for edges: the learned relationship (first observed, supporting spans,
