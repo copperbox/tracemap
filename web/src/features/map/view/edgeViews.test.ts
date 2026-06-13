@@ -90,6 +90,49 @@ describe('buildEdgeViews', () => {
     expect(v.op).toBeCloseTo(0.85);
   });
 
+  it('keeps the status color when a degraded edge is selected or hovered', () => {
+    const [sel] = buildEdgeViews([edge({ status: 'warn' })], geoms, { ...base, selEdgeKey: 'a=>b' });
+    expect(sel.stroke).toBe('var(--warn)');
+    expect(sel.arrowFill).toBe('var(--warn)');
+
+    const [hov] = buildEdgeViews([edge({ status: 'crit' })], geoms, { ...base, hoverEdge: 'a=>b' });
+    expect(hov.stroke).toBe('var(--crit)');
+    expect(hov.arrowFill).toBe('var(--crit)');
+  });
+
+  it('glows the selected edge in its status color, and not otherwise', () => {
+    const [plain] = buildEdgeViews([edge()], geoms, base);
+    expect(plain.glow).toBeNull();
+
+    const [okSel] = buildEdgeViews([edge()], geoms, { ...base, selEdgeKey: 'a=>b' });
+    expect(okSel.glow).toBe('var(--accent)');
+
+    const [critSel] = buildEdgeViews([edge({ status: 'crit' })], geoms, { ...base, selEdgeKey: 'a=>b' });
+    expect(critSel.glow).toBe('var(--crit)');
+
+    // a hovered-but-not-selected edge does not glow
+    const [hov] = buildEdgeViews([edge()], geoms, { ...base, hoverEdge: 'a=>b' });
+    expect(hov.glow).toBeNull();
+  });
+
+  it('does not glow a dimmed selected edge', () => {
+    const [v] = buildEdgeViews([edge()], geoms, { ...base, selEdgeKey: 'a=>b', dimmed: () => true });
+    expect(v.glow).toBeNull();
+  });
+
+  it('dims an off-tree edge even when both endpoints are lit', () => {
+    // focus active, both endpoints undimmed, but this edge is not on the focus
+    // tree -> it is a cross-link and must dim.
+    const [v] = buildEdgeViews([edge()], geoms, { ...base, focusEdges: new Set(['other=>edge']) });
+    expect(v.dim).toBe(true);
+    expect(v.op).toBeCloseTo(0.04);
+  });
+
+  it('keeps an on-tree edge lit when it is in the focus set', () => {
+    const [v] = buildEdgeViews([edge()], geoms, { ...base, focusEdges: new Set(['a=>b']) });
+    expect(v.dim).toBe(false);
+  });
+
   it('fades dimmed edges almost out and kills their flow', () => {
     const [v] = buildEdgeViews([edge({ rps: 50 })], geoms, { ...base, dimmed: (k) => k === 'a' });
     expect(v.dim).toBe(true);

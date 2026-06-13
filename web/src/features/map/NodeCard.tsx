@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 import type { GraphNode } from '../../lib/grouping';
 import { GROUP_W, NODE_W } from '../../lib/layout';
 import { fmtErr, fmtMs, fmtRps, jit, DOT } from '../../lib/format';
@@ -54,6 +54,18 @@ export function NodeCard({
 
   const dotCls = node.status === 'crit' ? styles.dotCrit : node.status === 'warn' ? styles.dotWarn : styles.dotOk;
 
+  // Selection border + glow take the node's status hue (green when healthy) so a
+  // degraded/critical node keeps signaling its state while selected.
+  const selColor = node.status === 'crit' ? 'var(--crit)' : node.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
+  const selSoft =
+    node.status === 'crit' ? 'var(--critbg)' : node.status === 'warn' ? 'var(--warnbg)' : 'var(--accent-dim)';
+  const cardStyle: CSSProperties = {
+    /* critPulse lives in the global stylesheet; referencing it from the CSS
+       module would let the module's name scoping rename it away */
+    animation: node.status === 'crit' && !selected ? 'critPulse 2.4s ease-in-out infinite' : 'none',
+    ...(selected ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties) : null),
+  };
+
   return (
     <div
       onClick={onClick}
@@ -66,12 +78,7 @@ export function NodeCard({
         opacity: (dim ? 0.13 : 1) * (fade ?? 1),
       }}
     >
-      <div
-        className={cardCls}
-        /* critPulse lives in the global stylesheet; referencing it from the CSS
-           module would let the module's name scoping rename it away */
-        style={{ animation: node.status === 'crit' && !selected ? 'critPulse 2.4s ease-in-out infinite' : 'none' }}
-      >
+      <div className={cardCls} style={cardStyle}>
         <div className={styles.head}>
           <TypeIcon type={node.type} />
           <span className={styles.typeLabel}>

@@ -14,6 +14,7 @@ import { PacketLayer } from './view/PacketLayer';
 import { TeamChips } from './view/TeamChips';
 import { ZoomControls } from './view/ZoomControls';
 import { buildEdgeViews } from './view/edgeViews';
+import { computeFocusSet } from './view/focusSet';
 import { buildFrameViews } from './view/frameViews';
 import { clearPinnedPositions, loadPinnedPositions, type NodePositions } from './view/pinnedPositions';
 import { useGraphTransition } from './view/useGraphTransition';
@@ -119,15 +120,7 @@ export function MapView() {
   const wasDrag = () => wasPan() || wasNodeDrag();
 
   // ---- dimming (focus, search, team filter) ----
-  const focusSet = useMemo(() => {
-    if (!focusId) return null;
-    const set = new Set<string>([focusId]);
-    for (const e of graph.edges) {
-      if (e.sourceKey === focusId) set.add(e.targetKey);
-      if (e.targetKey === focusId) set.add(e.sourceKey);
-    }
-    return set;
-  }, [focusId, graph]);
+  const focus = useMemo(() => computeFocusSet(focusId, graph), [focusId, graph]);
 
   const q = search.trim().toLowerCase();
   const nodeById = useMemo(() => new Map(graph.nodes.map((n) => [n.key, n])), [graph]);
@@ -135,7 +128,7 @@ export function MapView() {
     (key: string): boolean => {
       const n = nodeById.get(key);
       if (!n) return true;
-      if (focusSet && !focusSet.has(key)) return true;
+      if (focus && !focus.nodes.has(key)) return true;
       if (q) {
         const hay =
           n.kind === 'group'
@@ -149,7 +142,7 @@ export function MapView() {
       }
       return false;
     },
-    [nodeById, focusSet, q, teamFilter],
+    [nodeById, focus, q, teamFilter],
   );
 
   const selEdgeKey = selection?.kind === 'edge' ? selection.id : null;
@@ -175,6 +168,7 @@ export function MapView() {
   );
   const edgeViews = buildEdgeViews(graph.edges, geoms, {
     dimmed,
+    focusEdges: focus?.edges ?? null,
     selEdgeKey,
     hoverEdge,
     fadeInOf: (key) => (animating && animRef.current?.newEdges.has(key) ? eased : 1),

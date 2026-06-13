@@ -15,7 +15,7 @@ interface AppState {
   topology: Topology | null;
   selection: Selection;
   hoverEdge: string | null;
-  focusId: string | null; // node id or "group:<teamId>"
+  focusId: string | null; // node id, "group:<teamId>", or edge key "<src>=><tgt>"
   search: string;
   teamFilter: number | 'all';
   /** Teams currently collapsed into a single meganode on the map. */

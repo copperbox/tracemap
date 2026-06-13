@@ -21,7 +21,14 @@ export function EdgeLayer({
     <svg width="8000" height="3000" className={styles.svg}>
       {edges.map((v) => (
         <g key={v.e.key}>
-          <path d={v.d} fill="none" stroke={v.stroke} strokeWidth={v.w} opacity={v.op} />
+          <path
+            d={v.d}
+            fill="none"
+            stroke={v.stroke}
+            strokeWidth={v.w}
+            opacity={v.op}
+            style={v.glow ? { filter: `drop-shadow(0 0 5px ${v.glow})` } : undefined}
+          />
           <path
             d={v.d}
             fill="none"

@@ -254,6 +254,7 @@ export function MapDrawer({
       if (n.kind === 'group') onToggleMerge(n.teamId as number);
       else navigate('service', n.key);
     };
+    const focusActive = focusId === graphEdge.key;
 
     content = (
       <div className={styles.mode}>
@@ -354,6 +355,9 @@ export function MapDrawer({
           </FooterButton>
           <FooterButton primary onClick={() => openSide(graphEdge.targetKey)}>
             Open dependency
+          </FooterButton>
+          <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : graphEdge.key)}>
+            {focusActive ? 'Unfocus' : 'Focus'}
           </FooterButton>
         </div>
       </div>

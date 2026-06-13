@@ -40,10 +40,14 @@
   border-color: rgba(248, 113, 113, .65);
 }
 
-/* selection wins the border and the glow over status and group variants */
+/* selection wins the border and the glow over status and group variants.
+   --sel / --sel-soft are set inline per node so the glow takes the status hue. */
 .selected {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-dim), 0 14px 36px rgba(0, 0, 0, .35);
+  border-color: var(--sel, var(--accent));
+  box-shadow:
+    0 0 0 3px var(--sel-soft, var(--accent-dim)),
+    0 0 20px 3px var(--sel-soft, var(--accent-dim)),
+    0 14px 36px rgba(0, 0, 0, .35);
 }
 
 .head {
