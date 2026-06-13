@@ -46,6 +46,21 @@ working backwards from symptoms team by team.
   teams end up mutually dependent); the layout breaks those cycles with a
   greedy feedback-arc ordering so the dominant flow still runs top-to-bottom
   and only a minimal set of backward edges points up.
+- **Graph types (Map / Communities)** - a toggle in the top-right switches the
+  service map between two layouts. "Map" is the default layered dependency-flow
+  view described above. "Communities" is a force-directed graph (d3-force)
+  rendered on a canvas so it scales to hundreds of nodes: services become
+  Obsidian-style dots sized by traffic and colored by community, with edges as
+  light links and labels that appear on hover/selection or when zoomed in.
+  Community colors are confined to cool hues (cyan through magenta) so they can
+  never be confused with the red/amber/green a node's status ring uses.
+  Communities are detected automatically with label propagation over the call
+  graph (structure only, so they stay stable across metric polls and only shift
+  when the topology changes), revealing clusters of tightly-coupled services
+  independent of team ownership. The simulation pre-settles before the first
+  paint and stays cooled until you drag a node (which reheats it), so an idle
+  graph costs no CPU. Both views share the same selection/focus/search/team
+  filtering and the same inspector drawer.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines (hovering one moves the
   crosshair on all of them so the same instant is easy to compare),
@@ -216,9 +231,10 @@ server/src/api/       routes split per resource (service list/detail/edit/merge,
 server/src/db/        migrations (TimescaleDB schema), pool
 server/src/sim/       demo traffic generator, split by stage (args, trace gen,
                       OTLP payload encoding, http, seeding, metrics sampling)
-web/src/lib/          DAG layout, team grouping, time ranges, formatters, timeSince
+web/src/lib/          DAG layout, team grouping, community detection, time ranges, formatters, timeSince
 web/src/theme/        global CSS tokens/keyframes + font shorthand helpers
-web/src/features/     map (MapView + view/ render layers, MapDrawer + drawer/ panels),
+web/src/features/     map (MapView switches LayeredMap / force/ communities graph,
+                      view/ render layers, MapDrawer + drawer/ panels),
                       services list, service page (+ sections/), trace waterfall
 web/src/components/   top bar, charts, sparklines, SLO ring, icons
 ```

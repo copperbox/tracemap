@@ -3,6 +3,9 @@ import type { Topology } from '../api/types';
 import { DEFAULT_RANGE, type TimeRange } from '../lib/timerange';
 
 export type View = 'map' | 'services' | 'service';
+/** How the service map is drawn: layered dependency flow, or a force-directed
+ *  graph clustered by detected community. */
+export type GraphType = 'map' | 'communities';
 export type Selection =
   | { kind: 'node'; id: string }
   | { kind: 'edge'; id: string } // "source->target"
@@ -11,6 +14,7 @@ export type Selection =
 
 interface AppState {
   view: View;
+  graphType: GraphType;
   serviceId: string | null;
   topology: Topology | null;
   selection: Selection;
@@ -28,6 +32,7 @@ interface AppState {
 
   setTopology: (t: Topology) => void;
   navigate: (view: View, serviceId?: string) => void;
+  setGraphType: (g: GraphType) => void;
   select: (sel: Selection) => void;
   setHoverEdge: (id: string | null) => void;
   setFocus: (id: string | null) => void;
@@ -44,6 +49,7 @@ interface AppState {
 
 export const useStore = create<AppState>((set) => ({
   view: 'map',
+  graphType: 'map',
   serviceId: null,
   topology: null,
   selection: null,
@@ -61,6 +67,7 @@ export const useStore = create<AppState>((set) => ({
   setTopology: (topology) => set({ topology }),
   navigate: (view, serviceId) =>
     set({ view, serviceId: serviceId ?? null, openTraceId: null, selection: null }),
+  setGraphType: (graphType) => set({ graphType }),
   select: (selection) => set({ selection }),
   setHoverEdge: (hoverEdge) => set({ hoverEdge }),
   setFocus: (focusId) => set({ focusId }),

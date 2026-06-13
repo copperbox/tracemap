@@ -135,6 +135,42 @@ export function ThemeIcon({ theme }: { theme: 'dark' | 'light' }) {
   );
 }
 
+/** Layered dependency flow: stacked rows joined top-to-bottom. */
+export function FlowGraphIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <rect x="4.5" y="1" width="4" height="2.6" rx="0.8" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="1" y="5.2" width="4" height="2.6" rx="0.8" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="8" y="5.2" width="4" height="2.6" rx="0.8" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="4.5" y="9.4" width="4" height="2.6" rx="0.8" stroke="currentColor" strokeWidth="1.2" />
+      <path
+        d="M6.5 3.6 V5.2 M3 7.8 L6 9.4 M10 7.8 L7 9.4"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/** Force-graph communities: a small cluster of connected dots. */
+export function CommunityGraphIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path
+        d="M3 3.5 L9.5 2.5 M3 3.5 L4 9.5 M9.5 2.5 L10 8 M4 9.5 L10 8"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        opacity="0.7"
+      />
+      <circle cx="3" cy="3.5" r="2" fill="currentColor" />
+      <circle cx="9.5" cy="2.5" r="1.4" fill="currentColor" />
+      <circle cx="4" cy="9.5" r="1.4" fill="currentColor" />
+      <circle cx="10" cy="8" r="2" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function LogoIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none">

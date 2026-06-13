@@ -1,0 +1,45 @@
+.toggle {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  backdrop-filter: blur(6px);
+  transition: right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 2;
+}
+
+.shifted {
+  right: 368px;
+}
+
+.seg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  font: 600 10.5px 'JetBrains Mono', monospace;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.seg:hover {
+  color: var(--text);
+}
+
+.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.active:hover {
+  color: var(--accent);
+}
