@@ -51,11 +51,16 @@ working backwards from symptoms team by team.
   crosshair on all of them so the same instant is easy to compare),
   callers/dependencies, and for edges: the learned relationship (first
   observed, supporting spans, confidence, auto vs manual source) and the
-  observed operation mix.
+  observed operation mix. Selecting a node or edge also lists its top erroring
+  operations and, under each, the distinct errors actually seen in the traces
+  (exception types, HTTP status codes, queue/db error codes) with counts.
 - **Service pages** - per-service deep dive with KPI cards,
   latency/throughput/error-rate charts (crosshair hover tooltips that stay in
   sync across the charts), top
   operations, linked upstream/downstream services, and recent traces.
+  A top-erroring-operations panel lists each failing operation with the
+  distinct errors seen; clicking one filters the recent-traces list to that
+  operation's failing traces (click again, or the filter chip, to clear).
   A Kibana-style date/time picker (quick ranges or absolute from/to) scopes
   everything on the page.
 - **Trace waterfall** - click a trace to open the full distributed span tree
@@ -176,7 +181,9 @@ resumes, `q` quits.
 | `GET /api/topology` | Full live map: services, edges, teams, current metrics |
 | `GET /api/services` | Service list with sparklines + SLO |
 | `GET /api/services/:id?from=&to=` | Detail: KPIs, series, operations, neighbors |
-| `GET /api/services/:id/traces?from=&to=` | Recent traces touching a service |
+| `GET /api/services/:id/traces?from=&to=&op=` | Recent traces touching a service (`op` filters to that operation's failures) |
+| `GET /api/services/:id/errors?from=&to=` | Top erroring operations + the errors seen |
+| `GET /api/edges/:source/:target/errors` | Top erroring operations + the errors seen on one edge |
 | `GET /api/traces/:traceId` | Full trace for the waterfall |
 | `PATCH /api/services/:id` | Rename / describe / team / type / SLO target |
 | `POST /api/services/:id/merge` | Merge a duplicate service into this one (aliases its name) |

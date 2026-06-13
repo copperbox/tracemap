@@ -21,6 +21,36 @@
   flex: 1;
 }
 
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--hoverbg);
+  border: 1px solid var(--line);
+  color: var(--accent);
+  cursor: pointer;
+  font: 600 9.5px 'JetBrains Mono', monospace;
+}
+
+.filterChip:hover {
+  border-color: var(--accent);
+}
+
+.filterLabel {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filterX {
+  color: var(--faint);
+  font-weight: 700;
+}
+
 .hint {
   font: 500 9.5px 'JetBrains Mono', monospace;
   color: var(--faint);

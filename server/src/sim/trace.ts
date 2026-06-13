@@ -6,6 +6,7 @@
  *  - databases / queues / SaaS APIs produce only the caller's CLIENT span with
  *    semantic-convention attributes, so the collector has to infer the peer
  */
+import { errorFor } from './errors.js';
 import { hex, pick, rand } from './random.js';
 import {
   BASE_LATENCY,
@@ -66,6 +67,14 @@ export function clientAttrsFor(target: SimService, op: string): Record<string, s
  * Recursively build the spans of one trace rooted at `svcId`.
  * Returns the root server span's duration.
  */
+interface WalkResult {
+  endNs: bigint;
+  /** Did this service's own SERVER span error (what its caller observes)? */
+  isError: boolean;
+  /** Status the SERVER span returned (200 when healthy). */
+  httpStatus: number;
+}
+
 function walk(
   svcId: string,
   parentSpanId: string | null,
@@ -73,7 +82,7 @@ function walk(
   depth: number,
   spans: SimSpan[],
   traceErr: { has: boolean },
-): bigint {
+): WalkResult {
   const svc = byId.get(svcId)!;
   const op = pick(svc.ops);
   const serverSpanId = hex(16);
@@ -82,7 +91,9 @@ function walk(
   let childTotalNs = 0n;
 
   const isErr = errors(svc);
+  const err = isErr ? errorFor(svc) : null;
   if (isErr) traceErr.has = true;
+  const serverHttp = err?.httpStatus ?? (isErr ? 500 : 200);
 
   const children = (DEPS[svcId] ?? []).filter(() => Math.random() < (depth > 2 ? 0.5 : 0.88));
   const childSpans: SimSpan[] = [];
@@ -97,7 +108,13 @@ function walk(
     if (INFRA_TYPES.includes(dep.type)) {
       const depMs = latencyOf(dep);
       const depErr = errors(dep);
-      if (depErr) traceErr.has = true;
+      let depAttrs = clientAttrsFor(dep, depOp);
+      if (depErr) {
+        traceErr.has = true;
+        const e = errorFor(dep);
+        depAttrs = { ...depAttrs, ...e.attrs };
+        if (e.httpStatus != null) depAttrs['http.response.status_code'] = e.httpStatus;
+      }
       childSpans.push({
         service: svc,
         spanId: clientSpanId,
@@ -107,12 +124,18 @@ function walk(
         startNs: clientStart,
         endNs: clientStart + BigInt(Math.round(depMs * 1e6)),
         isError: depErr,
-        attrs: clientAttrsFor(dep, depOp),
+        attrs: depAttrs,
       });
       childTotalNs += BigInt(Math.round(depMs * 0.7 * 1e6));
     } else {
-      const subEnd = walk(depId, clientSpanId, clientStart + BigInt(Math.round(0.4 * 1e6)), depth + 1, spans, traceErr);
-      const clientEnd = subEnd + BigInt(Math.round(0.4 * 1e6));
+      const sub = walk(depId, clientSpanId, clientStart + BigInt(Math.round(0.4 * 1e6)), depth + 1, spans, traceErr);
+      const clientEnd = sub.endNs + BigInt(Math.round(0.4 * 1e6));
+      // The caller's CLIENT span records the status its callee returned, so a
+      // downstream failure surfaces as an error on this edge too.
+      let depAttrs = clientAttrsFor(dep, depOp);
+      if (sub.isError) {
+        depAttrs = { ...depAttrs, 'http.response.status_code': sub.httpStatus, 'error.type': String(sub.httpStatus) };
+      }
       childSpans.push({
         service: svc,
         spanId: clientSpanId,
@@ -121,8 +144,8 @@ function walk(
         kind: dep.type === 'kafka' ? 4 : 3,
         startNs: clientStart,
         endNs: clientEnd,
-        isError: false,
-        attrs: clientAttrsFor(dep, depOp),
+        isError: sub.isError,
+        attrs: depAttrs,
       });
       childTotalNs += (clientEnd - clientStart) * 7n / 10n;
     }
@@ -147,12 +170,13 @@ function walk(
     attrs: {
       'http.request.method': method,
       'http.route': path ?? op,
-      'http.response.status_code': isErr ? 500 : 200,
+      'http.response.status_code': serverHttp,
+      ...(err?.attrs ?? {}),
     },
   });
   spans.push(...childSpans);
   cursorNs = endNs;
-  return cursorNs;
+  return { endNs: cursorNs, isError: isErr, httpStatus: serverHttp };
 }
 
 export const ROOTS: [string, number][] = [

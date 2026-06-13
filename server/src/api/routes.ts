@@ -6,6 +6,7 @@ import { serviceRoutes } from './services.js';
 import { traceRoutes } from './traces.js';
 import { teamRoutes } from './teams.js';
 import { seriesRoutes } from './series.js';
+import { errorRoutes } from './errors.js';
 
 export async function apiRoutes(app: FastifyInstance): Promise<void> {
   await app.register(topologyRoutes);
@@ -13,6 +14,7 @@ export async function apiRoutes(app: FastifyInstance): Promise<void> {
   await app.register(traceRoutes);
   await app.register(teamRoutes);
   await app.register(seriesRoutes);
+  await app.register(errorRoutes);
 
   app.get('/health', async () => {
     const [svc, spans] = await Promise.all([

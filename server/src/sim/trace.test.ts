@@ -104,4 +104,22 @@ describe('makeTrace', () => {
     expect(root.startNs < atNs).toBe(true);
     expect(atNs - root.startNs <= 60n * 1_000_000n).toBe(true);
   });
+
+  it('attaches identifiable error detail to every error span', () => {
+    const errorSpans = [];
+    for (let i = 0; i < 1000; i++) {
+      for (const s of makeTrace().spans) if (s.isError) errorSpans.push(s);
+    }
+    // The configured error rates make some failures a near-certainty.
+    expect(errorSpans.length).toBeGreaterThan(0);
+    for (const s of errorSpans) {
+      const a = s.attrs;
+      const status = Number(a['http.response.status_code']);
+      const identifiable =
+        typeof a['exception.type'] === 'string' ||
+        typeof a['error.type'] === 'string' ||
+        (Number.isFinite(status) && status >= 400);
+      expect(identifiable).toBe(true);
+    }
+  });
 });

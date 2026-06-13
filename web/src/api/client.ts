@@ -1,4 +1,5 @@
 import type {
+  ErrorBreakdown,
   ServiceDetail,
   ServiceList,
   Topology,
@@ -32,9 +33,10 @@ export const api = {
     get<ServiceDetail>(
       `/services/${encodeURIComponent(id)}?from=${from.toISOString()}&to=${to.toISOString()}`,
     ),
-  serviceTraces: (id: string, from: Date, to: Date) =>
+  serviceTraces: (id: string, from: Date, to: Date, op?: string) =>
     get<{ traces: TraceListItem[] }>(
-      `/services/${encodeURIComponent(id)}/traces?from=${from.toISOString()}&to=${to.toISOString()}`,
+      `/services/${encodeURIComponent(id)}/traces?from=${from.toISOString()}&to=${to.toISOString()}` +
+        (op ? `&op=${encodeURIComponent(op)}` : ''),
     ),
   trace: (traceId: string) => get<TraceDetail>(`/traces/${encodeURIComponent(traceId)}`),
   health: () => get<{ ok: boolean; spansLastMinute: number }>('/health'),
@@ -47,6 +49,15 @@ export const api = {
       points: { t: string; rps: number | null; errPct: number | null; p95: number | null }[];
       operations: { name: string; share: number }[];
     }>(`/edges/${encodeURIComponent(source)}/${encodeURIComponent(target)}/series`),
+  serviceErrors: (id: string, from?: Date, to?: Date) =>
+    get<ErrorBreakdown>(
+      `/services/${encodeURIComponent(id)}/errors` +
+        (from && to ? `?from=${from.toISOString()}&to=${to.toISOString()}` : ''),
+    ),
+  edgeErrors: (source: string, target: string) =>
+    get<ErrorBreakdown>(
+      `/edges/${encodeURIComponent(source)}/${encodeURIComponent(target)}/errors`,
+    ),
   updateService: (
     id: string,
     patch: {

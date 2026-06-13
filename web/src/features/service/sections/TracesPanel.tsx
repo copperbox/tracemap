@@ -8,9 +8,14 @@ const HEADERS = ['TRACE ID', 'ROOT OPERATION', 'DURATION', 'SPANS', 'AGE'];
 export function TracesPanel({
   traces,
   onOpenTrace,
+  filterOp,
+  onClearFilter,
 }: {
   traces: TraceListItem[];
   onOpenTrace: (traceId: string) => void;
+  /** When set, the list is restricted to traces where this operation errored. */
+  filterOp?: string | null;
+  onClearFilter?: () => void;
 }) {
   const maxTraceDur = Math.max(1, ...traces.map((t) => t.durationMs));
 
@@ -18,8 +23,16 @@ export function TracesPanel({
     <div className={styles.card}>
       <div className={styles.headBar}>
         <div className={styles.label}>RECENT TRACES</div>
+        {filterOp && (
+          <button type="button" className={`${styles.filterChip} hov-accent`} onClick={onClearFilter}>
+            <span className={styles.filterLabel}>{`erroring: ${filterOp}`}</span>
+            <span className={styles.filterX}>x</span>
+          </button>
+        )}
         <div className={styles.spacer} />
-        <div className={styles.hint}>{`within selected range ${DOT} click to inspect`}</div>
+        <div className={styles.hint}>
+          {filterOp ? 'click the filter to clear' : `within selected range ${DOT} click to inspect`}
+        </div>
       </div>
       <div className={styles.headRow}>
         <span />
@@ -46,7 +59,11 @@ export function TracesPanel({
           <span className={styles.age}>{fmtAgo(t.time)}</span>
         </div>
       ))}
-      {!traces.length && <div className={styles.empty}>no traces in this range</div>}
+      {!traces.length && (
+        <div className={styles.empty}>
+          {filterOp ? `no traces with erroring ${filterOp} in this range` : 'no traces in this range'}
+        </div>
+      )}
     </div>
   );
 }

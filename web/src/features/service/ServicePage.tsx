@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../api/client';
-import type { ServiceDetail, TraceListItem } from '../../api/types';
+import type { OperationErrors, ServiceDetail, TraceListItem } from '../../api/types';
 import { BackIcon } from '../../components/Icon';
 import { isLiveRange, resolveRange } from '../../lib/timerange';
 import { useStore } from '../../state/store';
@@ -9,6 +9,7 @@ import { ChartGrid } from './sections/ChartGrid';
 import { KpiCards } from './sections/KpiCards';
 import { NeighborsPanel } from './sections/NeighborsPanel';
 import { OperationsTable } from './sections/OperationsTable';
+import { ServiceErrorsPanel } from './sections/ServiceErrorsPanel';
 import { ServiceHeader } from './sections/ServiceHeader';
 import { TracesPanel } from './sections/TracesPanel';
 import styles from './ServicePage.module.css';
@@ -24,25 +25,31 @@ export function ServicePage() {
 
   const [detail, setDetail] = useState<ServiceDetail | null>(null);
   const [traces, setTraces] = useState<TraceListItem[]>([]);
+  const [errorOps, setErrorOps] = useState<OperationErrors[]>([]);
+  const [opFilter, setOpFilter] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // Drop the trace filter when switching services.
+  useEffect(() => setOpFilter(null), [serviceId]);
+
+  // Detail + top erroring operations (range-scoped, refreshed while live).
   useEffect(() => {
     if (!serviceId) return;
     let alive = true;
     const load = async () => {
       const { from, to } = resolveRange(range);
       try {
-        const [d, t] = await Promise.all([
+        const [d, e] = await Promise.all([
           api.serviceDetail(serviceId, from, to),
-          api.serviceTraces(serviceId, from, to),
+          api.serviceErrors(serviceId, from, to),
         ]);
         if (!alive) return;
         setDetail(d);
-        setTraces(t.traces);
+        setErrorOps(e.operations);
         setError(null);
       } catch (err) {
         if (alive) setError((err as Error).message);
@@ -55,6 +62,28 @@ export function ServicePage() {
       if (i) clearInterval(i);
     };
   }, [serviceId, range, refreshKey]);
+
+  // Recent traces, optionally filtered to one erroring operation. Kept in its
+  // own effect so clicking a filter doesn't re-fetch the whole page.
+  useEffect(() => {
+    if (!serviceId) return;
+    let alive = true;
+    const load = async () => {
+      const { from, to } = resolveRange(range);
+      try {
+        const t = await api.serviceTraces(serviceId, from, to, opFilter ?? undefined);
+        if (alive) setTraces(t.traces);
+      } catch {
+        /* keep the last good list */
+      }
+    };
+    void load();
+    const i = isLiveRange(range) ? setInterval(load, 30_000) : undefined;
+    return () => {
+      alive = false;
+      if (i) clearInterval(i);
+    };
+  }, [serviceId, range, refreshKey, opFilter]);
 
   if (!serviceId) return null;
   if (!detail) {
@@ -94,7 +123,18 @@ export function ServicePage() {
           <OperationsTable operations={detail.operations} />
         </div>
 
-        <TracesPanel traces={traces} onOpenTrace={openTrace} />
+        <ServiceErrorsPanel
+          ops={errorOps}
+          activeOperation={opFilter}
+          onSelectOperation={(op) => setOpFilter((prev) => (prev === op ? null : op))}
+        />
+
+        <TracesPanel
+          traces={traces}
+          onOpenTrace={openTrace}
+          filterOp={opFilter}
+          onClearFilter={() => setOpFilter(null)}
+        />
       </div>
 
       {editOpen && detail && (

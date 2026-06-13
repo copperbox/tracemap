@@ -9,16 +9,19 @@ export async function traceRoutes(app: FastifyInstance): Promise<void> {
     const q = req.query as Record<string, unknown>;
     const { fromMs, toMs } = rangeMs(q);
     const limit = Math.min(50, Number(q.limit ?? 25));
+    // Optional: restrict to traces where this operation errored on the service.
+    const op = typeof q.op === 'string' && q.op ? q.op : null;
 
     const traceIds = await query<{ trace_id: string; latest: Date }>(
       `WITH recent AS (
          SELECT trace_id, time FROM spans
          WHERE service_id = $1 AND time >= $2 AND time < $3
+           AND ($5::text IS NULL OR (name = $5 AND is_error))
          ORDER BY time DESC LIMIT 2000
        )
        SELECT trace_id, max(time) AS latest FROM recent
        GROUP BY trace_id ORDER BY latest DESC LIMIT $4`,
-      [id, new Date(fromMs), new Date(toMs), limit],
+      [id, new Date(fromMs), new Date(toMs), limit, op],
     );
     if (!traceIds.rowCount) return { traces: [] };
 

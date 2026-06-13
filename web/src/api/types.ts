@@ -133,6 +133,23 @@ export interface ServiceDetail {
   neighbors: NeighborEdge[];
 }
 
+export interface ErrorCount {
+  /** Grouping label: exception type, "HTTP 503", queue/db error code, etc. */
+  code: string;
+  message: string | null;
+  count: number;
+}
+
+export interface OperationErrors {
+  operation: string;
+  errorCount: number;
+  errors: ErrorCount[];
+}
+
+export interface ErrorBreakdown {
+  operations: OperationErrors[];
+}
+
 export interface TraceListItem {
   traceId: string;
   rootOperation: string;

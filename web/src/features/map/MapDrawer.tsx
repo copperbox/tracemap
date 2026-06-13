@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import type { TopologyEdge, TopologyService } from '../../api/types';
 import { HoverSync } from '../../components/hoverSync';
 import { SloRing } from '../../components/SloRing';
+import { TopErrors } from '../../components/TopErrors';
 import { ARROW, DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
 import { groupKey, type Graph, type GraphEdge } from '../../lib/grouping';
 import { sloView, stColor } from '../../lib/status';
@@ -17,6 +18,7 @@ import { SparkRow } from './drawer/SparkRow';
 import { StatusPill } from './drawer/StatusPill';
 import { useEdgeOps } from './drawer/useEdgeOps';
 import { useSparklines } from './drawer/useSparklines';
+import { useTopErrors } from './drawer/useTopErrors';
 import styles from './MapDrawer.module.css';
 
 export function MapDrawer({
@@ -62,6 +64,8 @@ export function MapDrawer({
   const single: TopologyEdge | null = graphEdge?.underlying.length === 1 ? graphEdge.underlying[0] : null;
   const edgeSparks = useSparklines('edge', single ? single.source : null, single?.target);
   const edgeOps = useEdgeOps(single ? single.source : null, single?.target);
+  const nodeErrors = useTopErrors('service', nodeSvc?.id ?? null);
+  const edgeErrors = useTopErrors('edge', single ? single.source : null, single?.target);
 
   if (nodeSvc) {
     const s = nodeSvc;
@@ -154,6 +158,8 @@ export function MapDrawer({
               ))}
             </div>
           </div>
+
+          <TopErrors ops={nodeErrors} />
 
           <div className={styles.footnote}>
             {`topology learned from ~${fmtCount(m.rps * 86400)} spans/day ${DOT} updated continuously`}
@@ -322,6 +328,8 @@ export function MapDrawer({
                   </div>
                 </div>
               )}
+
+              <TopErrors ops={edgeErrors} />
             </>
           ) : (
             <div>
