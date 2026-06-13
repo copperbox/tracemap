@@ -61,6 +61,15 @@ describe('light theme tokens', () => {
     expect(tokensOf(darkBlock).edge).toBeTruthy();
   });
 
+  it('team frames keep a visible border in both themes', () => {
+    const alphaOf = (v: string): number => Number(v.match(/rgba\([^)]*,\s*([\d.]+)\)/)?.[1] ?? NaN);
+    expect(alphaOf(light['frame-line'])).toBeGreaterThanOrEqual(0.4);
+    expect(light['frame-bg']).toBeTruthy();
+    const dark = tokensOf(darkBlock);
+    expect(dark['frame-line']).toBeTruthy();
+    expect(dark['frame-bg']).toBeTruthy();
+  });
+
   it('native controls follow the active theme via color-scheme', () => {
     expect(darkBlock).toContain('color-scheme: dark');
     expect(lightBlock).toContain('color-scheme: light');

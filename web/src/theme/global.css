@@ -15,6 +15,8 @@ body {
   --line: rgba(148, 170, 200, 0.12);
   --line2: rgba(148, 170, 200, 0.26);
   --edge: rgba(148, 170, 200, 0.26);
+  --frame-line: rgba(148, 170, 200, 0.4);
+  --frame-bg: rgba(148, 170, 200, 0.055);
   --text: #e8eef8;
   --dim: #8b98ac;
   --faint: #5a6678;
@@ -43,6 +45,8 @@ body[data-theme='light'] {
   --line: rgba(25, 45, 80, 0.12);
   --line2: rgba(25, 45, 80, 0.25);
   --edge: rgba(25, 45, 80, 0.6);
+  --frame-line: rgba(25, 45, 80, 0.5);
+  --frame-bg: rgba(25, 45, 80, 0.05);
   --text: #16202f;
   --dim: #54647c;
   --faint: #76849b;

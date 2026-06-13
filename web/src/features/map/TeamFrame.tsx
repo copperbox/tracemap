@@ -33,9 +33,9 @@ export function TeamFrameBox({
         transform: `translate(${x}px, ${y}px)`,
         width: w,
         height: h,
-        border: '1.4px solid var(--line2)',
+        border: '1.6px solid var(--frame-line)',
         borderRadius: 14,
-        background: 'rgba(127,127,127,.045)',
+        background: 'var(--frame-bg)',
         opacity: dim ? 0.13 : 1,
         transition: 'opacity .25s',
         pointerEvents: 'none',
@@ -87,11 +87,11 @@ export function TeamFrameBar({
         transition: 'opacity .25s',
       }}
     >
-      <span style={{ font: mono(8.5, 600), letterSpacing: '.13em', color: 'var(--faint)' }}>TEAM</span>
-      <span style={{ font: "600 11.5px 'Space Grotesk'", color: 'var(--dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <span style={{ font: mono(9, 600), letterSpacing: '.13em', color: 'var(--faint)' }}>TEAM</span>
+      <span style={{ font: "700 22px 'Space Grotesk'", color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {name}
       </span>
-      <span style={{ font: mono(8.5), color: 'var(--faint)' }}>{memberCount}</span>
+      <span style={{ font: mono(9.5), color: 'var(--dim)' }}>{memberCount}</span>
       <span style={{ flex: 1 }} />
       <span
         className="hov-btn"
