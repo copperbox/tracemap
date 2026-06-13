@@ -189,13 +189,24 @@ npm test          # server (OTLP decode, peer inference, edge resolver) + web (l
 
 ## Project layout
 
+Modules keep a focused scope of concern: routes, simulator stages, and UI
+sections are split into small files rather than monoliths. On the web side,
+component styles live in colocated CSS Modules (`X.module.css` next to
+`X.tsx`); only genuinely dynamic values (computed transforms, per-datum
+colors) stay inline, and shared design tokens are CSS variables in
+`web/src/theme/global.css`.
+
 ```
 server/src/otlp/      OTLP decode (vendored protos), peer inference, edge resolver, ingest
-server/src/api/       topology / services / traces / teams / series routes
+server/src/api/       routes split per resource (service list/detail/edit/merge,
+                      topology, traces, teams, series) + shared range parsing
 server/src/db/        migrations (TimescaleDB schema), pool
-server/src/sim/       demo traffic generator
-web/src/lib/          DAG layout, team grouping, time ranges, formatters
-web/src/features/     map (canvas, node cards, drawer), services list, service page, trace waterfall
+server/src/sim/       demo traffic generator, split by stage (args, trace gen,
+                      OTLP payload encoding, http, seeding, metrics sampling)
+web/src/lib/          DAG layout, team grouping, time ranges, formatters, timeSince
+web/src/theme/        global CSS tokens/keyframes + font shorthand helpers
+web/src/features/     map (MapView + view/ render layers, MapDrawer + drawer/ panels),
+                      services list, service page (+ sections/), trace waterfall
 web/src/components/   top bar, charts, sparklines, SLO ring, icons
 ```
 

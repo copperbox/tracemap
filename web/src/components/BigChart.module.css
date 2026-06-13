@@ -1,0 +1,91 @@
+.wrap {
+  position: relative;
+}
+
+/* Height matches the H constant in BigChart.tsx. */
+.svg {
+  width: 100%;
+  height: 150px;
+  display: block;
+}
+
+.gradTop {
+  stop-color: var(--accent);
+  stop-opacity: 0.3;
+}
+
+.gradBottom {
+  stop-color: var(--accent);
+  stop-opacity: 0;
+}
+
+.crosshair {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 1px;
+  background: var(--line2);
+  pointer-events: none;
+}
+
+/* Ring marker; border-color is set inline per series. */
+.marker {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-width: 1.6px;
+  border-style: solid;
+  background: var(--bg2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.tooltip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(12px);
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 7px 10px;
+  pointer-events: none;
+  z-index: 6;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .35);
+  min-width: 108px;
+}
+
+/* Tooltip flips sides past 58% of the chart width. */
+.tooltipFlip {
+  transform: translateX(calc(-100% - 12px));
+}
+
+.tooltipTime {
+  font: 600 9px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  margin-bottom: 4px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 10px 'JetBrains Mono', monospace;
+  padding: 1.5px 0;
+}
+
+.rowSwatch {
+  width: 8px;
+  height: 2px;
+  flex: none;
+}
+
+.rowLabel {
+  color: var(--dim);
+  font-weight: 500;
+}
+
+.rowSpacer {
+  flex: 1;
+  min-width: 10px;
+}

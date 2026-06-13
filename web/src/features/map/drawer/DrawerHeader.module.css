@@ -1,0 +1,49 @@
+.header {
+  padding: 16px 18px 13px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  color: var(--faint);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.closeBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--faint);
+}
+
+.title {
+  font: 700 18px 'Space Grotesk';
+  margin: 2px 0 9px;
+  line-height: 1.4;
+}
+
+.pills {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.meta {
+  margin-top: 9px;
+  font: 500 10px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}

@@ -1,0 +1,84 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 14px 0 20px;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font: 700 25px 'Space Grotesk';
+  letter-spacing: .01em;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font: 600 11px 'JetBrains Mono', monospace;
+}
+
+.statusPill.ok {
+  background: var(--okbg);
+  color: var(--ok);
+}
+
+.statusPill.warn {
+  background: var(--warnbg);
+  color: var(--warn);
+}
+
+.statusPill.crit {
+  background: var(--critbg);
+  color: var(--crit);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.teamPill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  font: 600 11px 'JetBrains Mono', monospace;
+}
+
+.typePill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--faint);
+  font: 600 10px 'JetBrains Mono', monospace;
+  letter-spacing: .1em;
+}
+
+.meta {
+  font: 500 11px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  margin-top: 8px;
+}
+
+.description {
+  font: 500 12.5px 'Space Grotesk';
+  color: var(--dim);
+  margin-top: 8px;
+  max-width: 720px;
+}

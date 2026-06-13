@@ -1,0 +1,157 @@
+.bar {
+  height: 56px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--line);
+  position: relative;
+  z-index: 30;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title {
+  font: 700 13px 'Space Grotesk';
+  letter-spacing: .22em;
+}
+
+.subtitle {
+  font: 500 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .12em;
+  color: var(--faint);
+  margin-top: 1px;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: var(--line);
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+
+.navPill {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font: 600 12px 'Space Grotesk';
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+}
+
+.navPillActive {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 0 12px;
+  height: 34px;
+  width: 250px;
+}
+
+.searchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font: 500 12px 'JetBrains Mono', monospace;
+  width: 100%;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.healthChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 11px 'JetBrains Mono', monospace;
+}
+
+.healthChip.ok {
+  color: var(--ok);
+  background: var(--okbg);
+}
+
+.healthChip.warn {
+  color: var(--warn);
+  background: var(--warnbg);
+}
+
+.healthChip.crit {
+  color: var(--crit);
+  background: var(--critbg);
+}
+
+.healthDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+}
+
+.ingest {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px;
+}
+
+.ingestDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+/* global() keeps the reference to the pulseDot keyframes in theme/global.css
+   from being renamed by CSS modules scoping. */
+.ingestDotOn {
+  background: var(--accent);
+  animation: global(pulseDot) 2s ease-in-out infinite;
+}
+
+.ingestLabel {
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--dim);
+}
+
+.themeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--dim);
+}

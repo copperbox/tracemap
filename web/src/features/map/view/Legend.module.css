@@ -1,0 +1,57 @@
+.legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  backdrop-filter: blur(6px);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 500 10px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dotOk {
+  background: var(--ok);
+}
+
+.dotWarn {
+  background: var(--warn);
+}
+
+.dotCrit {
+  background: var(--crit);
+}
+
+.dashedLine {
+  width: 14px;
+  height: 0;
+  border-top: 1.4px dashed var(--line2);
+}
+
+.flowIcon {
+  flex: none;
+}
+
+.frameSample {
+  width: 14px;
+  height: 8px;
+  border: 1.4px solid var(--line2);
+  border-radius: 3px;
+  box-sizing: border-box;
+}

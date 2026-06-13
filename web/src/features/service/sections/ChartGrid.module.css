@@ -1,0 +1,71 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--faint);
+}
+
+.labelSpaced {
+  margin-bottom: 10px;
+}
+
+.latencyHead {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.legend {
+  display: flex;
+  gap: 10px;
+  font: 500 9px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.swatch {
+  width: 8px;
+  height: 2px;
+}
+
+.swatchP50 {
+  background: var(--faint);
+}
+
+.swatchP95 {
+  background: var(--accent);
+}
+
+.swatchP99 {
+  background: var(--warn);
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  font: 500 9px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  margin-top: 6px;
+}

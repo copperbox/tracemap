@@ -1,0 +1,88 @@
+.row {
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  background: transparent;
+}
+
+.row.open {
+  background: var(--hoverbg);
+}
+
+.main {
+  display: flex;
+  align-items: center;
+  height: 30px;
+}
+
+.left {
+  width: 300px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2.5px;
+  flex: none;
+}
+
+.name {
+  font: 600 11px 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service {
+  font: 500 9px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  white-space: nowrap;
+  flex: none;
+}
+
+.timeline {
+  flex: 1;
+  position: relative;
+  height: 100%;
+  border-left: 1px solid var(--line);
+}
+
+.bar {
+  position: absolute;
+  top: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.durLabel {
+  position: absolute;
+  top: 8.5px;
+  font: 500 9px 'JetBrains Mono', monospace;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.attrs {
+  padding: 8px 20px 12px 316px;
+}
+
+.attrRow {
+  display: flex;
+  gap: 12px;
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  padding: 2.5px 0;
+}
+
+.attrKey {
+  color: var(--faint);
+  width: 190px;
+  flex: none;
+}
+
+.attrVal {
+  word-break: break-all;
+}

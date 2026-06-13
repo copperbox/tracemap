@@ -1,0 +1,31 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 10.5px 'JetBrains Mono', monospace;
+}
+
+/* status variants mirror stBg()/stColor() in src/lib/status.ts */
+.ok {
+  background: var(--okbg);
+  color: var(--ok);
+}
+
+.warn {
+  background: var(--warnbg);
+  color: var(--warn);
+}
+
+.crit {
+  background: var(--critbg);
+  color: var(--crit);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}

@@ -1,0 +1,67 @@
+.box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1.6px solid var(--frame-line);
+  border-radius: 14px;
+  background: var(--frame-bg);
+  transition: opacity .25s;
+  pointer-events: none;
+}
+
+.bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 6px 0 10px;
+  box-sizing: border-box;
+  border-radius: 14px 14px 0 0;
+  cursor: grab;
+  transition: opacity .25s;
+}
+
+.dimmed {
+  opacity: 0.13;
+}
+
+.teamLabel {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .13em;
+  color: var(--faint);
+}
+
+.name {
+  font: 700 22px 'Space Grotesk';
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.mergeBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line2);
+  background: var(--bg2);
+  color: var(--dim);
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .08em;
+  cursor: pointer;
+  flex: none;
+}

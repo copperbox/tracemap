@@ -1,0 +1,28 @@
+.btn {
+  border-radius: 9px;
+  font: 600 12.5px 'Space Grotesk';
+  text-align: center;
+  cursor: pointer;
+}
+
+.primary {
+  flex: 1;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px;
+}
+
+.secondary {
+  border: 1px solid var(--line2);
+  color: var(--dim);
+  padding: 10px 14px;
+}
+
+.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.flexible {
+  flex: 1;
+}

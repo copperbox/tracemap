@@ -1,0 +1,12 @@
+.svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hit {
+  pointer-events: stroke;
+  cursor: pointer;
+}

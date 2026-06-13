@@ -1,0 +1,145 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 6, 12, .62);
+  backdrop-filter: blur(7px);
+}
+
+.modal {
+  width: min(1080px, 94%);
+  max-height: 86%;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: fadeUp .25s ease;
+}
+
+.header {
+  padding: 15px 20px 13px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+
+.headerInfo {
+  min-width: 0;
+}
+
+.label {
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  color: var(--faint);
+}
+
+.idRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 3px;
+}
+
+.traceId {
+  font: 700 14px 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font: 600 10px 'JetBrains Mono', monospace;
+}
+
+.statusPill.ok {
+  background: var(--okbg);
+  color: var(--ok);
+}
+
+.statusPill.error {
+  background: var(--critbg);
+  color: var(--crit);
+}
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.summary {
+  font: 500 11px 'JetBrains Mono', monospace;
+  color: var(--dim);
+  text-align: right;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--faint);
+  border: 1px solid var(--line);
+}
+
+.scaleRow {
+  display: flex;
+  height: 26px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.scaleLabel {
+  width: 300px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding-left: 16px;
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--faint);
+}
+
+.scaleTrack {
+  flex: 1;
+  position: relative;
+  border-left: 1px solid var(--line);
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--line);
+}
+
+.tickLabel {
+  font: 500 8.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  padding: 6px 0 0 5px;
+  white-space: nowrap;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+}

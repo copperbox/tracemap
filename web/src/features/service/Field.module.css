@@ -1,0 +1,11 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  color: var(--faint);
+}

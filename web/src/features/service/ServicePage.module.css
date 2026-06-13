@@ -1,0 +1,67 @@
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingText {
+  font: 500 11px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+}
+
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 32px 56px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: var(--dim);
+  font: 600 12px 'Space Grotesk';
+  padding: 5px 8px;
+  border-radius: 7px;
+  margin-left: -8px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editBtn {
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line2);
+  color: var(--dim);
+  font: 600 12px 'Space Grotesk';
+  cursor: pointer;
+}
+
+.lowerGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.45fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}

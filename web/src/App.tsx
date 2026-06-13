@@ -5,6 +5,7 @@ import { ServicePage } from './features/service/ServicePage';
 import { TraceModal } from './features/trace/TraceModal';
 import { useLiveData } from './state/usePolling';
 import { useStore } from './state/store';
+import styles from './App.module.css';
 
 export function App() {
   useLiveData();
@@ -12,20 +13,9 @@ export function App() {
   const openTraceId = useStore((s) => s.openTraceId);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'var(--bg)',
-        color: 'var(--text)',
-        fontFamily: "'Space Grotesk', system-ui, sans-serif",
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
+    <div className={styles.root}>
       <TopBar />
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div className={styles.main}>
         {view === 'map' && <MapView />}
         {view === 'services' && <ServicesPage />}
         {view === 'service' && <ServicePage />}

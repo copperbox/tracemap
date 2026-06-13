@@ -1,0 +1,22 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.label {
+  width: 86px;
+  flex: none;
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .1em;
+  color: var(--faint);
+}
+
+.empty {
+  flex: 1;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}

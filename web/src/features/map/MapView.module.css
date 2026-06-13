@@ -1,0 +1,38 @@
+.root {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: grab;
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
+  transition: none;
+}
+
+.canvasDragging {
+  cursor: grabbing;
+}
+
+/* keep duration and bezier in step with ANIM_MS / easeOut in view/animation.ts */
+.canvasAnimating {
+  transition:
+    background-size 420ms cubic-bezier(.33, 1, .68, 1),
+    background-position 420ms cubic-bezier(.33, 1, .68, 1);
+}
+
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  transition: none;
+}
+
+.worldAnimating {
+  transition: transform 420ms cubic-bezier(.33, 1, .68, 1);
+}

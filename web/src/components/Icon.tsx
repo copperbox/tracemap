@@ -1,5 +1,7 @@
 /** Inline SVG stroke glyphs from the design handoff. */
 
+import styles from './Icon.module.css';
+
 export const TYPE_ICONS: Record<string, string> = {
   postgres: 'M2 3.2 C2 1.6 10 1.6 10 3.2 L10 8.8 C10 10.4 2 10.4 2 8.8 Z M2 3.2 C2 4.8 10 4.8 10 3.2',
   redis: 'M6.5 1 L3 6.8 L5.6 6.8 L5 11 L9 5.2 L6.4 5.2 Z',
@@ -30,7 +32,7 @@ export const TYPE_LABELS: Record<string, string> = {
 
 export function TypeIcon({ type, size = 11 }: { type: string; size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 12 12" fill="none" style={{ flex: 'none' }}>
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none" className={styles.noShrink}>
       <path
         d={TYPE_ICONS[type] ?? TYPE_ICONS.service}
         stroke="var(--faint)"
@@ -53,7 +55,7 @@ export function CloseIcon({ size = 10 }: { size?: number }) {
 
 export function ChevronIcon() {
   return (
-    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" style={{ flex: 'none' }}>
+    <svg width="9" height="9" viewBox="0 0 9 9" fill="none" className={styles.noShrink}>
       <path d="M3 1.5 L6.5 4.5 L3 7.5" stroke="var(--faint)" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   );

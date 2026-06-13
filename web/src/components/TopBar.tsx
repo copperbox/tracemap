@@ -1,23 +1,11 @@
 import { useStore } from '../state/store';
 import { LogoIcon, SearchIcon, ThemeIcon } from './Icon';
+import styles from './TopBar.module.css';
 
-const mono = (px: number, weight = 500): string => `${weight} ${px}px 'JetBrains Mono', monospace`;
-
-function HealthChip({ color, bg, count }: { color: string; bg: string; count: number }) {
+function HealthChip({ status, count }: { status: 'ok' | 'warn' | 'crit'; count: number }) {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
-        borderRadius: 999,
-        background: bg,
-        font: mono(11, 600),
-        color,
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'inline-block' }} />
+    <div className={`${styles.healthChip} ${styles[status]}`}>
+      <span className={styles.healthDot} />
       {count}
     </div>
   );
@@ -39,111 +27,49 @@ export function TopBar() {
   const navPill = (label: string, active: boolean, onClick: () => void) => (
     <div
       onClick={onClick}
-      style={{
-        padding: '7px 14px',
-        borderRadius: 8,
-        font: "600 12px 'Space Grotesk'",
-        cursor: 'pointer',
-        background: active ? 'var(--accent-dim)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--dim)',
-      }}
+      className={active ? `${styles.navPill} ${styles.navPillActive}` : styles.navPill}
     >
       {label}
     </div>
   );
 
   return (
-    <div
-      style={{
-        height: 56,
-        flex: 'none',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '0 18px',
-        background: 'var(--bg2)',
-        borderBottom: '1px solid var(--line)',
-        position: 'relative',
-        zIndex: 30,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div className={styles.bar}>
+      <div className={styles.brand}>
         <LogoIcon />
         <div>
-          <div style={{ font: "700 13px 'Space Grotesk'", letterSpacing: '.22em' }}>TRACEMAP</div>
-          <div style={{ font: mono(8.5), letterSpacing: '.12em', color: 'var(--faint)', marginTop: 1 }}>
-            {'TOPOLOGY \u00B7 DERIVED FROM OTEL'}
-          </div>
+          <div className={styles.title}>TRACEMAP</div>
+          <div className={styles.subtitle}>{'TOPOLOGY \u00B7 DERIVED FROM OTEL'}</div>
         </div>
       </div>
-      <div style={{ width: 1, height: 24, background: 'var(--line)' }} />
-      <div style={{ display: 'flex', gap: 4 }}>
+      <div className={styles.divider} />
+      <div className={styles.nav}>
         {navPill('Service map', view === 'map', () => navigate('map'))}
         {navPill('Services', view === 'services', () => navigate('services'))}
       </div>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          background: 'var(--panel2)',
-          border: '1px solid var(--line)',
-          borderRadius: 9,
-          padding: '0 12px',
-          height: 34,
-          width: 250,
-        }}
-      >
+      <div className={styles.searchBox}>
         <SearchIcon />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={'Filter services\u2026'}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            outline: 'none',
-            color: 'var(--text)',
-            font: mono(12),
-            width: '100%',
-          }}
+          className={styles.searchInput}
         />
       </div>
-      <div style={{ flex: 1 }} />
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        <HealthChip color="var(--ok)" bg="var(--okbg)" count={counts.ok} />
-        <HealthChip color="var(--warn)" bg="var(--warnbg)" count={counts.warn} />
-        <HealthChip color="var(--crit)" bg="var(--critbg)" count={counts.crit} />
+      <div className={styles.spacer} />
+      <div className={styles.chips}>
+        <HealthChip status="ok" count={counts.ok} />
+        <HealthChip status="warn" count={counts.warn} />
+        <HealthChip status="crit" count={counts.crit} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '0 4px' }}>
-        <div
-          style={{
-            width: 7,
-            height: 7,
-            borderRadius: '50%',
-            background: ingesting ? 'var(--accent)' : 'var(--faint)',
-            animation: ingesting ? 'pulseDot 2s ease-in-out infinite' : 'none',
-          }}
-        />
-        <span style={{ font: mono(9.5, 600), letterSpacing: '.14em', color: 'var(--dim)' }}>
-          {ingesting ? 'INGESTING' : 'IDLE'}
-        </span>
+      <div className={styles.ingest}>
+        <div className={ingesting ? `${styles.ingestDot} ${styles.ingestDotOn}` : styles.ingestDot} />
+        <span className={styles.ingestLabel}>{ingesting ? 'INGESTING' : 'IDLE'}</span>
       </div>
-      <div style={{ width: 1, height: 24, background: 'var(--line)' }} />
+      <div className={styles.divider} />
       <div
-        className="hov-btn"
+        className={`${styles.themeBtn} hov-btn`}
         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          border: '1px solid var(--line)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          color: 'var(--dim)',
-        }}
       >
         <ThemeIcon theme={theme} />
       </div>

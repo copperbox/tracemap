@@ -1,0 +1,29 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--faint);
+}
+
+.value {
+  font: 700 21px 'JetBrains Mono', monospace;
+  margin: 7px 0 4px;
+}
+
+.sub {
+  font: 500 10px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}

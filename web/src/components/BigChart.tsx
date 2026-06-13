@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fmtClock } from '../lib/format';
 import { chartPath, chartY } from '../lib/spark';
+import styles from './BigChart.module.css';
 
 const W = 560;
 const H = 150;
@@ -82,14 +83,14 @@ export function BigChart({
 
   return (
     <div
-      style={{ position: 'relative' }}
+      className={styles.wrap}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setFrac(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
       }}
       onMouseLeave={() => setFrac(null)}
     >
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: H, display: 'block' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={styles.svg}>
         {gridLines > 0 &&
           Array.from({ length: gridLines }, (_, i) => {
             const y = (14 + (i * (H - 36)) / (gridLines - 1)).toFixed(1);
@@ -99,8 +100,8 @@ export function BigChart({
           <>
             <defs>
               <linearGradient id="gThr" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" style={{ stopColor: 'var(--accent)', stopOpacity: 0.3 }} />
-                <stop offset="1" style={{ stopColor: 'var(--accent)', stopOpacity: 0 }} />
+                <stop offset="0" className={styles.gradTop} />
+                <stop offset="1" className={styles.gradBottom} />
               </linearGradient>
             </defs>
             <path d={`${chartPath(lines[0].values, W, H, computedMax)} L ${W} ${H} L 0 ${H} Z`} fill="url(#gThr)" stroke="none" />
@@ -137,67 +138,20 @@ export function BigChart({
       </svg>
       {hover && (
         <>
-          <div
-            style={{
-              position: 'absolute',
-              top: 4,
-              bottom: 4,
-              left: hover.x,
-              width: 1,
-              background: 'var(--line2)',
-              pointerEvents: 'none',
-            }}
-          />
+          <div className={styles.crosshair} style={{ left: hover.x }} />
           {hover.markers.map((m, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                left: m.x,
-                top: m.y,
-                width: 8,
-                height: 8,
-                border: `1.6px solid ${m.color}`,
-                background: 'var(--bg2)',
-                borderRadius: '50%',
-                transform: 'translate(-50%,-50%)',
-                pointerEvents: 'none',
-              }}
-            />
+            <div key={i} className={styles.marker} style={{ left: m.x, top: m.y, borderColor: m.color }} />
           ))}
           <div
-            style={{
-              position: 'absolute',
-              top: 6,
-              left: hover.x,
-              transform: (frac ?? 0) > 0.58 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)',
-              background: 'var(--bg2)',
-              border: '1px solid var(--line2)',
-              borderRadius: 8,
-              padding: '7px 10px',
-              pointerEvents: 'none',
-              zIndex: 6,
-              boxShadow: '0 10px 28px rgba(0,0,0,.35)',
-              minWidth: 108,
-            }}
+            className={(frac ?? 0) > 0.58 ? `${styles.tooltip} ${styles.tooltipFlip}` : styles.tooltip}
+            style={{ left: hover.x }}
           >
-            <div style={{ font: "600 9px 'JetBrains Mono', monospace", color: 'var(--faint)', marginBottom: 4 }}>
-              {hover.time}
-            </div>
+            <div className={styles.tooltipTime}>{hover.time}</div>
             {hover.rows.map((r) => (
-              <div
-                key={r.label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  font: "600 10px 'JetBrains Mono', monospace",
-                  padding: '1.5px 0',
-                }}
-              >
-                <span style={{ width: 8, height: 2, background: r.color, flex: 'none' }} />
-                <span style={{ color: 'var(--dim)', fontWeight: 500 }}>{r.label}</span>
-                <span style={{ flex: 1, minWidth: 10 }} />
+              <div key={r.label} className={styles.tooltipRow}>
+                <span className={styles.rowSwatch} style={{ background: r.color }} />
+                <span className={styles.rowLabel}>{r.label}</span>
+                <span className={styles.rowSpacer} />
                 <span>{r.value}</span>
               </div>
             ))}

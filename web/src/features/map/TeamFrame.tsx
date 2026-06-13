@@ -1,7 +1,6 @@
 import type { MouseEvent } from 'react';
 import { GroupExpandIcon } from '../../components/Icon';
-
-const mono = (px: number, weight = 500): string => `${weight} ${px}px 'JetBrains Mono', monospace`;
+import styles from './TeamFrame.module.css';
 
 /**
  * Ownership frame drawn around an unmerged team's nodes, like a box on an
@@ -26,20 +25,8 @@ export function TeamFrameBox({
 }) {
   return (
     <div
-      style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        transform: `translate(${x}px, ${y}px)`,
-        width: w,
-        height: h,
-        border: '1.6px solid var(--frame-line)',
-        borderRadius: 14,
-        background: 'var(--frame-bg)',
-        opacity: dim ? 0.13 : 1,
-        transition: 'opacity .25s',
-        pointerEvents: 'none',
-      }}
+      className={`${styles.box} ${dim ? styles.dimmed : ''}`}
+      style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
     />
   );
 }
@@ -66,55 +53,23 @@ export function TeamFrameBar({
 }) {
   return (
     <div
-      className="hov-btn"
+      className={`${styles.bar} ${dim ? styles.dimmed : ''} hov-btn`}
       onMouseDown={onDragStart}
       title="Drag to move the whole team"
-      style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        transform: `translate(${x}px, ${y}px)`,
-        width: w,
-        height: 30,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 7,
-        padding: '0 6px 0 10px',
-        boxSizing: 'border-box',
-        borderRadius: '14px 14px 0 0',
-        cursor: 'grab',
-        opacity: dim ? 0.13 : 1,
-        transition: 'opacity .25s',
-      }}
+      style={{ transform: `translate(${x}px, ${y}px)`, width: w }}
     >
-      <span style={{ font: mono(9, 600), letterSpacing: '.13em', color: 'var(--faint)' }}>TEAM</span>
-      <span style={{ font: "700 22px 'Space Grotesk'", color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {name}
-      </span>
-      <span style={{ font: mono(9.5), color: 'var(--dim)' }}>{memberCount}</span>
-      <span style={{ flex: 1 }} />
+      <span className={styles.teamLabel}>TEAM</span>
+      <span className={styles.name}>{name}</span>
+      <span className={styles.count}>{memberCount}</span>
+      <span className={styles.spacer} />
       <span
-        className="hov-btn"
+        className={`${styles.mergeBtn} hov-btn`}
         title="Merge team into one node"
         onClick={(e) => {
           e.stopPropagation();
           onMerge();
         }}
         onMouseDown={(e) => e.stopPropagation()}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 5,
-          padding: '3px 8px',
-          borderRadius: 6,
-          border: '1px solid var(--line2)',
-          background: 'var(--bg2)',
-          color: 'var(--dim)',
-          font: mono(8.5, 600),
-          letterSpacing: '.08em',
-          cursor: 'pointer',
-          flex: 'none',
-        }}
       >
         <GroupExpandIcon expanded />
         MERGE

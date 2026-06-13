@@ -1,0 +1,117 @@
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.headBar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--faint);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.hint {
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}
+
+.headRow {
+  display: grid;
+  grid-template-columns: 14px 150px 1.6fr 220px 70px 80px;
+  gap: 12px;
+  padding: 8px 8px 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.headCell {
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .12em;
+  color: var(--faint);
+  text-align: left;
+}
+
+.headCellRight {
+  text-align: right;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 14px 150px 1.6fr 220px 70px 80px;
+  gap: 12px;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  cursor: pointer;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot.ok {
+  background: var(--ok);
+}
+
+.dot.error {
+  background: var(--crit);
+}
+
+.traceId {
+  font: 600 10.5px 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+
+.rootOp {
+  font: 600 11.5px 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.durationCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.durationBar {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: .5;
+}
+
+.duration {
+  font: 600 10.5px 'JetBrains Mono', monospace;
+}
+
+.spanCount {
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--dim);
+  text-align: right;
+}
+
+.age {
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+  text-align: right;
+}
+
+.empty {
+  padding: 18px 8px;
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}

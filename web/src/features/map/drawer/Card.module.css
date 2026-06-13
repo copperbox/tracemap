@@ -1,0 +1,19 @@
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 12px 13px;
+}
+
+.row {
+  padding: 13px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

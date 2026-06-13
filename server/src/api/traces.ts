@@ -1,13 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/pool.js';
+import { rangeMs } from './range.js';
 
 export async function traceRoutes(app: FastifyInstance): Promise<void> {
   // Recent traces touching a service within a time range.
   app.get('/services/:id/traces', async (req) => {
     const id = (req.params as { id: string }).id;
     const q = req.query as Record<string, unknown>;
-    const toMs = q.to ? Date.parse(String(q.to)) : Date.now();
-    const fromMs = q.from ? Date.parse(String(q.from)) : toMs - 24 * 3600 * 1000;
+    const { fromMs, toMs } = rangeMs(q);
     const limit = Math.min(50, Number(q.limit ?? 25));
 
     const traceIds = await query<{ trace_id: string; latest: Date }>(

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fmtClock } from '../lib/format';
 import { sparkPath } from '../lib/spark';
+import styles from './Sparkline.module.css';
 
 /**
  * 26px sparkline with the drawer hover behavior from the design:
@@ -39,58 +40,24 @@ export function Sparkline({
 
   return (
     <div
-      style={{ flex: 1, position: 'relative' }}
+      className={styles.wrap}
       onMouseMove={(e) => {
         const r = e.currentTarget.getBoundingClientRect();
         setFrac(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)));
       }}
       onMouseLeave={() => setFrac(null)}
     >
-      <svg viewBox="0 0 120 26" preserveAspectRatio="none" style={{ width: '100%', height: 26, display: 'block' }}>
+      <svg viewBox="0 0 120 26" preserveAspectRatio="none" className={styles.svg}>
         <path d={sparkPath(data)} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
       </svg>
       {hover && (
         <>
+          <div className={styles.crosshair} style={{ left: hover.x }} />
+          {/* background falls back to var(--accent) in the module CSS when dotColor is unset */}
+          <div className={styles.dot} style={{ left: hover.x, top: hover.y, background: dotColor }} />
           <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: hover.x,
-              width: 1,
-              background: 'var(--line2)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: hover.x,
-              top: hover.y,
-              width: 6,
-              height: 6,
-              borderRadius: '50%',
-              background: dotColor ?? 'var(--accent)',
-              transform: 'translate(-50%,-50%)',
-              pointerEvents: 'none',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              top: -32,
-              left: hover.x,
-              transform: (frac ?? 0) > 0.55 ? 'translateX(calc(-100% - 8px))' : 'translateX(8px)',
-              background: 'var(--bg2)',
-              border: '1px solid var(--line2)',
-              borderRadius: 6,
-              padding: '4px 8px',
-              font: "600 9.5px 'JetBrains Mono', monospace",
-              whiteSpace: 'nowrap',
-              pointerEvents: 'none',
-              zIndex: 6,
-              boxShadow: '0 6px 18px rgba(0,0,0,.3)',
-            }}
+            className={(frac ?? 0) > 0.55 ? `${styles.tooltip} ${styles.tooltipFlip}` : styles.tooltip}
+            style={{ left: hover.x }}
           >
             {hover.txt}
           </div>

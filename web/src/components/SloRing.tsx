@@ -1,4 +1,5 @@
 import { sloView } from '../lib/status';
+import styles from './SloRing.module.css';
 
 export function SloRing({
   target,
@@ -13,7 +14,7 @@ export function SloRing({
 }) {
   const slo = sloView(target, attain);
   return (
-    <svg width={size} height={size} viewBox="0 0 62 62" style={{ flex: 'none' }}>
+    <svg width={size} height={size} viewBox="0 0 62 62" className={styles.ring}>
       <circle cx="31" cy="31" r="26" fill="none" stroke="var(--line)" strokeWidth="4" />
       <circle
         cx="31"
@@ -28,21 +29,15 @@ export function SloRing({
       />
       {caption ? (
         <>
-          <text x="31" y="29" textAnchor="middle" fill="var(--text)" style={{ font: "700 10.5px 'JetBrains Mono', monospace" }}>
+          <text x="31" y="29" textAnchor="middle" fill="var(--text)" className={styles.pct}>
             {slo.pct}
           </text>
-          <text
-            x="31"
-            y="40"
-            textAnchor="middle"
-            fill="var(--faint)"
-            style={{ font: "600 6.5px 'JetBrains Mono', monospace", letterSpacing: '.1em' }}
-          >
+          <text x="31" y="40" textAnchor="middle" fill="var(--faint)" className={styles.caption}>
             {caption}
           </text>
         </>
       ) : (
-        <text x="31" y="35" textAnchor="middle" fill="var(--text)" style={{ font: "700 11px 'JetBrains Mono', monospace" }}>
+        <text x="31" y="35" textAnchor="middle" fill="var(--text)" className={styles.pctSolo}>
           {slo.pct}
         </text>
       )}
