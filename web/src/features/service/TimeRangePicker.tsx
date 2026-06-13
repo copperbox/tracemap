@@ -118,7 +118,6 @@ export function TimeRangePicker({ value, onChange }: { value: TimeRange; onChang
                     font: mono(11),
                     padding: '6px 8px',
                     outline: 'none',
-                    colorScheme: 'dark',
                   }}
                 />
               </label>

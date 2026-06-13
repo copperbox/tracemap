@@ -3,20 +3,10 @@ import { api } from '../../api/client';
 import type { TraceDetail, TraceSpan } from '../../api/types';
 import { CloseIcon } from '../../components/Icon';
 import { DOT, fmtAgo, fmtMs } from '../../lib/format';
+import { svcColor } from '../../lib/spanPalette';
 import { useStore } from '../../state/store';
 
 const mono = (px: number, weight = 500): string => `${weight} ${px}px 'JetBrains Mono', monospace`;
-
-const PALETTE = [
-  '#22D3EE', '#A78BFA', '#34D399', '#F472B6', '#FBBF24',
-  '#60A5FA', '#2DD4BF', '#FB923C', '#C084FC', '#4ADE80',
-];
-
-function svcColor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return PALETTE[h % PALETTE.length];
-}
 
 interface Row {
   span: TraceSpan;
@@ -53,6 +43,7 @@ function buildRows(spans: TraceSpan[]): { rows: Row[]; totalMs: number; t0: numb
 
 export function TraceModal({ traceId }: { traceId: string }) {
   const openTrace = useStore((s) => s.openTrace);
+  const theme = useStore((s) => s.theme);
   const [trace, setTrace] = useState<TraceDetail | null>(null);
   const [openSpan, setOpenSpan] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -171,7 +162,7 @@ export function TraceModal({ traceId }: { traceId: string }) {
 
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {built?.rows.map((r, i) => {
-            const col = r.span.isError ? 'var(--crit)' : svcColor(r.span.serviceId);
+            const col = r.span.isError ? 'var(--crit)' : svcColor(r.span.serviceId, theme);
             const left = (r.startMs / built.totalMs) * 100;
             const width = Math.max(0.8, (r.span.durationMs / built.totalMs) * 100);
             const isOpen = openSpan === i;

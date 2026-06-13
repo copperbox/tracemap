@@ -438,7 +438,7 @@ export function MapView() {
     const isSel = selEdgeKey === e.key;
     const isHov = hoverEdge === e.key;
     const fadeIn = animating && animRef.current?.newEdges.has(e.key) ? eased : 1;
-    const stc = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--line2)';
+    const stc = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--edge)';
     const flowC = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
     // Flow dash + packets only animate while traces are actually arriving:
     // an idle or stale edge keeps its base path but goes quiet.
