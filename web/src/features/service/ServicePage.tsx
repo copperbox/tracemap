@@ -1,19 +1,34 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { api } from '../../api/client';
-import type { OperationErrors, ServiceDetail, TraceListItem } from '../../api/types';
 import { BackIcon } from '../../components/Icon';
 import { isLiveRange, resolveRange } from '../../lib/timerange';
+import { resourcePhase } from '../../state/resource';
+import { useResource } from '../../state/useResource';
 import { useStore } from '../../state/store';
-import { EditServiceModal } from './EditServiceModal';
-import { ChartGrid } from './sections/ChartGrid';
 import { KpiCards } from './sections/KpiCards';
 import { NeighborsPanel } from './sections/NeighborsPanel';
 import { OperationsTable } from './sections/OperationsTable';
 import { ServiceErrorsPanel } from './sections/ServiceErrorsPanel';
 import { ServiceHeader } from './sections/ServiceHeader';
+import {
+  ChartSkeleton,
+  ErrorsSkeleton,
+  HeaderSkeleton,
+  KpiSkeleton,
+  NeighborsSkeleton,
+  OperationsSkeleton,
+  TracesSkeleton,
+} from './sections/Skeletons';
 import { TracesPanel } from './sections/TracesPanel';
 import styles from './ServicePage.module.css';
 import { TimeRangePicker } from './TimeRangePicker';
+
+// Heavy chunks (three SVG charts; the edit form) are split out so the page
+// shell paints before their JS is parsed.
+const ChartGrid = lazy(() => import('./sections/ChartGrid').then((m) => ({ default: m.ChartGrid })));
+const EditServiceModal = lazy(() =>
+  import('./EditServiceModal').then((m) => ({ default: m.EditServiceModal })),
+);
 
 export function ServicePage() {
   const serviceId = useStore((s) => s.serviceId);
@@ -23,79 +38,48 @@ export function ServicePage() {
   const openTrace = useStore((s) => s.openTrace);
   const tick = useStore((s) => s.tick);
 
-  const [detail, setDetail] = useState<ServiceDetail | null>(null);
-  const [traces, setTraces] = useState<TraceListItem[]>([]);
-  const [errorOps, setErrorOps] = useState<OperationErrors[]>([]);
   const [opFilter, setOpFilter] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-
-  const reload = useCallback(() => setRefreshKey((k) => k + 1), []);
+  const reload = () => setRefreshKey((k) => k + 1);
+  const live = isLiveRange(range);
+  const enabled = !!serviceId;
 
   // Drop the trace filter when switching services.
   useEffect(() => setOpFilter(null), [serviceId]);
 
-  // Detail + top erroring operations (range-scoped, refreshed while live).
-  useEffect(() => {
-    if (!serviceId) return;
-    let alive = true;
-    const load = async () => {
+  // Three independent resources so each section loads and reveals on its own
+  // rather than the whole page blocking on one combined request.
+  const detail = useResource(
+    () => {
       const { from, to } = resolveRange(range);
-      try {
-        const [d, e] = await Promise.all([
-          api.serviceDetail(serviceId, from, to),
-          api.serviceErrors(serviceId, from, to),
-        ]);
-        if (!alive) return;
-        setDetail(d);
-        setErrorOps(e.operations);
-        setError(null);
-      } catch (err) {
-        if (alive) setError((err as Error).message);
-      }
-    };
-    void load();
-    const i = isLiveRange(range) ? setInterval(load, 30_000) : undefined;
-    return () => {
-      alive = false;
-      if (i) clearInterval(i);
-    };
-  }, [serviceId, range, refreshKey]);
+      return api.serviceDetail(serviceId as string, from, to);
+    },
+    { deps: [serviceId, range, refreshKey], resetKey: serviceId, enabled, live },
+  );
 
-  // Recent traces, optionally filtered to one erroring operation. Kept in its
-  // own effect so clicking a filter doesn't re-fetch the whole page.
-  useEffect(() => {
-    if (!serviceId) return;
-    let alive = true;
-    const load = async () => {
+  const errors = useResource(
+    () => {
       const { from, to } = resolveRange(range);
-      try {
-        const t = await api.serviceTraces(serviceId, from, to, opFilter ?? undefined);
-        if (alive) setTraces(t.traces);
-      } catch {
-        /* keep the last good list */
-      }
-    };
-    void load();
-    const i = isLiveRange(range) ? setInterval(load, 30_000) : undefined;
-    return () => {
-      alive = false;
-      if (i) clearInterval(i);
-    };
-  }, [serviceId, range, refreshKey, opFilter]);
+      return api.serviceErrors(serviceId as string, from, to);
+    },
+    { deps: [serviceId, range, refreshKey], resetKey: serviceId, enabled, live },
+  );
+
+  const traces = useResource(
+    () => {
+      const { from, to } = resolveRange(range);
+      return api.serviceTraces(serviceId as string, from, to, opFilter ?? undefined);
+    },
+    { deps: [serviceId, range, refreshKey, opFilter], resetKey: serviceId, enabled, live },
+  );
 
   if (!serviceId) return null;
-  if (!detail) {
-    return (
-      <div className={styles.loading}>
-        <span className={styles.loadingText}>{error ?? `loading ${serviceId}\u2026`}</span>
-      </div>
-    );
-  }
 
-  const up = detail.neighbors.filter((n) => n.direction === 'upstream');
-  const down = detail.neighbors.filter((n) => n.direction === 'downstream');
+  const d = detail.data;
+  const detailFailed = resourcePhase(detail) === 'error';
+  const up = d ? d.neighbors.filter((n) => n.direction === 'upstream') : [];
+  const down = d ? d.neighbors.filter((n) => n.direction === 'downstream') : [];
 
   return (
     <div className={styles.page}>
@@ -114,38 +98,70 @@ export function ServicePage() {
           </div>
         </div>
 
-        <ServiceHeader service={detail.service} upCount={up.length} downCount={down.length} />
-        <KpiCards detail={detail} tick={tick} />
-        <ChartGrid series={detail.series} range={range} />
+        {detailFailed ? (
+          <div className={styles.error}>
+            <span className={styles.errorText}>{detail.error}</span>
+            <button type="button" className={`${styles.retry} hov-btn`} onClick={reload}>
+              retry
+            </button>
+          </div>
+        ) : d ? (
+          <>
+            <ServiceHeader service={d.service} upCount={up.length} downCount={down.length} />
+            <KpiCards detail={d} tick={tick} />
+            <Suspense fallback={<ChartSkeleton />}>
+              <ChartGrid series={d.series} range={range} />
+            </Suspense>
+            <div className={styles.lowerGrid}>
+              <NeighborsPanel up={up} down={down} onOpenService={(id) => navigate('service', id)} />
+              <OperationsTable operations={d.operations} />
+            </div>
+          </>
+        ) : (
+          <>
+            <HeaderSkeleton />
+            <KpiSkeleton />
+            <ChartSkeleton />
+            <div className={styles.lowerGrid}>
+              <NeighborsSkeleton />
+              <OperationsSkeleton />
+            </div>
+          </>
+        )}
 
-        <div className={styles.lowerGrid}>
-          <NeighborsPanel up={up} down={down} onOpenService={(id) => navigate('service', id)} />
-          <OperationsTable operations={detail.operations} />
-        </div>
+        {resourcePhase(errors) === 'loading' ? (
+          <ErrorsSkeleton />
+        ) : (
+          <ServiceErrorsPanel
+            ops={errors.data?.operations ?? []}
+            activeOperation={opFilter}
+            onSelectOperation={(op) => setOpFilter((prev) => (prev === op ? null : op))}
+          />
+        )}
 
-        <ServiceErrorsPanel
-          ops={errorOps}
-          activeOperation={opFilter}
-          onSelectOperation={(op) => setOpFilter((prev) => (prev === op ? null : op))}
-        />
-
-        <TracesPanel
-          traces={traces}
-          onOpenTrace={openTrace}
-          filterOp={opFilter}
-          onClearFilter={() => setOpFilter(null)}
-        />
+        {resourcePhase(traces) === 'loading' ? (
+          <TracesSkeleton />
+        ) : (
+          <TracesPanel
+            traces={traces.data?.traces ?? []}
+            onOpenTrace={openTrace}
+            filterOp={opFilter}
+            onClearFilter={() => setOpFilter(null)}
+          />
+        )}
       </div>
 
-      {editOpen && detail && (
-        <EditServiceModal
-          detail={detail}
-          onClose={() => setEditOpen(false)}
-          onSaved={() => {
-            setEditOpen(false);
-            reload();
-          }}
-        />
+      {editOpen && d && (
+        <Suspense fallback={null}>
+          <EditServiceModal
+            detail={d}
+            onClose={() => setEditOpen(false)}
+            onSaved={() => {
+              setEditOpen(false);
+              reload();
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

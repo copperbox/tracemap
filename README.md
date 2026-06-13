@@ -62,7 +62,10 @@ working backwards from symptoms team by team.
   distinct errors seen; clicking one filters the recent-traces list to that
   operation's failing traces (click again, or the filter chip, to clear).
   A Kibana-style date/time picker (quick ranges or absolute from/to) scopes
-  everything on the page.
+  everything on the page. Each section (header/KPIs/charts, top errors, recent
+  traces) loads independently behind its own shimmer skeleton, and the heavier
+  chart bundle is code-split, so the page shell paints immediately instead of
+  blocking on one combined request.
 - **Trace waterfall** - click a trace to open the full distributed span tree
   with timing bars and raw OTEL span attributes.
 - **Manual curation** - rename services, set descriptions, owning team/group,

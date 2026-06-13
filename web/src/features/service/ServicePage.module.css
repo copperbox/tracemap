@@ -1,14 +1,28 @@
-.loading {
-  position: absolute;
-  inset: 0;
+.error {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 12px;
+  margin: 14px 0 20px;
+  padding: 16px;
+  border: 1px solid var(--critbg);
+  background: var(--critbg);
+  border-radius: 12px;
 }
 
-.loadingText {
+.errorText {
+  flex: 1;
   font: 500 11px 'JetBrains Mono', monospace;
-  color: var(--faint);
+  color: var(--crit);
+}
+
+.retry {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--dim);
+  font: 600 11px 'Space Grotesk';
+  cursor: pointer;
 }
 
 .page {
