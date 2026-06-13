@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { fmtClock } from '../lib/format';
-import { sparkPath } from '../lib/spark';
+import { hoverIndex, hoverXPct, sparkPath } from '../lib/spark';
+import { useHoverFrac } from './hoverSync';
 import styles from './Sparkline.module.css';
 
 /**
@@ -21,18 +21,18 @@ export function Sparkline({
   fmt: (v: number) => string;
   dotColor?: string;
 }) {
-  const [frac, setFrac] = useState<number | null>(null);
+  const [frac, setFrac] = useHoverFrac();
 
   const n = data.length;
   let hover: { x: string; y: number; txt: string } | null = null;
   if (frac != null && n > 1) {
-    const idx = Math.round(frac * (n - 1));
+    const idx = hoverIndex(frac, n);
     const min = Math.min(...data);
     const max = Math.max(...data);
     const rng = max - min || 1;
     const time = times?.[idx];
     hover = {
-      x: `${((idx / (n - 1)) * 100).toFixed(2)}%`,
+      x: hoverXPct(idx, n),
       y: 26 - 3 - ((data[idx] - min) / rng) * (26 - 6),
       txt: `${time ? fmtClock(time) + ' \u00B7 ' : ''}${fmt(data[idx])}`,
     };

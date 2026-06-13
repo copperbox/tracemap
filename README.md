@@ -47,11 +47,14 @@ working backwards from symptoms team by team.
   greedy feedback-arc ordering so the dominant flow still runs top-to-bottom
   and only a minimal set of backward edges points up.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
-  attainment + error budget, KPIs, 24h sparklines, callers/dependencies, and
-  for edges: the learned relationship (first observed, supporting spans,
-  confidence, auto vs manual source) and the observed operation mix.
+  attainment + error budget, KPIs, 24h sparklines (hovering one moves the
+  crosshair on all of them so the same instant is easy to compare),
+  callers/dependencies, and for edges: the learned relationship (first
+  observed, supporting spans, confidence, auto vs manual source) and the
+  observed operation mix.
 - **Service pages** - per-service deep dive with KPI cards,
-  latency/throughput/error-rate charts (crosshair hover tooltips), top
+  latency/throughput/error-rate charts (crosshair hover tooltips that stay in
+  sync across the charts), top
   operations, linked upstream/downstream services, and recent traces.
   A Kibana-style date/time picker (quick ranges or absolute from/to) scopes
   everything on the page.

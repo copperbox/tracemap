@@ -30,3 +30,13 @@ export function chartPath(arr: (number | null)[], w: number, h: number, max?: nu
 export function chartY(v: number, h: number, max: number): number {
   return h - 8 - (v / (max || 1)) * (h - 26);
 }
+
+/** Data index under a hover fraction (0-1 across the chart width). */
+export function hoverIndex(frac: number, n: number): number {
+  return Math.round(frac * (n - 1));
+}
+
+/** CSS left% for the crosshair, snapped to the hovered data point. */
+export function hoverXPct(idx: number, n: number): string {
+  return `${((idx / (n - 1)) * 100).toFixed(2)}%`;
+}

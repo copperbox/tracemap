@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import type { TopologyEdge, TopologyService } from '../../api/types';
+import { HoverSync } from '../../components/hoverSync';
 import { SloRing } from '../../components/SloRing';
 import { ARROW, DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
 import { groupKey, type Graph, type GraphEdge } from '../../lib/grouping';
@@ -110,17 +111,19 @@ export function MapDrawer({
             ]}
           />
 
-          <Card variant="column">
-            <SparkRow label="LATENCY 24H" data={nodeSparks?.p95} times={nodeSparks?.times} color="var(--accent)" fmt={fmtMs} />
-            <SparkRow label="THROUGHPUT" data={nodeSparks?.rps} times={nodeSparks?.times} color="var(--dim)" fmt={(v) => `${fmtRps(v)}/s`} />
-            <SparkRow
-              label="ERROR RATE"
-              data={nodeSparks?.err}
-              times={nodeSparks?.times}
-              color={s.status === 'ok' ? 'var(--faint)' : stColor(s.status)}
-              fmt={(v) => `${v.toFixed(2)}%`}
-            />
-          </Card>
+          <HoverSync>
+            <Card variant="column">
+              <SparkRow label="LATENCY 24H" data={nodeSparks?.p95} times={nodeSparks?.times} color="var(--accent)" fmt={fmtMs} />
+              <SparkRow label="THROUGHPUT" data={nodeSparks?.rps} times={nodeSparks?.times} color="var(--dim)" fmt={(v) => `${fmtRps(v)}/s`} />
+              <SparkRow
+                label="ERROR RATE"
+                data={nodeSparks?.err}
+                times={nodeSparks?.times}
+                color={s.status === 'ok' ? 'var(--faint)' : stColor(s.status)}
+                fmt={(v) => `${v.toFixed(2)}%`}
+              />
+            </Card>
+          </HoverSync>
 
           <div>
             <div className={styles.sectionLabel}>{`CALLED BY ${DOT} ${callers.length}`}</div>
@@ -275,10 +278,12 @@ export function MapDrawer({
 
           {single ? (
             <>
-              <Card variant="column">
-                <SparkRow label="LATENCY 24H" data={edgeSparks?.p95} times={edgeSparks?.times} color="var(--accent)" fmt={fmtMs} />
-                <SparkRow label="CALL VOLUME" data={edgeSparks?.rps} times={edgeSparks?.times} color="var(--dim)" fmt={(v) => `${fmtRps(v)}/s`} />
-              </Card>
+              <HoverSync>
+                <Card variant="column">
+                  <SparkRow label="LATENCY 24H" data={edgeSparks?.p95} times={edgeSparks?.times} color="var(--accent)" fmt={fmtMs} />
+                  <SparkRow label="CALL VOLUME" data={edgeSparks?.rps} times={edgeSparks?.times} color="var(--dim)" fmt={(v) => `${fmtRps(v)}/s`} />
+                </Card>
+              </HoverSync>
 
               <Card>
                 <div className={styles.relLabel}>LEARNED RELATIONSHIP</div>

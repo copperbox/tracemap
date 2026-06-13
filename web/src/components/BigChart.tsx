@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { fmtClock } from '../lib/format';
-import { chartPath, chartY } from '../lib/spark';
+import { chartPath, chartY, hoverIndex, hoverXPct } from '../lib/spark';
+import { useHoverFrac } from './hoverSync';
 import styles from './BigChart.module.css';
 
 const W = 560;
@@ -39,7 +39,7 @@ export function BigChart({
   gridLines?: number;
   max?: number;
 }) {
-  const [frac, setFrac] = useState<number | null>(null);
+  const [frac, setFrac] = useHoverFrac();
 
   const all = bars ? [bars] : lines;
   const computedMax =
@@ -59,8 +59,8 @@ export function BigChart({
     markers: { x: string; y: number; color: string }[];
   } | null = null;
   if (frac != null && n > 1) {
-    const idx = Math.round(frac * (n - 1));
-    const x = `${((idx / (n - 1)) * 100).toFixed(2)}%`;
+    const idx = hoverIndex(frac, n);
+    const x = hoverXPct(idx, n);
     hover = {
       x,
       time: times[idx] ? fmtClock(times[idx]) : '',
