@@ -33,9 +33,19 @@ export interface EdgeInput {
   toKey: string;
 }
 
+/** The four control points of an edge's cubic bezier (start, two handles, end). */
+export interface CubicCurve {
+  a: Pt;
+  c1: Pt;
+  c2: Pt;
+  b: Pt;
+}
+
 export interface EdgeGeometry {
   /** bezier path running dependency -> dependent (matches dash/packet flow) */
   d: string;
+  /** the same bezier as control points, for evaluating positions along it (packet canvas) */
+  curve: CubicCurve;
   /** arrowhead polygon at the entry anchor, pointing into the dependent */
   arrow: string;
   /** point on the curve at t=0.5, for the metric label */
@@ -154,6 +164,7 @@ export function computeEdgeGeometries(
     const uy = nb.x;
     out.set(key, {
       d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`,
+      curve: { a, c1, c2, b },
       arrow:
         `${b.x},${b.y} ` +
         `${bx - ux * ARROW_HALF_W},${by - uy * ARROW_HALF_W} ` +

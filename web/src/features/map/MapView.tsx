@@ -10,7 +10,7 @@ import { MapDrawer } from './MapDrawer';
 import { EdgeLabelLayer } from './view/EdgeLabelLayer';
 import { EdgeLayer } from './view/EdgeLayer';
 import { Legend } from './view/Legend';
-import { PacketLayer } from './view/PacketLayer';
+import { PacketCanvas } from './view/PacketCanvas';
 import { TeamChips } from './view/TeamChips';
 import { ZoomControls } from './view/ZoomControls';
 import { buildEdgeViews } from './view/edgeViews';
@@ -201,6 +201,10 @@ export function MapView() {
           backgroundPosition: `${tf.tx}px ${tf.ty}px`,
         }}
       >
+        {/* packet glow sits below the world (edges + cards draw over it, so
+            packets read as "absorbed" arriving at a service) */}
+        <PacketCanvas edges={edgeViews} tfRef={tfRef} />
+
         <div
           className={`${styles.world} ${animating && !dragging ? styles.worldAnimating : ''}`}
           style={{ transform: `translate(${tf.tx}px, ${tf.ty}px) scale(${tf.k})` }}
@@ -215,8 +219,6 @@ export function MapView() {
             onSelect={(key) => select({ kind: 'edge', id: key })}
             onHover={setHoverEdge}
           />
-
-          <PacketLayer edges={edgeViews} />
 
           {/* frame title bars render above the edges so their drag/merge
               interactions cannot be stolen by an edge's invisible hit path */}

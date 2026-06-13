@@ -1,4 +1,4 @@
-import type { EdgeGeometry, Pt } from '../../../lib/edgeGeometry';
+import type { CubicCurve, EdgeGeometry, Pt } from '../../../lib/edgeGeometry';
 import { flowDuration } from '../../../lib/flow';
 import type { GraphEdge } from '../../../lib/grouping';
 
@@ -6,6 +6,8 @@ import type { GraphEdge } from '../../../lib/grouping';
 export interface EdgeView {
   e: GraphEdge;
   d: string;
+  /** control points of `d`, for positioning packets along the edge on the canvas */
+  curve: CubicCurve;
   dim: boolean;
   isSel: boolean;
   isHov: boolean;
@@ -61,6 +63,7 @@ export function buildEdgeViews(
       {
         e,
         d: g.d,
+        curve: g.curve,
         dim,
         isSel,
         isHov,

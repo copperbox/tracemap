@@ -35,7 +35,7 @@
 }
 
 .name {
-  font: 700 22px 'Space Grotesk';
+  font: 700 18px 'Space Grotesk';
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;

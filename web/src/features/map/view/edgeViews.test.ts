@@ -19,7 +19,12 @@ const edge = (over: Partial<GraphEdge> = {}): GraphEdge => ({
   ...over,
 });
 
-const geom: EdgeGeometry = { d: 'M0 0 L10 10', arrow: '0,0 1,1 2,2', mid: { x: 5, y: 5 } };
+const geom: EdgeGeometry = {
+  d: 'M0 0 L10 10',
+  curve: { a: { x: 0, y: 0 }, c1: { x: 3, y: 3 }, c2: { x: 7, y: 7 }, b: { x: 10, y: 10 } },
+  arrow: '0,0 1,1 2,2',
+  mid: { x: 5, y: 5 },
+};
 const geoms = new Map([['a=>b', geom]]);
 
 const base = {
@@ -37,6 +42,7 @@ describe('buildEdgeViews', () => {
   it('carries the geometry and flow duration through', () => {
     const [v] = buildEdgeViews([edge()], geoms, base);
     expect(v.d).toBe(geom.d);
+    expect(v.curve).toBe(geom.curve);
     expect(v.arrow).toBe(geom.arrow);
     expect(v.mid).toEqual(geom.mid);
     expect(v.dur).toBe(flowDuration(10));

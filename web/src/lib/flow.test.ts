@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flowDuration, packetCount, packetCycle, packetDelay, packetDelays } from './flow';
+import { PACKET_CAP, flowDuration, packetCount, packetSeed, packetTravelMs } from './flow';
 
 describe('flowDuration', () => {
   it('is faster for higher call rates', () => {
@@ -18,21 +18,6 @@ describe('flowDuration', () => {
   });
 });
 
-describe('packetCycle', () => {
-  it('emits packets more often on busier edges', () => {
-    expect(parseFloat(packetCycle(100))).toBeLessThan(parseFloat(packetCycle(2)));
-  });
-
-  it('clamps to the design range [4s, 14s]', () => {
-    expect(parseFloat(packetCycle(1_000_000))).toBeGreaterThanOrEqual(4);
-    expect(parseFloat(packetCycle(0))).toBeLessThanOrEqual(14);
-  });
-
-  it('is stable under small rps jitter (no animation restarts on poll)', () => {
-    expect(packetCycle(50)).toBe(packetCycle(51));
-  });
-});
-
 describe('packetCount', () => {
   it('is zero when no traffic is being received', () => {
     expect(packetCount(0)).toBe(0);
@@ -44,67 +29,58 @@ describe('packetCount', () => {
     expect(packetCount(1)).toBe(1);
   });
 
-  it('scales with call rate, one packet per decade of rps', () => {
-    expect(packetCount(5)).toBe(1);
-    expect(packetCount(50)).toBe(2);
-    expect(packetCount(500)).toBe(3);
-    expect(packetCount(5000)).toBe(4);
-  });
-
-  it('caps so busy edges do not strobe', () => {
-    expect(packetCount(1_000_000)).toBe(4);
-  });
-
-  it('is stable under small rps jitter (no re-render churn on poll)', () => {
-    expect(packetCount(50)).toBe(packetCount(51));
-  });
-});
-
-describe('packetDelays', () => {
-  it('returns no delays for an idle edge', () => {
-    expect(packetDelays('a=>b', 0)).toEqual([]);
-  });
-
-  it('returns one delay per packet', () => {
-    expect(packetDelays('a=>b', 5)).toHaveLength(1);
-    expect(packetDelays('a=>b', 500)).toHaveLength(3);
-  });
-
-  it('starts from the edge-hashed base delay', () => {
-    expect(packetDelays('a=>b', 5)[0]).toBe(packetDelay('a=>b'));
-  });
-
-  it('spreads packets evenly through the cycle', () => {
-    const delays = packetDelays('a=>b', 500).map((d) => parseInt(d, 10));
-    const cycleMs = parseFloat(packetCycle(500)) * 1000;
-    expect(delays[0] - delays[1]).toBeCloseTo(cycleMs / 3, -1);
-    expect(delays[1] - delays[2]).toBeCloseTo(cycleMs / 3, -1);
-  });
-
-  it('is deterministic and all delays are non-positive ms offsets', () => {
-    expect(packetDelays('a=>b', 500)).toEqual(packetDelays('a=>b', 500));
-    for (const d of packetDelays('group:1=>api.stripe.com', 5000)) {
-      expect(parseInt(d, 10)).toBeLessThanOrEqual(0);
-      expect(d.endsWith('ms')).toBe(true);
+  it('rises monotonically with call rate', () => {
+    for (const [lo, hi] of [
+      [1, 10],
+      [10, 50],
+      [50, 500],
+      [500, 2000],
+    ]) {
+      expect(packetCount(hi)).toBeGreaterThan(packetCount(lo));
     }
   });
+
+  it('separates the mid-traffic band (50 vs 500 rps read differently)', () => {
+    // The whole point of the high cap: these no longer collapse to 2 vs 3.
+    expect(packetCount(500) - packetCount(50)).toBeGreaterThanOrEqual(4);
+  });
+
+  it('keeps low traffic sparse', () => {
+    expect(packetCount(5)).toBeLessThanOrEqual(4);
+  });
+
+  it('caps busy edges at PACKET_CAP', () => {
+    expect(packetCount(1_000_000)).toBe(PACKET_CAP);
+    expect(packetCount(50)).toBeLessThanOrEqual(PACKET_CAP);
+  });
+
+  it('is much higher than the old fixed cap of 4', () => {
+    expect(PACKET_CAP).toBeGreaterThan(4);
+  });
 });
 
-describe('packetDelay', () => {
-  it('is deterministic per edge key', () => {
-    expect(packetDelay('a=>b')).toBe(packetDelay('a=>b'));
+describe('packetTravelMs', () => {
+  it('takes longer to cross a longer edge', () => {
+    expect(packetTravelMs(800)).toBeGreaterThan(packetTravelMs(200));
+  });
+
+  it('clamps to a readable range for extreme lengths', () => {
+    expect(packetTravelMs(1)).toBeGreaterThanOrEqual(1400);
+    expect(packetTravelMs(0)).toBeGreaterThanOrEqual(1400);
+    expect(packetTravelMs(100000)).toBeLessThanOrEqual(6000);
+  });
+});
+
+describe('packetSeed', () => {
+  it('is a deterministic unit phase per edge key', () => {
+    expect(packetSeed('a=>b')).toBe(packetSeed('a=>b'));
+    const v = packetSeed('group:1=>api.stripe.com');
+    expect(v).toBeGreaterThanOrEqual(0);
+    expect(v).toBeLessThan(1);
   });
 
   it('staggers different edges', () => {
-    const delays = new Set(['a=>b', 'b=>c', 'c=>d', 'group:1=>group:2'].map(packetDelay));
-    expect(delays.size).toBeGreaterThan(1);
-  });
-
-  it('is a non-positive ms offset (starts mid-cycle, never pauses first)', () => {
-    for (const k of ['a=>b', 'x', 'group:3=>api.stripe.com']) {
-      const v = parseInt(packetDelay(k), 10);
-      expect(v).toBeLessThanOrEqual(0);
-      expect(packetDelay(k).endsWith('ms')).toBe(true);
-    }
+    const seeds = new Set(['a=>b', 'b=>c', 'c=>d', 'group:1=>group:2'].map(packetSeed));
+    expect(seeds.size).toBeGreaterThan(1);
   });
 });
