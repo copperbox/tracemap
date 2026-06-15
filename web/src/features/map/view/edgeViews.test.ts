@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import type { EdgeGeometry } from '../../../lib/edgeGeometry';
-import { flowDuration } from '../../../lib/flow';
 import type { GraphEdge } from '../../../lib/grouping';
 import { buildEdgeViews } from './edgeViews';
 
@@ -39,20 +38,19 @@ describe('buildEdgeViews', () => {
     expect(buildEdgeViews([edge({ key: 'x=>y' })], geoms, base)).toEqual([]);
   });
 
-  it('carries the geometry and flow duration through', () => {
+  it('carries the geometry through', () => {
     const [v] = buildEdgeViews([edge()], geoms, base);
     expect(v.d).toBe(geom.d);
     expect(v.curve).toBe(geom.curve);
     expect(v.arrow).toBe(geom.arrow);
     expect(v.mid).toEqual(geom.mid);
-    expect(v.dur).toBe(flowDuration(10));
   });
 
-  it('renders a healthy idle edge with base stroke and quiet flow', () => {
+  it('renders a healthy idle edge green with quiet flow', () => {
     const [v] = buildEdgeViews([edge({ rps: 0 })], geoms, base);
-    expect(v.stroke).toBe('var(--edge)');
-    expect(v.w).toBe(1.1);
-    expect(v.op).toBeCloseTo(0.4);
+    expect(v.stroke).toBe('var(--accent)');
+    expect(v.w).toBe(1.2);
+    expect(v.op).toBeCloseTo(0.5);
     expect(v.flowOp).toBe(0);
   });
 
@@ -149,8 +147,8 @@ describe('buildEdgeViews', () => {
 
   it('multiplies all opacities by the transition fade-in', () => {
     const [v] = buildEdgeViews([edge({ rps: 50 })], geoms, { ...base, fadeInOf: () => 0.5 });
-    expect(v.op).toBeCloseTo(0.4 * 0.5);
-    expect(v.arrowOp).toBeCloseTo(0.55 * 0.5);
+    expect(v.op).toBeCloseTo(0.5 * 0.5);
+    expect(v.arrowOp).toBeCloseTo(0.6 * 0.5);
     expect(v.flowOp).toBeCloseTo(0.7 * 0.5);
   });
 });

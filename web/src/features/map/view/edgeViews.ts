@@ -1,5 +1,4 @@
 import type { CubicCurve, EdgeGeometry, Pt } from '../../../lib/edgeGeometry';
-import { flowDuration } from '../../../lib/flow';
 import type { GraphEdge } from '../../../lib/grouping';
 
 /** Everything the render layers need to draw one edge (path, arrow, label, animation). */
@@ -20,7 +19,6 @@ export interface EdgeView {
   op: number;
   flowStroke: string;
   flowOp: number;
-  dur: string;
   /** Glow color for the selected edge (status-tinted); null when not selected. */
   glow: string | null;
 }
@@ -52,12 +50,14 @@ export function buildEdgeViews(
     const isSel = opts.selEdgeKey === e.key;
     const isHov = opts.hoverEdge === e.key;
     const fadeIn = opts.fadeInOf(e.key);
-    const stc = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--edge)';
-    // Highlight color (hover/select/flow): keep the edge's status hue instead of
-    // forcing green, so a degraded or critical edge still reads as such when lit.
-    const flowC = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
-    // Flow dash + packets only animate while traces are actually arriving:
-    // an idle or stale edge keeps its base path but goes quiet.
+    // Edge color follows health: green when healthy, amber/red when degraded or
+    // critical. One hue drives the base stroke, the arrowhead and the packets, so
+    // an edge reads as a single coherent color -- and the green now carries the
+    // "healthy" signal that the animated flow dash (formerly the only green on
+    // the line) used to provide before it was removed for performance.
+    const color = e.status === 'crit' ? 'var(--crit)' : e.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
+    // Packets only animate while traces are actually arriving: an idle or stale
+    // edge keeps its base path but goes quiet.
     const live = e.rps > 0 && !e.stale;
     return [
       {
@@ -68,16 +68,15 @@ export function buildEdgeViews(
         isSel,
         isHov,
         arrow: g.arrow,
-        arrowFill: isSel || isHov ? flowC : e.status !== 'ok' ? stc : 'var(--accent)',
-        arrowOp: (dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.55) * fadeIn,
+        arrowFill: color,
+        arrowOp: (dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.6) * fadeIn,
         mid: g.mid,
-        stroke: isSel || isHov ? flowC : stc,
-        w: isSel ? 2 : isHov ? 1.8 : 1.1,
-        op: (dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.4) * fadeIn,
-        flowStroke: flowC,
+        stroke: color,
+        w: isSel ? 2 : isHov ? 1.8 : 1.2,
+        op: (dim ? 0.04 : isSel ? 0.95 : isHov ? 0.85 : e.status !== 'ok' ? 0.75 : 0.5) * fadeIn,
+        flowStroke: color,
         flowOp: (dim || !live ? 0 : e.status !== 'ok' ? 0.95 : 0.7) * fadeIn,
-        dur: flowDuration(e.rps),
-        glow: isSel && !dim ? flowC : null,
+        glow: isSel && !dim ? color : null,
       },
     ];
   });

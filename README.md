@@ -11,12 +11,13 @@ working backwards from symptoms team by team.
 - **Service map** - a live, pannable/zoomable graph of every known service
   (internal and external) and every learned caller -> dependency edge. Health
   is encoded as heat (green/amber/red) on node borders and edges. Edges show
-  the direction of data flow: an animated dash flow (speed tracks call rate)
-  plus glowing packets (pure CSS offset-path, no per-frame JS) travel from
-  each dependency into the service that depends on it, ending in an arrowhead
-  at the dependent's edge. The animation reflects traces actually being
-  received: edges with no current traffic (or only stale metrics) go quiet,
-  and busier edges carry more packets per cycle. Edge anchors are direction-aware:
+  the direction of data flow: glowing packets travel from each dependency into
+  the service that depends on it, ending in an arrowhead at the dependent's
+  edge. The packets are drawn on a single screen-space canvas and culled to the
+  viewport, so the map stays smooth at any zoom even with hundreds of edges.
+  Their density reflects traces actually being received: edges with no current
+  traffic (or only stale metrics) go quiet, and busier edges carry more
+  packets. Edge anchors are direction-aware:
   each edge attaches to the side of a node that faces its counterpart, and
   edges sharing a side fan out instead of converging on one point, so
   dependency direction stays readable even in cyclic graphs or after manual

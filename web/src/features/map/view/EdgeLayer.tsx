@@ -2,8 +2,15 @@ import type { EdgeView } from './edgeViews';
 import styles from './EdgeLayer.module.css';
 
 /**
- * SVG layer with every edge: base path, animated flow dash, arrowhead, and a
- * fat invisible hit path for hover/click.
+ * SVG layer with every edge: base path, arrowhead, and a fat invisible hit path
+ * for hover/click.
+ *
+ * There is deliberately no animated flow dash here. A scrolling
+ * `stroke-dashoffset` animation is not GPU-compositable, so it forces a full
+ * SVG repaint every frame whose cost grows with zoom -- with ~100 services it
+ * dropped the zoomed-in map to <10fps. Flow and direction are already conveyed
+ * by the arrowhead and the glowing packets on PacketCanvas (a screen-space
+ * canvas that stays cheap at any zoom), so the dash was pure cost.
  */
 export function EdgeLayer({
   edges,
@@ -28,16 +35,6 @@ export function EdgeLayer({
             strokeWidth={v.w}
             opacity={v.op}
             style={v.glow ? { filter: `drop-shadow(0 0 5px ${v.glow})` } : undefined}
-          />
-          <path
-            d={v.d}
-            fill="none"
-            stroke={v.flowStroke}
-            strokeWidth="1.7"
-            opacity={v.flowOp}
-            strokeDasharray="2.5 9.5"
-            strokeLinecap="round"
-            style={{ animation: `flow ${v.dur} linear infinite` }}
           />
           <polygon points={v.arrow} fill={v.arrowFill} opacity={v.arrowOp} />
           <path

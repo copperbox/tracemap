@@ -23,7 +23,12 @@ import { useGraphTransition } from './view/useGraphTransition';
 import { useMergeHandoff } from './view/useMergeHandoff';
 import { useNodeDrag } from './view/useNodeDrag';
 import { usePanZoom } from './view/usePanZoom';
+import { rectsOverlap, visibleWorldRect } from './view/viewport';
 import styles from './MapView.module.css';
+
+// Screen-pixel buffer kept around the viewport when culling: just-offscreen
+// nodes/edges stay mounted so a small pan doesn't pop them in and out.
+const CULL_MARGIN = 320;
 
 /** Layered dependency-flow view of the service map (the default graph type). */
 export function LayeredMap() {
@@ -47,6 +52,20 @@ export function LayeredMap() {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef);
+
+  // Canvas size in CSS px, used to cull the world to the visible viewport.
+  // Defaults to the window so the first paint (before the observer fires)
+  // errs toward rendering everything rather than culling too aggressively.
+  const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const measure = (): void => setViewport({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // User-pinned node positions (dragging a node overrides the auto-layout;
   // "fit" resets). Edges always follow the effective position. A drag moves
@@ -167,6 +186,35 @@ export function LayeredMap() {
 
   const frameViews = buildFrameViews(teams, graph.nodes, displayPos, dimmed);
 
+  // ---- viewport culling ----
+  // Edge geometry and anchor spreading stay computed over the FULL graph above
+  // (so anchors don't shift as the visible set changes); only the DOM/SVG layers
+  // below are trimmed to what's on screen. This is what makes zooming in cheap:
+  // paint, hit-testing and the per-edge flow animation all scale with the number
+  // of mounted elements, not the graph size.
+  const visRect = useMemo(
+    () => visibleWorldRect(tf, viewport.w, viewport.h, CULL_MARGIN),
+    [tf, viewport],
+  );
+  const visibleEdgeViews = edgeViews.filter((v) => {
+    const s = displayPos(v.e.sourceKey);
+    const t = displayPos(v.e.targetKey);
+    if (!s || !t) return false;
+    return rectsOverlap(visRect, {
+      x0: Math.min(s.x, t.x),
+      y0: Math.min(s.y, t.y),
+      x1: Math.max(s.x, t.x) + NODE_W,
+      y1: Math.max(s.y, t.y) + NODE_H,
+    });
+  });
+  const visibleFrames = frameViews.filter((f) =>
+    rectsOverlap(visRect, { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + f.h }),
+  );
+  const nodeVisible = (key: string, w: number, h: number): boolean => {
+    const p = displayPos(key);
+    return p != null && rectsOverlap(visRect, { x0: p.x, y0: p.y, x1: p.x + w, y1: p.y + h });
+  };
+
   return (
     <div className={styles.root}>
       <div
@@ -197,12 +245,12 @@ export function LayeredMap() {
           className={`${styles.world} ${animating && !dragging ? styles.worldAnimating : ''}`}
           style={{ transform: `translate(${tf.tx}px, ${tf.ty}px) scale(${tf.k})` }}
         >
-          {frameViews.map((f) => (
+          {visibleFrames.map((f) => (
             <TeamFrameBox key={f.teamId} x={f.x} y={f.y} w={f.w} h={f.h} dim={f.dim} />
           ))}
 
           <EdgeLayer
-            edges={edgeViews}
+            edges={visibleEdgeViews}
             wasDrag={wasDrag}
             onSelect={(key) => select({ kind: 'edge', id: key })}
             onHover={setHoverEdge}
@@ -210,7 +258,7 @@ export function LayeredMap() {
 
           {/* frame title bars render above the edges so their drag/merge
               interactions cannot be stolen by an edge's invisible hit path */}
-          {frameViews.map((f) => (
+          {visibleFrames.map((f) => (
             <TeamFrameBar
               key={`bar:${f.teamId}`}
               name={f.name}
@@ -238,6 +286,7 @@ export function LayeredMap() {
           {graph.nodes.map((n) => {
             const p = displayPos(n.key);
             if (!p) return null;
+            if (!nodeVisible(n.key, widthOf(n), heightOf(n))) return null;
             return (
               <NodeCard
                 key={n.key}
@@ -289,7 +338,7 @@ export function LayeredMap() {
               />
             ))}
 
-          <EdgeLabelLayer edges={edgeViews} />
+          <EdgeLabelLayer edges={visibleEdgeViews} />
         </div>
 
         <TeamChips
