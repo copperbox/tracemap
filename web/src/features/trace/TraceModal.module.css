@@ -139,6 +139,37 @@
   white-space: nowrap;
 }
 
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+  max-height: 84px;
+  overflow-y: auto;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+.legendSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.legendError {
+  background: var(--crit);
+}
+
 .body {
   flex: 1;
   overflow-y: auto;

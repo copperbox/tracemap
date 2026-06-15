@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Topology } from '../api/types';
+import type { TeamFilterValue } from '../lib/teamFilter';
 import { DEFAULT_RANGE, type TimeRange } from '../lib/timerange';
 
 export type View = 'map' | 'services' | 'service';
@@ -21,7 +22,7 @@ interface AppState {
   hoverEdge: string | null;
   focusId: string | null; // node id, "group:<teamId>", or edge key "<src>=><tgt>"
   search: string;
-  teamFilter: number | 'all';
+  teamFilter: TeamFilterValue;
   /** Teams currently collapsed into a single meganode on the map. */
   mergedTeams: number[];
   theme: 'dark' | 'light';
@@ -37,7 +38,7 @@ interface AppState {
   setHoverEdge: (id: string | null) => void;
   setFocus: (id: string | null) => void;
   setSearch: (s: string) => void;
-  setTeamFilter: (t: number | 'all') => void;
+  setTeamFilter: (t: TeamFilterValue) => void;
   toggleTeamMerged: (teamId: number) => void;
   setMergedTeams: (teamIds: number[]) => void;
   setTheme: (t: 'dark' | 'light') => void;

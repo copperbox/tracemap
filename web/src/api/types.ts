@@ -131,6 +131,8 @@ export interface ServiceDetail {
     p99: number | null;
   }[];
   neighbors: NeighborEdge[];
+  /** Duplicate service ids merged into this one; each can be unmerged. */
+  aliases: string[];
 }
 
 export interface ErrorCount {

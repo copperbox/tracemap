@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { api } from '../../api/client';
 import type { ServiceDetail } from '../../api/types';
+import { Combobox } from '../../components/Combobox';
 import { CloseIcon } from '../../components/Icon';
 import { ARROW, DOT } from '../../lib/format';
 import { useStore } from '../../state/store';
@@ -18,10 +19,13 @@ export function EditServiceModal({
   detail,
   onClose,
   onSaved,
+  onRefresh,
 }: {
   detail: ServiceDetail;
   onClose: () => void;
   onSaved: () => void;
+  /** Reload the service detail without closing the modal (after a merge/unmerge). */
+  onRefresh: () => void;
 }) {
   const topology = useStore((s) => s.topology);
   const s = detail.service;
@@ -35,11 +39,20 @@ export function EditServiceModal({
   const [mergeSource, setMergeSource] = useState('');
   const [confirmMerge, setConfirmMerge] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Merge/unmerge get their own busy flag so they show progress in place and
+  // refresh the modal instead of hijacking the footer Save button or closing.
+  const [mergeBusy, setMergeBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const otherServices = useMemo(
     () => (topology?.services ?? []).filter((x) => x.id !== s.id).sort((a, b) => a.id.localeCompare(b.id)),
     [topology, s.id],
+  );
+  // Only team-less services are offered as merge sources -- assigned services
+  // are deliberately owned and not treated as stray duplicates.
+  const mergeOptions = useMemo(
+    () => otherServices.filter((x) => x.teamId == null).map((x) => ({ label: x.id, value: x.id })),
+    [otherServices],
   );
   const teamNames = useMemo(
     () => [...new Set((topology?.teams ?? []).map((t) => t.name))].sort(),
@@ -57,6 +70,23 @@ export function EditServiceModal({
       setError((err as Error).message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // Merge/unmerge keep the modal open and refresh in place so the merged-duplicate
+  // list updates and the action can be reversed right away.
+  const runMerge = async (fn: () => Promise<unknown>) => {
+    setMergeBusy(true);
+    setError(null);
+    try {
+      await fn();
+      setMergeSource('');
+      setConfirmMerge(false);
+      onRefresh();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setMergeBusy(false);
     }
   };
 
@@ -179,38 +209,54 @@ export function EditServiceModal({
 
           <div>
             <div className={`${styles.label} ${styles.sectionLabel}`}>MERGE DUPLICATE INTO THIS SERVICE</div>
+            {detail.aliases.length > 0 && (
+              <div className={styles.mergedList}>
+                {detail.aliases.map((alias) => (
+                  <div key={alias} className={styles.mergedRow}>
+                    <span className={styles.mergedName}>{alias}</span>
+                    <span className={styles.mergedTag}>MERGED</span>
+                    <span
+                      className={`${styles.unmergeBtn} ${mergeBusy ? styles.unmergeDisabled : ''} hov-btn`}
+                      title="Split this duplicate back into its own service"
+                      onClick={() => !mergeBusy && void runMerge(() => api.unmergeService(s.id, alias))}
+                    >
+                      Unmerge
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className={styles.actionRow}>
-              <select
-                className={`${styles.input} ${styles.grow}`}
+              <Combobox
+                block
+                dropUp
+                options={mergeOptions}
                 value={mergeSource}
-                onChange={(e) => {
-                  setMergeSource(e.target.value);
+                onChange={(v) => {
+                  setMergeSource(v);
                   setConfirmMerge(false);
                 }}
-              >
-                <option value="">pick the duplicate service</option>
-                {otherServices.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.id}
-                  </option>
-                ))}
-              </select>
+                label={mergeSource || 'pick the duplicate service'}
+                placeholder="Filter services..."
+                emptyText="no unassigned services"
+                active={!!mergeSource}
+              />
               <div
-                className={`${styles.mergeBtn} ${mergeState}`}
+                className={`${styles.mergeBtn} ${mergeState} ${mergeBusy ? styles.busy : ''}`}
                 onClick={() => {
-                  if (!mergeSource || busy) return;
+                  if (!mergeSource || mergeBusy) return;
                   if (!confirmMerge) {
                     setConfirmMerge(true);
                     return;
                   }
-                  void run(() => api.mergeService(s.id, mergeSource));
+                  void runMerge(() => api.mergeService(s.id, mergeSource));
                 }}
               >
-                {confirmMerge ? 'Confirm merge' : 'Merge'}
+                {mergeBusy ? 'Merging...' : confirmMerge ? 'Confirm merge' : 'Merge'}
               </div>
             </div>
             <div className={styles.note}>
-              {`re-points all telemetry from the duplicate here and aliases its name ${DOT} cannot be undone`}
+              {`re-points all telemetry from the duplicate here and aliases its name ${DOT} reversible via Unmerge`}
             </div>
           </div>
 

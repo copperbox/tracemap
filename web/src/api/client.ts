@@ -71,6 +71,8 @@ export const api = {
   ) => send<{ ok: true }>('PATCH', `/services/${encodeURIComponent(id)}`, patch),
   mergeService: (id: string, sourceId: string) =>
     send<{ ok: true }>('POST', `/services/${encodeURIComponent(id)}/merge`, { sourceId }),
+  unmergeService: (id: string, sourceId: string) =>
+    send<{ ok: true }>('POST', `/services/${encodeURIComponent(id)}/unmerge`, { sourceId }),
   addDependency: (id: string, targetId: string) =>
     send<{ ok: true }>('POST', `/services/${encodeURIComponent(id)}/dependencies`, { targetId }),
   removeDependency: (id: string, targetId: string) =>

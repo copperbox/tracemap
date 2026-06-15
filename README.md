@@ -60,7 +60,14 @@ working backwards from symptoms team by team.
   independent of team ownership. The simulation pre-settles before the first
   paint and stays cooled until you drag a node (which reheats it), so an idle
   graph costs no CPU. Both views share the same selection/focus/search/team
-  filtering and the same inspector drawer.
+  filtering and the same inspector drawer. The team filter is a searchable
+  dropdown (type to narrow the team list, pick a team or "Unassigned" for
+  services with no owner) reused across the map and the services list.
+- **Services list** - a sortable table of every service (health, traffic, p95,
+  error rate, 30-day SLO, and a 24h latency sparkline), ranked worst-health
+  first. The shared searchable team filter scopes the table to one team -- or
+  to "Unassigned" for services that belong to no team -- and the global search
+  box narrows by name.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines (hovering one moves the
   crosshair on all of them so the same instant is easy to compare),
@@ -87,7 +94,12 @@ working backwards from symptoms team by team.
   type and SLO target; manually associate dependencies the inference cannot
   see; and merge duplicate services (same service reported under different
   names) into one canonical service -- historical telemetry is re-pointed and
-  the old name becomes an alias for all future traffic.
+  the old name becomes an alias for all future traffic. The duplicate picker
+  is the same searchable dropdown used elsewhere, scoped to team-less services
+  (assigned ones are deliberately owned, not stray duplicates). Merges are
+  reversible: each merge is recorded and the re-pointed telemetry is tagged, so
+  the edit modal lists everything merged into a service and an Unmerge button
+  splits a duplicate back out -- restoring its service, telemetry and edges.
 
 ## Architecture
 
@@ -173,8 +185,10 @@ The optimal path from zero to a curated live map:
    merge them -- history is re-pointed and the old name becomes an alias.
 
 The bundled simulator (`npm run simulate`) demonstrates this exact flow: its
-instrumented services carry `team.name` on every trace, while its databases
-and SaaS peers get their ownership seeded through the management API.
+instrumented services carry `team.name` on every trace, so teams are created
+and ownership is assigned purely from telemetry. Its databases, queues, and
+SaaS peers emit no telemetry of their own, so -- like real inferred
+dependencies -- they show up unassigned for you to curate in step 4.
 
 ## Configuration
 
@@ -191,6 +205,24 @@ While the simulator runs in a terminal, dial the trace rate live: `+` doubles
 it, `-` halves it (clamped to 0.25-96 traces/s), `0`/space/`p` pauses and
 resumes, `q` quits.
 
+For stress testing and demos, the topology can be scaled up past the curated
+40-service demo (the demo is always kept as the recognizable core; synthetic
+teams and services are layered on top):
+
+| Flag           | Env             | Default | Purpose                                                                 |
+| -------------- | --------------- | ------- | ----------------------------------------------------------------------- |
+| `--services`   | `SIM_SERVICES`  | `0`     | Target total node count; augments the demo with synthetic teams to reach it (0 = demo only). |
+| `--teams`      | `SIM_TEAMS`     | `0`     | Number of synthetic teams to spread the generated services across (0 = derive from count). |
+| `--unassigned` | `SIM_UNASSIGNED`| `0`     | Number of team-less inferred peers to mint (never seeded -- they stay unassigned). |
+| `--dup-ratio`  | `SIM_DUP_RATIO` | `0.4`   | Fraction of unassigned peers minted as duplicate pairs: two names for one backend, to test merging. |
+
+Synthetic teams own a varied number of services, so the map shows realistic
+size differences. The unassigned duplicate pairs (e.g. `billing-2.example.com`
+and `api.billing-2.io`, or `media-cdn-1-db` and `pg-media-cdn-1`) are two
+distinct inferred nodes that stand for one backend -- merge them in the UI or
+with `POST /api/services/:id/merge` to exercise association. Example:
+`npm run simulate -- --services 300 --unassigned 40 --dup-ratio 0.5 --tps 24`.
+
 ## API overview
 
 | Endpoint | Purpose |
@@ -205,6 +237,7 @@ resumes, `q` quits.
 | `GET /api/traces/:traceId` | Full trace for the waterfall |
 | `PATCH /api/services/:id` | Rename / describe / team / type / SLO target |
 | `POST /api/services/:id/merge` | Merge a duplicate service into this one (aliases its name) |
+| `POST /api/services/:id/unmerge` | Reverse a merge, splitting a duplicate back into its own service |
 | `POST/DELETE /api/services/:id/dependencies` | Manual dependency association |
 | `GET/POST /api/teams` | Team (group) management |
 | `GET /api/health` | Ingest liveness + counters |
@@ -229,8 +262,9 @@ server/src/otlp/      OTLP decode (vendored protos), peer inference, edge resolv
 server/src/api/       routes split per resource (service list/detail/edit/merge,
                       topology, traces, teams, series) + shared range parsing
 server/src/db/        migrations (TimescaleDB schema), pool
-server/src/sim/       demo traffic generator, split by stage (args, trace gen,
-                      OTLP payload encoding, http, seeding, metrics sampling)
+server/src/sim/       demo traffic generator, split by stage (args, topology +
+                      procedural augmentation, trace gen, OTLP payload encoding,
+                      http, metrics sampling)
 web/src/lib/          DAG layout, team grouping, community detection, time ranges, formatters, timeSince
 web/src/theme/        global CSS tokens/keyframes + font shorthand helpers
 web/src/features/     map (MapView switches LayeredMap / force/ communities graph,

@@ -1,6 +1,15 @@
 /**
- * Demo topology for the simulator: the 40-service e-commerce system from the
- * design handoff, replayed as genuine OTLP traffic.
+ * Demo topology for the simulator. The hand-tuned 40-service e-commerce system
+ * from the design handoff is the immutable baseline (the `BASE_*` exports);
+ * the simulator replays it as genuine OTLP traffic.
+ *
+ * For stress testing, `genTopology.ts` augments this baseline with procedurally
+ * generated teams, services, infra, and team-less "unassigned" peers, then
+ * hands the result to `configureTopology()`. The active topology is exposed
+ * through live `let` bindings (`SERVICES`, `DEPS`, `byId`, ...) so the trace
+ * generator and payload encoder pick up the augmented set without threading it
+ * through every call. With no configuration, the active topology is the
+ * curated baseline -- which is what the unit tests exercise.
  */
 
 export type SimType =
@@ -24,9 +33,25 @@ export interface SimService {
   ops: string[];
 }
 
+/** A fully-built topology: the catalog plus the relationships over it. */
+export interface Topology {
+  /** Instrumented + infra nodes that report or are seeded with an owning team. */
+  services: SimService[];
+  /** Team-less inferred peers minted for merge/association testing. */
+  unassigned: SimService[];
+  /** caller id -> dependency ids (may point at services or unassigned peers). */
+  deps: Record<string, string[]>;
+  /** Per-service error rate (fraction of requests). */
+  errorRate: Record<string, number>;
+  /** Per-service self-latency multiplier. */
+  latencyMultiplier: Record<string, number>;
+  /** Weighted trace entry points; weights are normalized to sum to 1. */
+  roots: [string, number][];
+}
+
 export const INFRA_TYPES: SimType[] = ['postgres', 'redis', 'kafka', 'elastic', 's3', 'external'];
 
-export const SERVICES: SimService[] = [
+export const BASE_SERVICES: SimService[] = [
   { id: 'pg-orders', type: 'postgres', team: 'Checkout', ops: ['SELECT orders', 'INSERT order_items', 'UPDATE orders SET status'] },
   { id: 'pg-users', type: 'postgres', team: 'Identity', ops: ['SELECT users', 'UPDATE users', 'SELECT addresses'] },
   { id: 'pg-catalog', type: 'postgres', team: 'Catalog', ops: ['SELECT products', 'SELECT variants', 'SELECT categories'] },
@@ -70,7 +95,7 @@ export const SERVICES: SimService[] = [
   { id: 'api-gateway', type: 'gateway', team: 'Platform', lang: 'cpp', ops: ['route /storefront', 'route /checkout', 'route /admin', 'route /account'] },
 ];
 
-export const DEPS: Record<string, string[]> = {
+export const BASE_DEPS: Record<string, string[]> = {
   'orders-svc': ['pg-orders', 'kafka-events'],
   'users-svc': ['pg-users'],
   'catalog-svc': ['pg-catalog', 'redis-catalog'],
@@ -98,7 +123,7 @@ export const DEPS: Record<string, string[]> = {
 };
 
 /** Incident narrative: error rates per service (fraction of requests). */
-export const ERROR_RATE: Record<string, number> = {
+export const BASE_ERROR_RATE: Record<string, number> = {
   'search-svc': 0.045,
   'payments-svc': 0.014,
   'api.stripe.com': 0.013,
@@ -119,11 +144,48 @@ export const BASE_LATENCY: Record<SimType, [number, number]> = {
   gateway: [2, 8],
 };
 
-export const LATENCY_MULTIPLIER: Record<string, number> = {
+export const BASE_LATENCY_MULTIPLIER: Record<string, number> = {
   'search-svc': 3.2,
   'payments-svc': 2.0,
   'api.stripe.com': 2.2,
   'inventory-svc': 1.6,
 };
 
-export const byId = new Map(SERVICES.map((s) => [s.id, s]));
+/** Weighted trace entry points for the curated baseline (weights sum to 1). */
+export const BASE_ROOTS: [string, number][] = [
+  ['api-gateway', 0.8],
+  ['storefront-bff', 0.08],
+  ['checkout-bff', 0.06],
+  ['admin-bff', 0.06],
+];
+
+function buildById(services: SimService[]): Map<string, SimService> {
+  return new Map(services.map((s) => [s.id, s]));
+}
+
+// ---- active topology (live bindings; default to the curated baseline) ----
+
+export let SERVICES: SimService[] = BASE_SERVICES;
+export let DEPS: Record<string, string[]> = BASE_DEPS;
+export let ERROR_RATE: Record<string, number> = BASE_ERROR_RATE;
+export let LATENCY_MULTIPLIER: Record<string, number> = BASE_LATENCY_MULTIPLIER;
+/** Lookup over services *and* unassigned peers, so the trace walk resolves any dep. */
+export let byId: Map<string, SimService> = buildById(BASE_SERVICES);
+
+/** Swap the active topology in. Roots are applied separately via trace.setRoots. */
+export function configureTopology(t: Topology): void {
+  SERVICES = t.services;
+  DEPS = t.deps;
+  ERROR_RATE = t.errorRate;
+  LATENCY_MULTIPLIER = t.latencyMultiplier;
+  byId = buildById([...t.services, ...t.unassigned]);
+}
+
+/** Restore the curated baseline (used by tests to undo a configureTopology). */
+export function resetTopology(): void {
+  SERVICES = BASE_SERVICES;
+  DEPS = BASE_DEPS;
+  ERROR_RATE = BASE_ERROR_RATE;
+  LATENCY_MULTIPLIER = BASE_LATENCY_MULTIPLIER;
+  byId = buildById(BASE_SERVICES);
+}

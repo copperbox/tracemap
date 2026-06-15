@@ -212,6 +212,50 @@
   cursor: pointer;
 }
 
+.mergeBtn.busy {
+  opacity: .6;
+  cursor: default;
+}
+
+.mergedList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.mergedRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 4px;
+}
+
+.mergedName {
+  font: 600 11.5px 'JetBrains Mono', monospace;
+  flex: 1;
+}
+
+.mergedTag {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .08em;
+  color: var(--accent);
+}
+
+.unmergeBtn {
+  font: 600 10px 'Space Grotesk';
+  color: var(--dim);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+}
+
+.unmergeDisabled {
+  opacity: .5;
+  cursor: default;
+}
+
 .errorBox {
   font: 500 10.5px 'JetBrains Mono', monospace;
   color: var(--crit);

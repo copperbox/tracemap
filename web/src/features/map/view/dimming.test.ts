@@ -19,8 +19,16 @@ const svc = (key: string, teamId: number | null, label = key): GraphNode => ({
   memberIds: [],
 });
 
+const group = (teamId: number, label: string): GraphNode =>
+  ({ ...svc(`group:${teamId}`, teamId, label), kind: 'group', type: 'group' }) as GraphNode;
+
 const graph = {
-  nodes: [svc('api', 1, 'API Gateway'), svc('cart', 2, 'Cart'), svc('pay', 2, 'Payments')],
+  nodes: [
+    svc('api', 1, 'API Gateway'),
+    svc('cart', 2, 'Cart'),
+    svc('pay', 2, 'Payments'),
+    svc('inferred', null, 'Inferred peer'),
+  ],
   edges: [],
   nodeKeyOf: (id: string) => id,
 } as unknown as Graph;
@@ -55,5 +63,19 @@ describe('buildDimmer', () => {
     expect(d('api')).toBe(true);
     expect(d('cart')).toBe(false);
     expect(d('pay')).toBe(false);
+    expect(d('inferred')).toBe(true);
+  });
+
+  it("under 'none', keeps only team-less services and dims team groups", () => {
+    const g = {
+      nodes: [...graph.nodes, group(2, 'Cart Team')],
+      edges: [],
+      nodeKeyOf: (id: string) => id,
+    } as unknown as Graph;
+    const d = buildDimmer(g, { focus: null, query: '', teamFilter: 'none' });
+    expect(d('inferred')).toBe(false); // unassigned -> kept
+    expect(d('api')).toBe(true); // owned -> dimmed
+    expect(d('cart')).toBe(true);
+    expect(d('group:2')).toBe(true); // a team meganode is never "unassigned"
   });
 });

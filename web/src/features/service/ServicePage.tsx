@@ -160,6 +160,7 @@ export function ServicePage() {
               setEditOpen(false);
               reload();
             }}
+            onRefresh={reload}
           />
         </Suspense>
       )}

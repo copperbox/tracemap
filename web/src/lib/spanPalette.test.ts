@@ -1,42 +1,47 @@
 import { describe, expect, it } from 'vitest';
-import { SPAN_PALETTES, svcColor, svcColorIndex } from './spanPalette';
-
-function luminance(hex: string): number {
-  const [r, g, b] = [1, 3, 5].map((i) => {
-    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrastOnWhite(hex: string): number {
-  return 1.05 / (luminance(hex) + 0.05);
-}
+import { buildSpanColors, HUE_MIN, HUE_SPAN, paletteColor, paletteHue } from './spanPalette';
 
 describe('spanPalette', () => {
-  it('palettes cover the same hue slots', () => {
-    expect(SPAN_PALETTES.dark.length).toBe(SPAN_PALETTES.light.length);
-    for (const theme of ['dark', 'light'] as const) {
-      for (const c of SPAN_PALETTES[theme]) expect(c).toMatch(/^#[0-9A-Fa-f]{6}$/);
+  it('keeps hues within the safe cool->pink arc (never red/amber/green)', () => {
+    for (let i = 0; i < 50; i++) {
+      const h = paletteHue(i);
+      expect(h).toBeGreaterThanOrEqual(HUE_MIN);
+      expect(h).toBeLessThanOrEqual(HUE_MIN + HUE_SPAN);
     }
   });
 
-  it('hashes a service id to a stable palette index', () => {
-    const i = svcColorIndex('checkout-svc');
-    expect(i).toBe(svcColorIndex('checkout-svc'));
-    expect(i).toBeGreaterThanOrEqual(0);
-    expect(i).toBeLessThan(SPAN_PALETTES.dark.length);
-  });
-
-  it('keeps the same hue slot for a service across themes', () => {
-    const i = svcColorIndex('payments-svc');
-    expect(svcColor('payments-svc', 'dark')).toBe(SPAN_PALETTES.dark[i]);
-    expect(svcColor('payments-svc', 'light')).toBe(SPAN_PALETTES.light[i]);
-  });
-
-  it('light palette colors stay legible on white panels', () => {
-    for (const c of SPAN_PALETTES.light) {
-      expect(contrastOnWhite(c), `${c} contrast on white`).toBeGreaterThanOrEqual(4);
+  it('spreads consecutive hues apart for distinctness', () => {
+    const hues = [0, 1, 2, 3, 4].map(paletteHue);
+    for (let i = 1; i < hues.length; i++) {
+      expect(Math.abs(hues[i] - hues[i - 1])).toBeGreaterThan(20);
     }
+  });
+
+  it('emits theme-tuned hsl() colors', () => {
+    expect(paletteColor(0, 'dark')).toMatch(/^hsl\(\d+, 62%, 62%\)$/);
+    expect(paletteColor(0, 'light')).toMatch(/^hsl\(\d+, 60%, 42%\)$/);
+    // Deterministic per index.
+    expect(paletteColor(3, 'dark')).toBe(paletteColor(3, 'dark'));
+  });
+
+  describe('buildSpanColors', () => {
+    it('assigns a distinct color to each service', () => {
+      const colors = buildSpanColors(['a', 'b', 'c', 'd'], 'dark');
+      expect(colors.size).toBe(4);
+      expect(new Set(colors.values()).size).toBe(4);
+    });
+
+    it('de-duplicates and orders services so colors are stable per trace', () => {
+      const colors = buildSpanColors(['orders', 'api', 'orders', 'redis'], 'dark');
+      expect([...colors.keys()]).toEqual(['api', 'orders', 'redis']);
+      // First service (sorted) takes the first slot of the shared scale.
+      expect(colors.get('api')).toBe(paletteColor(0, 'dark'));
+    });
+
+    it('is order-independent given the same set of services', () => {
+      const a = buildSpanColors(['x', 'y', 'z'], 'light');
+      const b = buildSpanColors(['z', 'x', 'y'], 'light');
+      expect([...a]).toEqual([...b]);
+    });
   });
 });

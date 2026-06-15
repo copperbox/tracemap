@@ -74,7 +74,7 @@ export async function serviceDetailRoutes(app: FastifyInstance): Promise<void> {
       WHERE target_id = $1 AND bucket >= $2::timestamptz AND bucket < $3::timestamptz
       GROUP BY operation ORDER BY n DESC LIMIT 8`;
 
-    const [series, ops, neighbors, svcMetrics, edgMetrics, slo, team] = await Promise.all([
+    const [series, ops, neighbors, aliases, svcMetrics, edgMetrics, slo, team] = await Promise.all([
       query<{
         t: Date;
         rps: string | null;
@@ -91,6 +91,8 @@ export async function serviceDetailRoutes(app: FastifyInstance): Promise<void> {
         'SELECT * FROM edges WHERE source_id = $1 OR target_id = $1',
         [id],
       ),
+      // Duplicates that were merged into this service (each unmergeable).
+      query<{ alias: string }>('SELECT alias FROM service_aliases WHERE service_id = $1 ORDER BY alias', [id]),
       serviceLiveMetrics(),
       edgeLiveMetrics(),
       sloAttainment(),
@@ -190,6 +192,7 @@ export async function serviceDetailRoutes(app: FastifyInstance): Promise<void> {
         p99: o.p99 == null ? null : Number(o.p99),
       })),
       neighbors: neighborOut,
+      aliases: aliases.rows.map((a) => a.alias),
     };
   });
 }

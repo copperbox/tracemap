@@ -20,17 +20,44 @@
  * metricsSample.ts (gauge exports), rate.ts (live rate dial).
  */
 import { parseSimArgs } from './args.js';
+import { buildTopology } from './genTopology.js';
 import { postJson } from './http.js';
 import { sendMetricsSample } from './metricsSample.js';
 import { exportPayload } from './payload.js';
 import { rand } from './random.js';
 import { applyKey, RateControl } from './rate.js';
-import { seedOwnership } from './seed.js';
-import { makeTrace } from './trace.js';
+import { configureTopology } from './topology.js';
+import { makeTrace, setRoots } from './trace.js';
 
-const { otlp: OTLP, api: API, tps: TPS } = parseSimArgs(process.argv.slice(2));
+const ARGS = parseSimArgs(process.argv.slice(2));
+const { otlp: OTLP, api: API, tps: TPS } = ARGS;
+
+// Build the active topology: the curated demo, augmented when --services asks
+// for more than the baseline, plus any requested unassigned/duplicate peers.
+const topo = buildTopology({
+  services: ARGS.services,
+  teams: ARGS.teams,
+  unassigned: ARGS.unassigned,
+  dupRatio: ARGS.dupRatio,
+});
+configureTopology(topo);
+setRoots(topo.roots);
 
 const rate = new RateControl(TPS);
+
+/** One-line summary of what the configured topology contains. */
+function topologySummary(): string {
+  const teams = new Set(topo.services.map((s) => s.team)).size;
+  const dupPeers = topo.meta.dupPairs.length * 2;
+  const parts = [
+    `${topo.services.length} services across ${teams} teams`,
+    `${topo.meta.syntheticServiceCount} synthetic`,
+  ];
+  if (topo.unassigned.length) {
+    parts.push(`${topo.unassigned.length} unassigned (${topo.meta.dupPairs.length} mergeable pairs / ${dupPeers} nodes)`);
+  }
+  return parts.join(', ');
+}
 
 /** Live rate dial: only active when stdin is an interactive terminal. */
 function attachKeyboard(): void {
@@ -46,19 +73,31 @@ function attachKeyboard(): void {
   console.log('Keys: [+] double rate, [-] halve rate, [0/space/p] pause, [q] quit');
 }
 
+/** Send one trace from every root so each team registers up front. */
+async function warmUpSweep(): Promise<void> {
+  const ids = topo.roots.map(([id]) => id);
+  for (let i = 0; i < ids.length; i += 8) {
+    const batch = ids.slice(i, i + 8).map((id) => {
+      const t = makeTrace(Date.now(), id);
+      return postJson(OTLP, '/v1/traces', exportPayload(t.traceId, t.spans)).catch(() => undefined);
+    });
+    await Promise.allSettled(batch);
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`TraceMap simulator: ${rate.label()} -> ${OTLP} (api ${API})`);
+  console.log(`Topology: ${topologySummary()}`);
   attachKeyboard();
 
-  // Send one warm-up trace so services start registering (team.name on each
-  // resource assigns instrumented services), then seed the inferred peers.
-  const warm = makeTrace();
-  await postJson(OTLP, '/v1/traces', exportPayload(warm.traceId, warm.spans));
-  await new Promise((r) => setTimeout(r, 1500));
-  await seedOwnership(API);
-  // Inferred peers (databases, SaaS APIs) appear after the first edge flush;
-  // re-run so they get their team/type too.
-  setTimeout(() => seedOwnership(API).catch(() => undefined), 20_000);
+  // Warm-up sweep so every team's entry (and the peers it calls) registers up
+  // front. Team ownership comes entirely from the `team.name` resource
+  // attribute on instrumented services' traces -- the simulator never seeds
+  // ownership through the management API. Inferred peers (databases, queues,
+  // SaaS APIs) emit no telemetry of their own, so they surface as unassigned
+  // nodes, exactly like real inferred dependencies, until an operator curates
+  // them in the UI.
+  await warmUpSweep();
 
   let sent = 0;
   let windowSent = 0;

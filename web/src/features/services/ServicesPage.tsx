@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { ServiceList } from '../../api/types';
+import { TeamFilter } from '../../components/TeamFilter';
 import { TYPE_LABELS } from '../../components/Icon';
 import { DOT, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
 import { sparkPath } from '../../lib/spark';
 import { sloView, stColor } from '../../lib/status';
+import { matchesTeamFilter } from '../../lib/teamFilter';
 import { useStore } from '../../state/store';
 import styles from './ServicesPage.module.css';
 
@@ -24,6 +26,8 @@ export function ServicesPage() {
   const navigate = useStore((s) => s.navigate);
   const search = useStore((s) => s.search);
   const topology = useStore((s) => s.topology);
+  const teamFilter = useStore((s) => s.teamFilter);
+  const setTeamFilter = useStore((s) => s.setTeamFilter);
   const tick = useStore((s) => s.tick);
   const [data, setData] = useState<ServiceList | null>(null);
 
@@ -38,21 +42,28 @@ export function ServicesPage() {
     };
   }, []);
 
-  const teamName = new Map((topology?.teams ?? []).map((t) => [t.id, t.name]));
+  const teams = topology?.teams ?? [];
+  const teamName = new Map(teams.map((t) => [t.id, t.name]));
   const q = search.trim().toLowerCase();
   const rank = { crit: 0, warn: 1, ok: 2 } as const;
+  const total = data?.services.length ?? 0;
   const rows = (data?.services ?? [])
     .filter((s) => !q || s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
+    .filter((s) => matchesTeamFilter(s.teamId, teamFilter))
     .sort((a, b) => rank[a.status] - rank[b.status] || b.rps - a.rps);
+  const countLabel = rows.length === total ? `${total} services` : `${rows.length} of ${total} services`;
 
   return (
     <div className={styles.page}>
       <div className={styles.content}>
         <div className={styles.heading}>
-          <div className={styles.title}>Services</div>
-          <div className={styles.subtitle}>
-            {`${data?.services.length ?? 0} services ${DOT} ${data?.edgeCount ?? 0} learned dependencies ${DOT} sorted by health`}
+          <div className={styles.headingText}>
+            <div className={styles.title}>Services</div>
+            <div className={styles.subtitle}>
+              {`${countLabel} ${DOT} ${data?.edgeCount ?? 0} learned dependencies ${DOT} sorted by health`}
+            </div>
           </div>
+          <TeamFilter teams={teams} value={teamFilter} onChange={setTeamFilter} />
         </div>
         <div className={styles.table}>
           <div className={`${styles.gridRow} ${styles.headRow}`}>

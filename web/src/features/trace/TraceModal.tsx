@@ -3,7 +3,7 @@ import { api } from '../../api/client';
 import type { TraceDetail } from '../../api/types';
 import { CloseIcon } from '../../components/Icon';
 import { DOT, fmtAgo, fmtMs } from '../../lib/format';
-import { svcColor } from '../../lib/spanPalette';
+import { buildSpanColors } from '../../lib/spanPalette';
 import { useStore } from '../../state/store';
 import { buildRows } from './buildRows';
 import { SpanRow } from './SpanRow';
@@ -33,7 +33,11 @@ export function TraceModal({ traceId }: { traceId: string }) {
   const close = () => openTrace(null);
 
   const hasError = trace?.spans.some((s) => s.isError) ?? false;
-  const services = new Set(trace?.spans.map((s) => s.serviceId) ?? []);
+  // One distinct color per service, shared by the bars and the legend below.
+  const spanColors = useMemo(
+    () => buildSpanColors(trace?.spans.map((s) => s.serviceId) ?? [], theme),
+    [trace, theme],
+  );
   const firstStart = trace?.spans.length ? trace.spans[0].startTime : null;
 
   return (
@@ -53,7 +57,7 @@ export function TraceModal({ traceId }: { traceId: string }) {
           <div className={styles.spacer} />
           <div className={styles.summary}>
             {built
-              ? `${fmtMs(built.totalMs)} total ${DOT} ${trace?.spans.length} spans ${DOT} ${services.size} services ${DOT} ${firstStart ? fmtAgo(firstStart) : '--'} ago`
+              ? `${fmtMs(built.totalMs)} total ${DOT} ${trace?.spans.length} spans ${DOT} ${spanColors.size} services ${DOT} ${firstStart ? fmtAgo(firstStart) : '--'} ago`
               : error ?? 'loading\u2026'}
           </div>
           <div className={`${styles.closeBtn} hov-btn`} onClick={close}>
@@ -73,13 +77,30 @@ export function TraceModal({ traceId }: { traceId: string }) {
           </div>
         </div>
 
+        {built && (
+          <div className={styles.legend}>
+            {[...spanColors].map(([id, color]) => (
+              <span key={id} className={styles.legendItem}>
+                <span className={styles.legendSwatch} style={{ background: color }} />
+                {id}
+              </span>
+            ))}
+            {hasError && (
+              <span className={styles.legendItem}>
+                <span className={`${styles.legendSwatch} ${styles.legendError}`} />
+                errored span
+              </span>
+            )}
+          </div>
+        )}
+
         <div className={styles.body}>
           {built?.rows.map((r, i) => (
             <SpanRow
               key={r.span.spanId}
               row={r}
               totalMs={built.totalMs}
-              color={r.span.isError ? 'var(--crit)' : svcColor(r.span.serviceId, theme)}
+              color={r.span.isError ? 'var(--crit)' : spanColors.get(r.span.serviceId) ?? 'var(--dim)'}
               isOpen={openSpan === i}
               onToggle={() => setOpenSpan(openSpan === i ? null : i)}
             />

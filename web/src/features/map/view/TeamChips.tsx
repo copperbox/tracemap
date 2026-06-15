@@ -1,7 +1,10 @@
+import { TeamFilter } from '../../../components/TeamFilter';
 import type { Team } from '../../../api/types';
+import type { TeamFilterValue } from '../../../lib/teamFilter';
 import styles from './TeamChips.module.css';
 
-/** Team filter + grouping chips floating over the top-left of the canvas. */
+/** Team grouping shortcut + the shared searchable team filter, floating over
+ *  the top-left of the canvas. */
 export function TeamChips({
   teams,
   teamFilter,
@@ -10,10 +13,10 @@ export function TeamChips({
   onFilter,
 }: {
   teams: Team[];
-  teamFilter: number | 'all';
+  teamFilter: TeamFilterValue;
   allMerged: boolean;
   onToggleMergeAll: () => void;
-  onFilter: (id: number | 'all') => void;
+  onFilter: (id: TeamFilterValue) => void;
 }) {
   return (
     <div className={styles.bar}>
@@ -27,21 +30,7 @@ export function TeamChips({
         {allMerged ? 'Unmerge all teams' : 'Merge all teams'}
       </div>
       <div className={styles.divider} />
-      {[{ id: 'all' as const, name: 'All teams' }, ...teams].map((t) => {
-        const act = teamFilter === (t.id === 'all' ? 'all' : t.id);
-        return (
-          <div
-            key={String(t.id)}
-            className={`${styles.chip} ${act ? styles.chipActive : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onFilter(t.id === 'all' ? 'all' : (t.id as number));
-            }}
-          >
-            {t.name}
-          </div>
-        );
-      })}
+      <TeamFilter teams={teams} value={teamFilter} onChange={onFilter} />
     </div>
   );
 }

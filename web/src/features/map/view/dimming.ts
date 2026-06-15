@@ -1,4 +1,5 @@
 import type { Graph } from '../../../lib/grouping';
+import { matchesTeamFilter, type TeamFilterValue } from '../../../lib/teamFilter';
 import type { FocusSet } from './focusSet';
 
 /**
@@ -10,7 +11,7 @@ import type { FocusSet } from './focusSet';
  */
 export function buildDimmer(
   graph: Graph,
-  opts: { focus: FocusSet | null; query: string; teamFilter: number | 'all' },
+  opts: { focus: FocusSet | null; query: string; teamFilter: TeamFilterValue },
 ): (key: string) => boolean {
   const nodeById = new Map(graph.nodes.map((n) => [n.key, n]));
   const q = opts.query.trim().toLowerCase();
@@ -25,10 +26,9 @@ export function buildDimmer(
           : `${n.key} ${n.label}`.toLowerCase();
       if (!hay.includes(q)) return true;
     }
-    if (opts.teamFilter !== 'all') {
-      if (n.kind === 'group') return n.teamId !== opts.teamFilter;
-      if (n.teamId !== opts.teamFilter) return true;
-    }
+    // A group node carries its team's id, so the same matcher dims it under a
+    // foreign team filter and under "Unassigned" (a team is never unassigned).
+    if (!matchesTeamFilter(n.teamId, opts.teamFilter)) return true;
     return false;
   };
 }

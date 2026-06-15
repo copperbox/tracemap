@@ -10,6 +10,7 @@ import { errorFor } from './errors.js';
 import { hex, pick, rand } from './random.js';
 import {
   BASE_LATENCY,
+  BASE_ROOTS,
   byId,
   DEFAULT_ERROR_RATE,
   DEPS,
@@ -179,24 +180,30 @@ function walk(
   return { endNs: cursorNs, isError: isErr, httpStatus: serverHttp };
 }
 
-export const ROOTS: [string, number][] = [
-  ['api-gateway', 0.8],
-  ['storefront-bff', 0.08],
-  ['checkout-bff', 0.06],
-  ['admin-bff', 0.06],
-];
+/**
+ * Weighted trace entry points. Defaults to the curated baseline; the simulator
+ * replaces it (via setRoots) with the augmented topology's roots so synthetic
+ * teams also receive traffic.
+ */
+export let ROOTS: [string, number][] = BASE_ROOTS;
+
+/** Install a new weighted root set (weights are expected to sum to ~1). */
+export function setRoots(roots: [string, number][]): void {
+  ROOTS = roots.length ? roots : BASE_ROOTS;
+}
 
 export function pickRoot(): string {
   let r = Math.random();
   for (const [id, w] of ROOTS) {
     if ((r -= w) <= 0) return id;
   }
-  return 'api-gateway';
+  return ROOTS[0][0];
 }
 
-export function makeTrace(atMs = Date.now()): { traceId: string; spans: SimSpan[] } {
+/** Build one trace, optionally forced to start at `rootId` (used for warm-up coverage). */
+export function makeTrace(atMs = Date.now(), rootId?: string): { traceId: string; spans: SimSpan[] } {
   const spans: SimSpan[] = [];
   const traceErr = { has: false };
-  walk(pickRoot(), null, BigInt(Math.round(atMs * 1e6)) - BigInt(Math.round(rand(5, 60) * 1e6)), 0, spans, traceErr);
+  walk(rootId ?? pickRoot(), null, BigInt(Math.round(atMs * 1e6)) - BigInt(Math.round(rand(5, 60) * 1e6)), 0, spans, traceErr);
   return { traceId: hex(32), spans };
 }
