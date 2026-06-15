@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Topology } from '../api/types';
 import type { TeamFilterValue } from '../lib/teamFilter';
 import { DEFAULT_RANGE, type TimeRange } from '../lib/timerange';
+import type { RouteState } from './routing';
 
 export type View = 'map' | 'services' | 'service';
 /** How the service map is drawn: layered dependency flow, or a force-directed
@@ -33,6 +34,9 @@ interface AppState {
 
   setTopology: (t: Topology) => void;
   navigate: (view: View, serviceId?: string) => void;
+  /** Apply a deep-link route in one update (used by the URL <-> store sync on
+   *  initial load and on browser back/forward). */
+  applyRoute: (route: RouteState) => void;
   setGraphType: (g: GraphType) => void;
   select: (sel: Selection) => void;
   setHoverEdge: (id: string | null) => void;
@@ -68,6 +72,15 @@ export const useStore = create<AppState>((set) => ({
   setTopology: (topology) => set({ topology }),
   navigate: (view, serviceId) =>
     set({ view, serviceId: serviceId ?? null, openTraceId: null, selection: null }),
+  applyRoute: (route) =>
+    set({
+      view: route.view,
+      serviceId: route.serviceId,
+      graphType: route.graphType,
+      openTraceId: route.openTraceId,
+      range: route.range,
+      teamFilter: route.teamFilter,
+    }),
   setGraphType: (graphType) => set({ graphType }),
   select: (selection) => set({ selection }),
   setHoverEdge: (hoverEdge) => set({ hoverEdge }),

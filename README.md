@@ -126,7 +126,9 @@ working backwards from symptoms team by team.
     traces, teams, and the curation endpoints (rename/merge/manual edges).
 - `web/` - React + Vite + zustand. Custom SVG map (layered DAG layout - leaf
   dependencies on top, gateway at the bottom), charts, and the full UI from
-  the design handoff (dark/light themes, green accent).
+  the design handoff (dark/light themes, green accent). The current view is
+  reflected in the URL (see [Deep links](#deep-links)), so reloads and shared
+  links land on the same place.
 - **TimescaleDB** (Postgres + timescaledb_toolkit): raw `spans` and
   `edge_events` hypertables with per-minute continuous aggregates
   (`percentile_agg` sketches for p50/p95/p99) powering all charts, and
@@ -153,6 +155,30 @@ npm run simulate
 
 Open http://localhost:5173. Point real services at
 `http://<host>:4318/v1/traces` (standard OTLP/HTTP exporter settings).
+
+### Deep links
+
+The whole UI is URL-addressable, so every view survives a reload and can be
+shared as a link. The store and the address bar are kept in sync (no routing
+library - a small `web/src/state/routing.ts` encoder plus a `urlSync.ts` glue
+layer bound to the History API), and the browser back/forward buttons move
+between views as expected.
+
+```
+/                     service map (layered dependency flow)
+/communities          service map (force-directed, clustered by community)
+/services             services list
+/service/<id>         service detail
+
+?trace=<id>           open a trace in the modal overlay (any view)
+?range=q.<ms>         quick time range  (e.g. q.3600000 = last 1 hour)
+?range=a.<from>.<to>  absolute time range (epoch ms)
+?team=none|<id>       team filter (omitted when "all teams")
+```
+
+Default values (24h range, all teams) are left out of the URL to keep links
+clean. Serving requires the usual SPA fallback to `index.html`; the bundled
+`web/nginx.conf` and the Vite dev server both already do this.
 
 ## Onboarding your services
 
