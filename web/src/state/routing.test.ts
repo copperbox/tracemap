@@ -9,6 +9,7 @@ const base: RouteState = {
   openTraceId: null,
   range: DEFAULT_RANGE,
   teamFilter: 'all',
+  isolateId: null,
 };
 
 const route = (over: Partial<RouteState>): RouteState => ({ ...base, ...over });
@@ -65,6 +66,24 @@ describe('routeToUrl', () => {
   it('encodes the team filter (numeric and none)', () => {
     expect(routeToUrl(route({ teamFilter: 7 }))).toBe('/?team=7');
     expect(routeToUrl(route({ teamFilter: 'none' }))).toBe('/?team=none');
+  });
+
+  it('encodes an isolated node tree on the layered map', () => {
+    expect(routeToUrl(route({ isolateId: 'checkout' }))).toBe('/?isolate=checkout');
+  });
+
+  it('url-encodes an isolated edge key', () => {
+    expect(routeToUrl(route({ isolateId: 'api=>db' }))).toBe('/?isolate=api%3D%3Edb');
+  });
+
+  it('omits isolate on the communities graph', () => {
+    expect(routeToUrl(route({ graphType: 'communities', isolateId: 'checkout' }))).toBe('/communities');
+  });
+
+  it('omits isolate on a non-map view', () => {
+    expect(routeToUrl(route({ view: 'service', serviceId: 'api', isolateId: 'api' }))).toBe(
+      '/service/api',
+    );
   });
 });
 
@@ -123,6 +142,16 @@ describe('urlToRoute', () => {
     expect(urlToRoute('/?team=bogus').teamFilter).toBe('all');
   });
 
+  it('reads the isolate param on the layered map', () => {
+    expect(urlToRoute('/?isolate=checkout').isolateId).toBe('checkout');
+    expect(urlToRoute('/?isolate=api%3D%3Edb').isolateId).toBe('api=>db');
+  });
+
+  it('ignores the isolate param off the layered map', () => {
+    expect(urlToRoute('/communities?isolate=checkout').isolateId).toBeNull();
+    expect(urlToRoute('/service/api?isolate=api').isolateId).toBeNull();
+  });
+
   it('degrades an unknown path to the map view', () => {
     expect(urlToRoute('/nope/here')).toEqual(base);
   });
@@ -140,6 +169,9 @@ describe('routeToUrl <-> urlToRoute round trips', () => {
     route({ teamFilter: 'none' }),
     route({ teamFilter: 42 }),
     route({ view: 'service', serviceId: 'api', teamFilter: 3, openTraceId: 't1' }),
+    route({ isolateId: 'checkout' }),
+    route({ isolateId: 'group:3' }),
+    route({ isolateId: 'api=>db', teamFilter: 5 }),
   ];
 
   it.each(cases)('round-trips %o', (r) => {

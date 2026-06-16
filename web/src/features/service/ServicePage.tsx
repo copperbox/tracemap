@@ -33,6 +33,7 @@ const EditServiceModal = lazy(() =>
 export function ServicePage() {
   const serviceId = useStore((s) => s.serviceId);
   const navigate = useStore((s) => s.navigate);
+  const isolateOnMap = useStore((s) => s.isolateOnMap);
   const range = useStore((s) => s.range);
   const setRange = useStore((s) => s.setRange);
   const openTrace = useStore((s) => s.openTrace);
@@ -92,6 +93,13 @@ export function ServicePage() {
           <div className={styles.spacer} />
           <div className={styles.actions}>
             <TimeRangePicker value={range} onChange={setRange} />
+            <div
+              className={`${styles.editBtn} hov-btn`}
+              title="Open the service map showing only this service's dependency tree"
+              onClick={() => isolateOnMap(serviceId)}
+            >
+              View isolated tree
+            </div>
             <div className={`${styles.editBtn} hov-btn`} onClick={() => setEditOpen(true)}>
               Edit service
             </div>

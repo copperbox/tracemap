@@ -24,18 +24,40 @@ import styles from './MapDrawer.module.css';
 export function MapDrawer({
   graph,
   onToggleMerge,
+  allowIsolate = false,
 }: {
   graph: Graph;
   /** Merge/unmerge a team in place (owned by the map so positions carry over). */
   onToggleMerge: (teamId: number) => void;
+  /** Offer the "isolate tree" action. Layered map only -- the communities view
+   *  cannot prune to a subtree, so it leaves this off. */
+  allowIsolate?: boolean;
 }) {
   const topology = useStore((s) => s.topology);
   const selection = useStore((s) => s.selection);
   const select = useStore((s) => s.select);
   const focusId = useStore((s) => s.focusId);
   const setFocus = useStore((s) => s.setFocus);
+  const isolateId = useStore((s) => s.isolateId);
+  const setIsolate = useStore((s) => s.setIsolate);
   const navigate = useStore((s) => s.navigate);
   const tick = useStore((s) => s.tick);
+
+  // Isolating supersedes focus dimming, so entering isolation clears any focus.
+  const toggleIsolate = (key: string) => {
+    if (isolateId === key) {
+      setIsolate(null);
+    } else {
+      setIsolate(key);
+      setFocus(null);
+    }
+  };
+  const isolateButton = (key: string) =>
+    allowIsolate ? (
+      <FooterButton active={isolateId === key} onClick={() => toggleIsolate(key)}>
+        {isolateId === key ? 'Exit isolated' : 'Isolate tree'}
+      </FooterButton>
+    ) : null;
 
   const open = selection != null;
 
@@ -172,6 +194,7 @@ export function MapDrawer({
           <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : s.id)}>
             {focusActive ? 'Unfocus' : 'Focus'}
           </FooterButton>
+          {isolateButton(s.id)}
         </div>
       </div>
     );
@@ -234,6 +257,7 @@ export function MapDrawer({
             <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : gNode.key)}>
               {focusActive ? 'Unfocus' : 'Focus'}
             </FooterButton>
+            {isolateButton(gNode.key)}
           </div>
         </div>
       );
@@ -359,6 +383,7 @@ export function MapDrawer({
           <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : graphEdge.key)}>
             {focusActive ? 'Unfocus' : 'Focus'}
           </FooterButton>
+          {isolateButton(graphEdge.key)}
         </div>
       </div>
     );

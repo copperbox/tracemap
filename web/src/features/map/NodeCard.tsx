@@ -12,6 +12,7 @@ export function NodeCard({
   tick,
   dim,
   selected,
+  compact,
   fade,
   ghost,
   onClick,
@@ -25,6 +26,9 @@ export function NodeCard({
   tick: number;
   dim: boolean;
   selected: boolean;
+  /** Zoomed too far out to read text: hide the labels (keeping the card's
+   *  footprint) so the map reads as clean status nodes rather than a blur. */
+  compact?: boolean;
   /** Opacity multiplier driven per-frame by graph transitions (disables the CSS opacity transition). */
   fade?: number;
   /** Non-interactive leftover of a removed node, shown only while a transition runs. */
@@ -43,6 +47,7 @@ export function NodeCard({
 
   const cardCls = [
     styles.card,
+    compact ? styles.compact : '',
     isGroup ? styles.group : '',
     dashed ? styles.dashed : '',
     !selected && node.status === 'warn' ? styles.warn : '',

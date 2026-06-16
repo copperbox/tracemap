@@ -28,6 +28,17 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, .28);
 }
 
+/* Zoomed too far to read text: keep the card box (so edge anchors still land on
+   it) but hide the labels via visibility so the layout height is preserved. The
+   type icon + status dot stay visible, so the map reads as clean status nodes. */
+.compact .typeLabel,
+.compact .name,
+.compact .metrics,
+.compact .members,
+.compact .toggleBtn {
+  visibility: hidden;
+}
+
 .dashed {
   border-style: dashed;
 }

@@ -23,7 +23,13 @@ working backwards from symptoms team by team.
   dependency direction stays readable even in cyclic graphs or after manual
   drags. Nodes can be
   dragged to custom positions (edges follow; positions persist locally and a
-  reset-layout button restores the default layout). No date selection needed:
+  reset-layout button restores the default layout). The camera frames itself so
+  the map is never left illegible: it fits the whole graph on load, centers and
+  zooms to a selected node (click, or a deep link) at a readable level clear of
+  the drawer, and reframes onto the dependency cone when you focus or isolate.
+  When zoomed too far out to read, node labels are hidden (cards become clean
+  status boxes) and a "zoom in to read labels" hint shows, so the overview reads
+  as intentional rather than a blur. No date selection needed:
   the map always
   shows the current (or last-known) state of everything, even services with
   no recent traffic.
@@ -77,6 +83,14 @@ working backwards from symptoms team by team.
   observed operation mix. Selecting a node or edge also lists its top erroring
   operations and, under each, the distinct errors actually seen in the traces
   (exception types, HTTP status codes, queue/db error codes) with counts.
+  The drawer footer can **focus** the selection (dims everything outside its
+  dependency cone while keeping the rest on screen) or, on the layered map,
+  **isolate** it: the map is redrawn for that node/team/edge's dependency tree
+  alone, dropping every other node so a large tree becomes legible. Isolation is
+  a deep link (`?isolate=<key>`); a "View isolated tree" action on each service
+  page jumps straight to that service's isolated tree, and a top-centre banner
+  with an Exit button returns to the full map. (Communities offers focus only --
+  it cannot prune to a subtree.)
 - **Service pages** - per-service deep dive with KPI cards,
   latency/throughput/error-rate charts (crosshair hover tooltips that stay in
   sync across the charts), top
@@ -175,6 +189,8 @@ between views as expected.
 ?range=q.<ms>         quick time range  (e.g. q.3600000 = last 1 hour)
 ?range=a.<from>.<to>  absolute time range (epoch ms)
 ?team=none|<id>       team filter (omitted when "all teams")
+?isolate=<key>        render only this node/team/edge's dependency tree
+                      (layered map only; ignored on every other view)
 ```
 
 Default values (24h range, all teams) are left out of the URL to keep links

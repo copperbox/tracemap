@@ -22,6 +22,12 @@ interface AppState {
   selection: Selection;
   hoverEdge: string | null;
   focusId: string | null; // node id, "group:<teamId>", or edge key "<src>=><tgt>"
+  /**
+   * The dependency tree to render in isolation: same key shape as focusId, but
+   * instead of dimming the rest, everything outside the tree is removed from the
+   * layout entirely. Layered map only -- the communities view ignores it.
+   */
+  isolateId: string | null;
   search: string;
   teamFilter: TeamFilterValue;
   /** Teams currently collapsed into a single meganode on the map. */
@@ -41,6 +47,9 @@ interface AppState {
   select: (sel: Selection) => void;
   setHoverEdge: (id: string | null) => void;
   setFocus: (id: string | null) => void;
+  setIsolate: (id: string | null) => void;
+  /** Jump to the layered map showing only the dependency tree of `id`. */
+  isolateOnMap: (id: string) => void;
   setSearch: (s: string) => void;
   setTeamFilter: (t: TeamFilterValue) => void;
   toggleTeamMerged: (teamId: number) => void;
@@ -60,6 +69,7 @@ export const useStore = create<AppState>((set) => ({
   selection: null,
   hoverEdge: null,
   focusId: null,
+  isolateId: null,
   search: '',
   teamFilter: 'all',
   mergedTeams: [],
@@ -80,11 +90,23 @@ export const useStore = create<AppState>((set) => ({
       openTraceId: route.openTraceId,
       range: route.range,
       teamFilter: route.teamFilter,
+      isolateId: route.isolateId,
     }),
   setGraphType: (graphType) => set({ graphType }),
   select: (selection) => set({ selection }),
   setHoverEdge: (hoverEdge) => set({ hoverEdge }),
   setFocus: (focusId) => set({ focusId }),
+  setIsolate: (isolateId) => set({ isolateId }),
+  isolateOnMap: (isolateId) =>
+    set({
+      view: 'map',
+      graphType: 'map',
+      serviceId: null,
+      selection: null,
+      focusId: null,
+      openTraceId: null,
+      isolateId,
+    }),
   setSearch: (search) => set({ search }),
   setTeamFilter: (teamFilter) => set({ teamFilter }),
   toggleTeamMerged: (teamId) =>

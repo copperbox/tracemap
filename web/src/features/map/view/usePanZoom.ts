@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, RefObject } from 'react';
+import { centerTransform, fitZoom } from './camera';
 
 export interface Transform {
   tx: number;
@@ -98,7 +99,7 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
       const r = el.getBoundingClientRect();
       const bw = bbox.x1 - bbox.x0;
       const bh = bbox.y1 - bbox.y0;
-      const k = Math.max(0.12, Math.min((r.width - 120) / bw, (r.height - 150) / bh, 1.1));
+      const k = fitZoom(bbox, r.width, r.height);
       setTf({
         tx: (r.width - bw * k) / 2 - bbox.x0 * k,
         ty: (r.height - bh * k) / 2 - bbox.y0 * k + 12,
@@ -108,5 +109,20 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
     [canvasRef],
   );
 
-  return { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds };
+  /**
+   * Pan (and zoom in, never out) so the given world bounds sit centered in the
+   * canvas at a legible zoom. Used to bring a freshly selected node into view.
+   * `rightInset` keeps the target clear of the open drawer.
+   */
+  const centerOn = useCallback(
+    (bbox: ViewBounds, opts: { rightInset?: number } = {}) => {
+      const el = canvasRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setTf((s) => centerTransform(bbox, r.width, r.height, s.k, { rightInset: opts.rightInset }));
+    },
+    [canvasRef],
+  );
+
+  return { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn };
 }

@@ -16,6 +16,7 @@ function routeFromStore(): RouteState {
     openTraceId: s.openTraceId,
     range: s.range,
     teamFilter: s.teamFilter,
+    isolateId: s.isolateId,
   };
 }
 
@@ -51,7 +52,8 @@ export function initRouting(): void {
       state.view !== prev.view ||
       state.serviceId !== prev.serviceId ||
       state.graphType !== prev.graphType ||
-      state.openTraceId !== prev.openTraceId;
+      state.openTraceId !== prev.openTraceId ||
+      state.isolateId !== prev.isolateId;
     if (navChanged) window.history.pushState(null, '', url);
     else window.history.replaceState(null, '', url);
   });

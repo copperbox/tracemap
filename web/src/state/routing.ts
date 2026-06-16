@@ -17,6 +17,8 @@ import type { TeamFilterValue } from '../lib/teamFilter';
  *   ?range=q.<ms>         quick time range (omitted when it equals the default)
  *   ?range=a.<from>.<to>  absolute time range (epoch ms)
  *   ?team=none|<id>       team filter (omitted when "all")
+ *   ?isolate=<key>        render only this node/group/edge's dependency tree
+ *                         (layered map only -- ignored on every other view)
  */
 export interface RouteState {
   view: View;
@@ -25,6 +27,8 @@ export interface RouteState {
   openTraceId: string | null;
   range: TimeRange;
   teamFilter: TeamFilterValue;
+  /** Isolated dependency-tree key; only meaningful on the layered map ("/"). */
+  isolateId: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +115,9 @@ export function routeToUrl(s: RouteState): string {
   if (range) params.set('range', range);
   const team = encodeTeam(s.teamFilter);
   if (team) params.set('team', team);
+  // Isolation only renders on the layered map, so it never appears on any other
+  // path (the store may still hold an id from before a view switch).
+  if (s.view === 'map' && s.graphType === 'map' && s.isolateId) params.set('isolate', s.isolateId);
 
   const query = params.toString();
   return query ? `${path}?${query}` : path;
@@ -137,6 +144,10 @@ export function urlToRoute(url: string): RouteState {
     graphType = 'communities';
   }
 
+  // Isolation is a layered-map concept; ignore the param anywhere else so a
+  // stray ?isolate on, say, /communities does not resurrect a removed tree.
+  const isolateId = view === 'map' && graphType === 'map' ? params.get('isolate') : null;
+
   return {
     view,
     serviceId,
@@ -144,5 +155,6 @@ export function urlToRoute(url: string): RouteState {
     openTraceId: params.get('trace'),
     range: decodeRange(params.get('range')),
     teamFilter: decodeTeam(params.get('team')),
+    isolateId,
   };
 }

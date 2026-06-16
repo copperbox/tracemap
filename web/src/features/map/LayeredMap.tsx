@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '../../state/store';
+import { ARROW } from '../../lib/format';
 import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
 import { GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
 import { layoutClusteredGraph } from '../../lib/clusterLayout';
@@ -17,6 +18,11 @@ import { ZoomControls } from './view/ZoomControls';
 import { buildEdgeViews } from './view/edgeViews';
 import { buildDimmer } from './view/dimming';
 import { computeFocusSet } from './view/focusSet';
+import { isolateGraph } from './view/isolateGraph';
+import { IsolateBanner } from './view/IsolateBanner';
+import { ZoomHint } from './view/ZoomHint';
+import { LABEL_MIN_K, fitZoom } from './view/camera';
+import { nodeCardBounds } from './view/nodeBounds';
 import { buildFrameViews } from './view/frameViews';
 import { clearPinnedPositions, loadPinnedPositions, type NodePositions } from './view/pinnedPositions';
 import { useGraphTransition } from './view/useGraphTransition';
@@ -30,6 +36,10 @@ import styles from './MapView.module.css';
 // nodes/edges stay mounted so a small pan doesn't pop them in and out.
 const CULL_MARGIN = 320;
 
+// Drawer width (keep in step with MapDrawer.module.css .drawer width). The
+// selection auto-center reserves it so the chosen node lands clear of the drawer.
+const DRAWER_W = 352;
+
 /** Layered dependency-flow view of the service map (the default graph type). */
 export function LayeredMap() {
   const topology = useStore((s) => s.topology);
@@ -39,6 +49,8 @@ export function LayeredMap() {
   const setHoverEdge = useStore((s) => s.setHoverEdge);
   const focusId = useStore((s) => s.focusId);
   const setFocus = useStore((s) => s.setFocus);
+  const isolateId = useStore((s) => s.isolateId);
+  const setIsolate = useStore((s) => s.setIsolate);
   const search = useStore((s) => s.search);
   const teamFilter = useStore((s) => s.teamFilter);
   const setTeamFilter = useStore((s) => s.setTeamFilter);
@@ -51,7 +63,7 @@ export function LayeredMap() {
   const setGraphType = useStore((s) => s.setGraphType);
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef);
+  const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn } = usePanZoom(canvasRef);
 
   // Canvas size in CSS px, used to cull the world to the visible viewport.
   // Defaults to the window so the first paint (before the observer fires)
@@ -73,13 +85,32 @@ export function LayeredMap() {
   const [pinned, setPinned] = useState<NodePositions>(loadPinnedPositions);
   const { beginDrag, wasNodeDrag } = useNodeDrag(tfRef, setPinned);
 
-  const graph = useMemo(
+  const fullGraph = useMemo(
     () =>
       topology
         ? buildGraph(topology, { mergedTeams })
         : { nodes: [] as GraphNode[], edges: [] as GraphEdge[], nodeKeyOf: (id: string) => id },
     [topology, mergedTeams],
   );
+
+  // Isolation prunes the graph to one dependency tree BEFORE layout, so the
+  // whole pipeline (layout, culling, edges, drawer) only ever sees the subtree.
+  // Returns the same reference when nothing is isolated, so `isolated` below is
+  // a cheap identity check.
+  const graph = useMemo(() => isolateGraph(fullGraph, isolateId), [fullGraph, isolateId]);
+  const isolated = graph !== fullGraph;
+
+  // Human label for the isolated entity (node, team group, or "src -> tgt"
+  // edge), drawn from the full graph so the name survives the pruning.
+  const isolateLabel = useMemo(() => {
+    if (!isolated || !isolateId) return null;
+    const nameOf = (key: string) => fullGraph.nodes.find((n) => n.key === key)?.label ?? key;
+    if (isolateId.includes('=>')) {
+      const [src, tgt] = isolateId.split('=>');
+      return `${nameOf(src)} ${ARROW} ${nameOf(tgt)}`;
+    }
+    return nameOf(isolateId);
+  }, [isolated, isolateId, fullGraph]);
 
   // The layout must only depend on the graph's STRUCTURE. Metrics refresh
   // every poll (and the edge rows arrive in arbitrary order), so keying the
@@ -92,8 +123,21 @@ export function LayeredMap() {
     [graph],
   );
 
+  // The layout is a pure function of structure (layoutSig), but a plain useMemo
+  // only retains the LAST signature -- so every isolate enter/exit recomputed the
+  // full 118-node layout from scratch (layoutClusteredGraph runs the layered DAG
+  // solver ~once per team), a ~350ms main-thread stall on exit. Cache results by
+  // signature so returning to a structure already seen (the full graph, on exit)
+  // is instant. Bounded so a long session of merges/isolations stays small.
+  const layoutCache = useRef(new Map<string, ReturnType<typeof layoutClusteredGraph>>());
   const layout = useMemo(() => {
-    return layoutClusteredGraph(graph.nodes, graph.edges);
+    const cache = layoutCache.current;
+    const cached = cache.get(layoutSig);
+    if (cached) return cached;
+    const result = layoutClusteredGraph(graph.nodes, graph.edges);
+    cache.set(layoutSig, result);
+    if (cache.size > 32) cache.delete(cache.keys().next().value as string);
+    return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- structure-only dependency by design
   }, [layoutSig]);
 
@@ -141,6 +185,25 @@ export function LayeredMap() {
     }
   }, [graph, fitView]);
 
+  // Entering or leaving isolation reframes the map onto the new (much smaller,
+  // or restored full) layout. fitView's deps already include the recomputed
+  // layout, so by the time this effect runs the bbox is the isolated one. Skips
+  // the initial mount so a deep-linked isolated load uses the first-data fit.
+  const prevIsolateRef = useRef(isolateId);
+  useEffect(() => {
+    if (prevIsolateRef.current === isolateId) return;
+    prevIsolateRef.current = isolateId;
+    fitView();
+  }, [isolateId, fitView]);
+
+  // Drop a stale isolate id (e.g. a deep link to a service that no longer
+  // exists, or one swallowed by a merged team) so the URL and map agree. Guard
+  // on a loaded graph: before data arrives isolateGraph also returns the full
+  // (empty) graph, and clearing then would wipe a valid deep link.
+  useEffect(() => {
+    if (isolateId && fullGraph.nodes.length && graph === fullGraph) setIsolate(null);
+  }, [isolateId, fullGraph, graph, setIsolate]);
+
   const wasDrag = () => wasPan() || wasNodeDrag();
 
   // ---- dimming (focus, search, team filter) ----
@@ -158,6 +221,61 @@ export function LayeredMap() {
 
   const widthOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_W : NODE_W);
   const heightOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_H : NODE_H);
+
+  // Zoom the camera onto the focus cone when Focus is switched on, and back to
+  // the full layout when it's cleared. First-load and isolate fits are handled
+  // by the effects above; this gives focus mode (which dims rather than prunes)
+  // the same legible reframing isolation already gets. Guarded on focusId so a
+  // metrics poll (which changes posOf/focus) never re-runs the fit.
+  const prevFocusRef = useRef(focusId);
+  useEffect(() => {
+    if (prevFocusRef.current === focusId) return;
+    prevFocusRef.current = focusId;
+    if (!focusId) {
+      fitView(); // clearing focus returns to the full overview
+      return;
+    }
+    if (!focus) return;
+    const box = nodeCardBounds([...focus.nodes].map((k) => posOf(k)));
+    if (!box) return;
+    // If the whole cone fits at a readable zoom, frame it. In a layered DAG the
+    // cone usually spans the gateway layer down to datastores, so fitting it
+    // would shrink to specks -- in that case keep the focused node centered and
+    // legible (its cone stays highlighted and pannable) instead.
+    if (fitZoom(box, viewport.w, viewport.h) >= LABEL_MIN_K) {
+      fitBounds(box);
+      return;
+    }
+    const seedKey = focusId.includes('=>') ? focusId.split('=>')[0] : focusId;
+    const seed = nodeById.get(seedKey);
+    const sp = posOf(seedKey);
+    if (seed && sp) {
+      centerOn({ x0: sp.x, y0: sp.y, x1: sp.x + widthOf(seed), y1: sp.y + heightOf(seed) }, { rightInset: DRAWER_W });
+    } else {
+      fitBounds(box);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reframe once per focus change; posOf/nodeById churn each poll
+  }, [focusId, fitView, fitBounds, centerOn, viewport]);
+
+  // Bring a freshly selected node/group to the centre of the visible map (clear
+  // of the drawer) at a legible zoom -- so clicking, searching to, or deep
+  // linking a service actually shows it instead of leaving it a speck. Keyed on
+  // the selected key so it fires once per selection, not on every poll. Edge
+  // selections are left alone; their focus/isolate actions reframe instead.
+  const prevSelRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!selNodeKey) {
+      prevSelRef.current = null;
+      return;
+    }
+    if (prevSelRef.current === selNodeKey) return;
+    prevSelRef.current = selNodeKey;
+    const n = nodeById.get(selNodeKey);
+    const p = posOf(selNodeKey);
+    if (!n || !p) return;
+    centerOn({ x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) }, { rightInset: DRAWER_W });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- center once per selection; posOf/nodeById churn each poll
+  }, [selNodeKey, centerOn]);
 
   // ---- edge geometry + labels ----
   // Anchor sides come from the nodes' actual relative positions (the grouped
@@ -214,6 +332,13 @@ export function LayeredMap() {
     const p = displayPos(key);
     return p != null && rectsOverlap(visRect, { x0: p.x, y0: p.y, x1: p.x + w, y1: p.y + h });
   };
+
+  // Too far out to read card text: render cards as clean status nodes and show
+  // the "zoom in" hint, so the overview reads as intentional, not a broken blur.
+  // Never applied while isolated: isolation is the deliberate "make this tree
+  // legible" mode, so its labels stay on even when a deep tree fits below the
+  // threshold (e.g. dynamo-bff fits ~0.44) -- hiding them there defeats the point.
+  const labelsHidden = tf.k < LABEL_MIN_K && !isolated;
 
   return (
     <div className={styles.root}>
@@ -296,6 +421,7 @@ export function LayeredMap() {
                 tick={tick}
                 dim={dimmed(n.key)}
                 selected={selNodeKey === n.key}
+                compact={labelsHidden}
                 fade={animating && animRef.current?.appear.has(n.key) ? eased : undefined}
                 onDragStart={(ev) => {
                   if (ev.button !== 0) return;
@@ -352,6 +478,12 @@ export function LayeredMap() {
           onFilter={setTeamFilter}
         />
 
+        {isolated && isolateLabel && (
+          <IsolateBanner label={isolateLabel} onExit={() => setIsolate(null)} />
+        )}
+
+        {labelsHidden && graph.nodes.length > 0 && <ZoomHint />}
+
         <Legend />
 
         <GraphModeToggle value={graphType} shifted={selection != null} onChange={setGraphType} />
@@ -365,7 +497,7 @@ export function LayeredMap() {
         />
       </div>
 
-      <MapDrawer graph={graph} onToggleMerge={toggleMerge} />
+      <MapDrawer graph={graph} onToggleMerge={toggleMerge} allowIsolate />
     </div>
   );
 }

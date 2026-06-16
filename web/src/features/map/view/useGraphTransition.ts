@@ -3,6 +3,11 @@ import type { Graph } from '../../../lib/grouping';
 import { computeGraphTransition, type GraphSnapshot, type GraphTransition, type Pos } from '../../../lib/transition';
 import { ANIM_MS, easeOut } from './animation';
 
+// Above this many nodes appearing/disappearing in one structural change, skip
+// the glide and snap. Team toggles (a team's worth of services, <= ~13) stay
+// animated; isolate enter/exit and merge-all (most of the graph) snap.
+const WHOLESALE_CHURN = 24;
+
 /**
  * ---- structural transition animation ----
  * When grouping/ungrouping (or any structure change) swaps the node set,
@@ -75,7 +80,17 @@ export function useGraphTransition(
         if (p) targets.set(n.key, p);
       }
       const tr = computeGraphTransition(prev.snap, { nodes: graph.nodes, pos: targets, edgeKeys });
-      if (tr.from.size || tr.appear.size || tr.ghosts.length) startAnim(tr);
+      // A structural glide only reads as a merge/split for an incremental change.
+      // A wholesale swap -- entering/leaving isolation, or merge-all -- replaces
+      // most of the graph at once: animating it is both disorienting and janky
+      // (≈100 cards mounting while every card re-renders each of ~25 frames), so
+      // snap straight to the target instead. Small team toggles still animate.
+      const churn = tr.appear.size + tr.ghosts.length;
+      if (churn > WHOLESALE_CHURN) {
+        finishAnim();
+      } else if (tr.from.size || tr.appear.size || tr.ghosts.length) {
+        startAnim(tr);
+      }
     }
   });
 
