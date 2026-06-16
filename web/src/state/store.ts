@@ -50,6 +50,10 @@ interface AppState {
   setIsolate: (id: string | null) => void;
   /** Jump to the layered map showing only the dependency tree of `id`. */
   isolateOnMap: (id: string) => void;
+  /** Jump to the full layered map with `id` selected -- opens its drawer and
+   *  pans the camera to it. Used by the header health-count popovers so a
+   *  responder goes from a count straight to the offending service. */
+  revealOnMap: (id: string) => void;
   setSearch: (s: string) => void;
   setTeamFilter: (t: TeamFilterValue) => void;
   toggleTeamMerged: (teamId: number) => void;
@@ -106,6 +110,16 @@ export const useStore = create<AppState>((set) => ({
       focusId: null,
       openTraceId: null,
       isolateId,
+    }),
+  revealOnMap: (id) =>
+    set({
+      view: 'map',
+      graphType: 'map',
+      serviceId: null,
+      isolateId: null,
+      focusId: null,
+      openTraceId: null,
+      selection: { kind: 'node', id },
     }),
   setSearch: (search) => set({ search }),
   setTeamFilter: (teamFilter) => set({ teamFilter }),

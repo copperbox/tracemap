@@ -70,6 +70,11 @@ working backwards from symptoms team by team.
   filtering and the same inspector drawer. The team filter is a searchable
   dropdown (type to narrow the team list, pick a team or "Unassigned" for
   services with no owner) reused across the map and the services list.
+- **Header health counts** - the top-bar healthy / degraded / critical counts
+  are a live triage entry point. Clicking the degraded or critical count opens a
+  list of exactly those services (worst-first by error rate, then tail latency);
+  picking one jumps to the map with that service selected -- camera panned to it
+  and its inspector drawer open. Escape or a click outside dismisses the list.
 - **Services list** - a sortable table of every service (health, traffic, p95,
   error rate, 30-day SLO, and a 24h latency sparkline), ranked worst-health
   first. The shared searchable team filter scopes the table to one team -- or

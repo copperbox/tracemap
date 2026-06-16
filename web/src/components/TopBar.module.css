@@ -83,6 +83,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  position: relative;
 }
 
 .healthChip {
@@ -115,6 +116,110 @@
   border-radius: 50%;
   background: currentColor;
   display: inline-block;
+}
+
+/* The two problem chips are real buttons that open the offending-services
+   popover. They inherit the chip's colours/padding; reset only button chrome. */
+.healthChipBtn {
+  border: none;
+  cursor: pointer;
+  transition: filter 120ms ease;
+}
+
+.healthChipBtn:hover {
+  filter: brightness(1.14);
+}
+
+.healthChipOpen {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* ---- health-count popover (HIGH-2: count -> offending services) ---- */
+.healthPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 288px;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 11px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 40;
+}
+
+.healthPopoverHead {
+  flex: none;
+  padding: 9px 12px;
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+}
+
+.healthPopoverList {
+  overflow-y: auto;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.healthRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+
+.healthRow:hover {
+  background: var(--hoverbg);
+}
+
+.healthRowName {
+  flex: 1;
+  min-width: 0;
+  font: 600 12px 'Space Grotesk';
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.healthRowMetrics {
+  flex: none;
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--dim);
+}
+
+.rowDot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.rowDot.ok {
+  background: var(--ok);
+}
+
+.rowDot.warn {
+  background: var(--warn);
+}
+
+.rowDot.crit {
+  background: var(--crit);
 }
 
 .ingest {
