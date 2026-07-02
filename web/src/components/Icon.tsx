@@ -135,6 +135,22 @@ export function ThemeIcon({ theme }: { theme: 'dark' | 'light' }) {
   );
 }
 
+/** Preferences cog: gear body with eight teeth around a hub. */
+export function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="1.7" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="7" cy="7" r="4" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M7 1.2 V3 M7 11 V12.8 M1.2 7 H3 M11 7 H12.8 M2.9 2.9 L4.17 4.17 M9.83 9.83 L11.1 11.1 M2.9 11.1 L4.17 9.83 M9.83 4.17 L11.1 2.9"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 /** Layered dependency flow: stacked rows joined top-to-bottom. */
 export function FlowGraphIcon() {
   return (

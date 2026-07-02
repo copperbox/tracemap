@@ -8,7 +8,10 @@
   inset: 0;
   overflow: hidden;
   cursor: grab;
-  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
+  background-image: radial-gradient(
+    rgba(var(--dot-rgb), calc(var(--dot-a) * var(--dot-k, 1))) 1px,
+    transparent 1.4px
+  );
   transition: none;
 }
 
@@ -20,7 +23,8 @@
 .canvasAnimating {
   transition:
     background-size 420ms cubic-bezier(.33, 1, .68, 1),
-    background-position 420ms cubic-bezier(.33, 1, .68, 1);
+    background-position 420ms cubic-bezier(.33, 1, .68, 1),
+    --dot-k 420ms cubic-bezier(.33, 1, .68, 1);
 }
 
 .world {

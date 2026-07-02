@@ -29,7 +29,8 @@ working backwards from symptoms team by team.
   the drawer, and reframes onto the dependency cone when you focus or isolate.
   When zoomed too far out to read, node labels are hidden (cards become clean
   status boxes) and a "zoom in to read labels" hint shows, so the overview reads
-  as intentional rather than a blur. No date selection needed:
+  as intentional rather than a blur; the zoom level where labels appear is a
+  user preference (see below), defaulting to the tuned threshold. No date selection needed:
   the map always
   shows the current (or last-known) state of everything, even services with
   no recent traffic.
@@ -75,6 +76,12 @@ working backwards from symptoms team by team.
   list of exactly those services (worst-first by error rate, then tail latency);
   picking one jumps to the map with that service selected -- camera panned to it
   and its inspector drawer open. Escape or a click outside dismisses the list.
+- **User preferences** - a cog in the header opens a preferences popover with
+  the theme (dark/light) and the "map labels" setting: how far you must zoom in
+  before node labels show (Always / Zoomed out / Default / Zoomed in), applied
+  to both the layered map and the communities view. Preferences persist in
+  localStorage (`tracemap.prefs`), so the theme and label threshold survive
+  reloads.
 - **Services list** - a sortable table of every service (health, traffic, p95,
   error rate, 30-day SLO, and a 24h latency sparkline), ranked worst-health
   first. The shared searchable team filter scopes the table to one team -- or

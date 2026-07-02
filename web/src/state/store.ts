@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Topology } from '../api/types';
+import { loadPrefs, savePrefs, type LabelZoomLevel, type Theme } from '../lib/preferences';
 import type { TeamFilterValue } from '../lib/teamFilter';
 import { DEFAULT_RANGE, type TimeRange } from '../lib/timerange';
 import type { RouteState } from './routing';
@@ -32,7 +33,9 @@ interface AppState {
   teamFilter: TeamFilterValue;
   /** Teams currently collapsed into a single meganode on the map. */
   mergedTeams: number[];
-  theme: 'dark' | 'light';
+  theme: Theme;
+  /** Required zoom before map node labels render (user preference, persisted). */
+  labelZoom: LabelZoomLevel;
   tick: number;
   range: TimeRange;
   openTraceId: string | null;
@@ -58,12 +61,17 @@ interface AppState {
   setTeamFilter: (t: TeamFilterValue) => void;
   toggleTeamMerged: (teamId: number) => void;
   setMergedTeams: (teamIds: number[]) => void;
-  setTheme: (t: 'dark' | 'light') => void;
+  setTheme: (t: Theme) => void;
+  setLabelZoom: (l: LabelZoomLevel) => void;
   bumpTick: () => void;
   setRange: (r: TimeRange) => void;
   openTrace: (traceId: string | null) => void;
   setIngesting: (on: boolean) => void;
 }
+
+// Persisted preferences seed the initial state; main.tsx syncs the theme to
+// <body data-theme> before first paint.
+const prefs = loadPrefs();
 
 export const useStore = create<AppState>((set) => ({
   view: 'map',
@@ -77,7 +85,8 @@ export const useStore = create<AppState>((set) => ({
   search: '',
   teamFilter: 'all',
   mergedTeams: [],
-  theme: 'dark',
+  theme: prefs.theme,
+  labelZoom: prefs.labelZoom,
   tick: 0,
   range: DEFAULT_RANGE,
   openTraceId: null,
@@ -130,10 +139,17 @@ export const useStore = create<AppState>((set) => ({
         : [...s.mergedTeams, teamId],
     })),
   setMergedTeams: (mergedTeams) => set({ mergedTeams }),
-  setTheme: (theme) => {
-    document.body.setAttribute('data-theme', theme);
-    set({ theme });
-  },
+  setTheme: (theme) =>
+    set((s) => {
+      document.body.setAttribute('data-theme', theme);
+      savePrefs({ theme, labelZoom: s.labelZoom });
+      return { theme };
+    }),
+  setLabelZoom: (labelZoom) =>
+    set((s) => {
+      savePrefs({ theme: s.theme, labelZoom });
+      return { labelZoom };
+    }),
   bumpTick: () => set((s) => ({ tick: s.tick + 1 })),
   setRange: (range) => set({ range }),
   openTrace: (openTraceId) => set({ openTraceId }),

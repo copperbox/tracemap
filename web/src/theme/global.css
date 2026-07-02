@@ -1,3 +1,12 @@
+/* Per-zoom dimming factor for the canvas dot grid (see view/dotGrid.ts). The map
+   sets it inline per frame; registering it as a typed number lets it animate with
+   background-size during click-to-zoom instead of snapping. */
+@property --dot-k {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
 html,
 body {
   margin: 0;
@@ -20,7 +29,9 @@ body {
   --text: #e8eef8;
   --dim: #8b98ac;
   --faint: #5a6678;
-  --dot: rgba(140, 165, 200, 0.17);
+  --dot-rgb: 140, 165, 200;
+  --dot-a: 0.17;
+  --dot: rgba(var(--dot-rgb), var(--dot-a));
   --ok: #34d399;
   --warn: #fbbf24;
   --crit: #f87171;
@@ -50,7 +61,9 @@ body[data-theme='light'] {
   --text: #16202f;
   --dim: #54647c;
   --faint: #76849b;
-  --dot: rgba(25, 45, 80, 0.16);
+  --dot-rgb: 25, 45, 80;
+  --dot-a: 0.16;
+  --dot: rgba(var(--dot-rgb), var(--dot-a));
   --ok: #047857;
   --warn: #a16207;
   --crit: #d92626;

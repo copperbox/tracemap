@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import { buildGraph, type Graph, type GraphEdge, type GraphNode } from '../../../lib/grouping';
 import { detectCommunities } from '../../../lib/community';
+import { LABEL_ZOOM_FACTOR } from '../../../lib/preferences';
 import { useStore } from '../../../state/store';
 import { MapDrawer } from '../MapDrawer';
 import { computeFocusSet } from '../view/focusSet';
+import { dotAlphaScale } from '../view/dotGrid';
 import { buildDimmer } from '../view/dimming';
 import { GraphModeToggle } from '../view/GraphModeToggle';
 import { ZoomControls } from '../view/ZoomControls';
@@ -44,6 +46,11 @@ export function ForceGraph() {
   const theme = useStore((s) => s.theme);
   const graphType = useStore((s) => s.graphType);
   const setGraphType = useStore((s) => s.setGraphType);
+  const labelZoomPref = useStore((s) => s.labelZoom);
+
+  // Effective label threshold: the tuned default scaled by the user preference
+  // ('always' zeroes it out, so labels never hide).
+  const labelZoom = LABEL_ZOOM * LABEL_ZOOM_FACTOR[labelZoomPref];
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLCanvasElement>(null);
@@ -211,7 +218,7 @@ export function ForceGraph() {
       }
       ctx.globalAlpha = 1;
 
-      if (!isDim && (isSel || isHover || k >= LABEL_ZOOM)) {
+      if (!isDim && (isSel || isHover || k >= labelZoom)) {
         ctx.font = '600 11px "Space Grotesk", system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -377,7 +384,8 @@ export function ForceGraph() {
         style={{
           backgroundSize: `${22 * tf.k}px ${22 * tf.k}px`,
           backgroundPosition: `${tf.tx}px ${tf.ty}px`,
-        }}
+          ['--dot-k' as string]: dotAlphaScale(tf.k),
+        } as CSSProperties}
       >
         <canvas ref={surfaceRef} className={styles.surface} />
       </div>

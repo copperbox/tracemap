@@ -248,15 +248,3 @@
   letter-spacing: .14em;
   color: var(--dim);
 }
-
-.themeBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--dim);
-}

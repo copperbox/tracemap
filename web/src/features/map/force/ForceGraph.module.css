@@ -8,7 +8,10 @@
   inset: 0;
   overflow: hidden;
   cursor: grab;
-  background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
+  background-image: radial-gradient(
+    rgba(var(--dot-rgb), calc(var(--dot-a) * var(--dot-k, 1))) 1px,
+    transparent 1.4px
+  );
   background-size: 22px 22px;
 }
 

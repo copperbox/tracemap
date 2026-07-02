@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useStore } from '../../state/store';
 import { ARROW } from '../../lib/format';
+import { LABEL_ZOOM_FACTOR } from '../../lib/preferences';
 import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
 import { GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
 import { layoutClusteredGraph } from '../../lib/clusterLayout';
@@ -16,6 +18,7 @@ import { PacketCanvas } from './view/PacketCanvas';
 import { TeamChips } from './view/TeamChips';
 import { ZoomControls } from './view/ZoomControls';
 import { buildEdgeViews } from './view/edgeViews';
+import { dotAlphaScale } from './view/dotGrid';
 import { buildDimmer } from './view/dimming';
 import { computeFocusSet } from './view/focusSet';
 import { isolateGraph } from './view/isolateGraph';
@@ -61,6 +64,11 @@ export function LayeredMap() {
   const tick = useStore((s) => s.tick);
   const graphType = useStore((s) => s.graphType);
   const setGraphType = useStore((s) => s.setGraphType);
+  const labelZoom = useStore((s) => s.labelZoom);
+
+  // Effective label threshold: the tuned default scaled by the user preference
+  // ('always' zeroes it out, so labels never hide).
+  const labelMinK = LABEL_MIN_K * LABEL_ZOOM_FACTOR[labelZoom];
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn } = usePanZoom(canvasRef);
@@ -242,7 +250,7 @@ export function LayeredMap() {
     // cone usually spans the gateway layer down to datastores, so fitting it
     // would shrink to specks -- in that case keep the focused node centered and
     // legible (its cone stays highlighted and pannable) instead.
-    if (fitZoom(box, viewport.w, viewport.h) >= LABEL_MIN_K) {
+    if (fitZoom(box, viewport.w, viewport.h) >= labelMinK) {
       fitBounds(box);
       return;
     }
@@ -338,7 +346,7 @@ export function LayeredMap() {
   // Never applied while isolated: isolation is the deliberate "make this tree
   // legible" mode, so its labels stay on even when a deep tree fits below the
   // threshold (e.g. dynamo-bff fits ~0.44) -- hiding them there defeats the point.
-  const labelsHidden = tf.k < LABEL_MIN_K && !isolated;
+  const labelsHidden = tf.k < labelMinK && !isolated;
 
   return (
     <div className={styles.root}>
@@ -360,7 +368,8 @@ export function LayeredMap() {
         style={{
           backgroundSize: `${22 * tf.k}px ${22 * tf.k}px`,
           backgroundPosition: `${tf.tx}px ${tf.ty}px`,
-        }}
+          ['--dot-k' as string]: dotAlphaScale(tf.k),
+        } as CSSProperties}
       >
         {/* packet glow sits below the world (edges + cards draw over it, so
             packets read as "absorbed" arriving at a service) */}

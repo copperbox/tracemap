@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../state/store';
-import { LogoIcon, SearchIcon, ThemeIcon } from './Icon';
+import { LogoIcon, SearchIcon } from './Icon';
+import { PreferencesMenu } from './PreferencesMenu';
 import { servicesByStatus } from '../lib/healthSummary';
 import { DOT, ELLIPSIS, fmtErr, fmtMs } from '../lib/format';
 import type { Status, TopologyService } from '../api/types';
@@ -92,8 +93,6 @@ export function TopBar() {
   const navigate = useStore((s) => s.navigate);
   const search = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
-  const theme = useStore((s) => s.theme);
-  const setTheme = useStore((s) => s.setTheme);
   const topology = useStore((s) => s.topology);
   const ingesting = useStore((s) => s.ingesting);
   const revealOnMap = useStore((s) => s.revealOnMap);
@@ -192,12 +191,7 @@ export function TopBar() {
         <span className={styles.ingestLabel}>{ingesting ? 'INGESTING' : 'IDLE'}</span>
       </div>
       <div className={styles.divider} />
-      <div
-        className={`${styles.themeBtn} hov-btn`}
-        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-      >
-        <ThemeIcon theme={theme} />
-      </div>
+      <PreferencesMenu />
     </div>
   );
 }
