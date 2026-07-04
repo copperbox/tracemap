@@ -1,4 +1,5 @@
 .claude/
+.pi/
 graphify-out/
 design_handoff_lattice_observability/
 prompt.txt
@@ -7,3 +8,4 @@ dist/
 *.log
 .env
 .env.local
+docs/qa-findings.md
