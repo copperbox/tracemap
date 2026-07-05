@@ -6,7 +6,12 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 ## Branch diff
 
-!`git diff {{TARGET_BRANCH}}...{{BRANCH}}`
+Generated artifacts under `graphify-out/` are excluded from this diff: they are
+machine-produced by `graphify update` and are always considered good — do not
+review them. The `| head -c` cap is a safety net so an unexpectedly large diff
+can never overflow the prompt.
+
+!`git diff {{TARGET_BRANCH}}...{{BRANCH}} -- . ':(exclude)graphify-out/**' | head -c 200000`
 
 ## Commits on this branch
 

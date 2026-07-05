@@ -15,6 +15,22 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   && apt-get update && apt-get install -y gh \
   && rm -rf /var/lib/apt/lists/*
 
+# Provision Playwright's Chromium and its OS dependencies while we are still
+# root. The web-UI verification the implementer needs (libnss3, the GTK/ATK
+# chain, wayland libs, ...) requires apt + a browser download — steps a non-root
+# agent cannot do at runtime. Baking them in turns "bootstrap a browser from
+# scratch" (which previously exhausted an agent's whole context) into a no-op.
+#
+# The browser lands in a shared, world-accessible PLAYWRIGHT_BROWSERS_PATH so
+# the agent user finds it; PLAYWRIGHT_VERSION is pinned so the agent installs a
+# matching Playwright JS package (see .sandcastle/implement-prompt.md). Keep the
+# two envs in sync with any bump.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PLAYWRIGHT_VERSION=1.49.1
+RUN npx -y playwright@${PLAYWRIGHT_VERSION} install --with-deps chromium \
+  && chmod -R a+rwX /ms-playwright \
+  && rm -rf /var/lib/apt/lists/*
+
 # Install uv system-wide (as root) so it lands on the default PATH and is
 # available to the agent user regardless of $HOME. Installing it after the
 # USER switch is fragile: uv installs to $HOME/.local/bin, and the value of

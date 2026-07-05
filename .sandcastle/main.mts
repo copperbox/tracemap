@@ -6,10 +6,13 @@
 //                               listing unblocked issues with branch names.
 //   Phase 2 (Execute + Review): For each issue, a sandbox is created via
 //                               createSandbox(). The implementer runs first
-//                               (100 iterations). If it produces commits, a
-//                               reviewer runs in the same sandbox on the same
-//                               branch (1 iteration). All issue pipelines run
-//                               concurrently via Promise.allSettled().
+//                               (100 iterations). If the branch is then ahead
+//                               of the target (regardless of which run made the
+//                               commits), a reviewer runs in the same sandbox on
+//                               the same branch (1 iteration); a reviewer failure
+//                               is logged but never discards committed work. All
+//                               issue pipelines run concurrently via
+//                               Promise.allSettled().
 //   Phase 3 (Merge):            A single agent merges all completed branches
 //                               into the current branch.
 //
@@ -43,6 +46,12 @@ const planSchema = z.object({
 // Raise this if your backlog is large; lower it for a quick smoke-test run.
 const MAX_ITERATIONS = 10;
 
+// The branch that completed work is reviewed against and merged into. Must match
+// the repo's base branch (Sandcastle also injects it into the reviewer/merger
+// prompts as {{TARGET_BRANCH}}). The branch-state gate below asks git how far a
+// work branch is ahead of this ref.
+const TARGET_BRANCH = "main";
+
 // Hooks run inside the sandbox before the agent starts each iteration.
 // npm install ensures the sandbox always has fresh dependencies.
 const hooks = {
@@ -53,6 +62,31 @@ const hooks = {
 // starts. Avoids a full npm install from scratch; the hook above handles
 // platform-specific binaries and any packages added since the last copy.
 const copyToWorktree = ["node_modules"];
+
+// Count the commits a work branch carries that the target branch does not yet
+// have. This — not "did this agent invocation commit?" — is the source of truth
+// for "is there work to review and merge?". It reflects the branch's actual
+// state, so work committed in an earlier iteration (whose reviewer may have
+// crashed) is still picked up by a later iteration even if that iteration's
+// implementer adds nothing new. Runs inside the sandbox, where `exec` defaults
+// its cwd to the worktree repo.
+async function branchCommitsAhead(
+  sandbox: sandcastle.Sandbox,
+  target: string,
+  branch: string,
+): Promise<{ sha: string }[]> {
+  const res = await sandbox.exec(`git rev-list ${target}..${branch}`);
+  if (res.exitCode !== 0) {
+    throw new Error(
+      `git rev-list ${target}..${branch} failed (exit ${res.exitCode}): ${res.stderr.trim()}`,
+    );
+  }
+  return res.stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((sha) => ({ sha }));
+}
 
 // ---------------------------------------------------------------------------
 // Main loop
@@ -106,7 +140,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   //
   // For each issue, create a sandbox via createSandbox() so the implementer
   // and reviewer share the same sandbox instance per branch. The implementer
-  // runs first; if it produces commits, the reviewer runs in the same sandbox.
+  // runs first; the reviewer then runs whenever the branch is ahead of the
+  // target (branch-state gate), not merely when this run committed.
   //
   // Promise.allSettled means one failing pipeline doesn't cancel the others.
   // -------------------------------------------------------------------------
@@ -134,9 +169,38 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
           },
         });
 
-        // Only review if the implementer produced commits
-        if (implement.commits.length > 0) {
-          const review = await sandbox.run({
+        if (implement.completionSignal === undefined) {
+          // The implementer stopped without signalling completion — it hit its
+          // iteration cap or ran out of context. Any commits it managed to make
+          // are still on the branch and are handled by the branch-state check
+          // below; we just surface that the run ended early.
+          console.warn(
+            `  ⚠ ${issue.id} implementer stopped without a completion signal (iteration cap or context limit).`,
+          );
+        }
+
+        // Gate review + merge on the BRANCH's state, not on whether this
+        // particular implementer invocation committed. A prior iteration can
+        // leave the branch ahead of the target with unreviewed work (e.g. its
+        // reviewer crashed on an oversized prompt); a later iteration whose
+        // implementer adds nothing new must still trigger review and merge.
+        const commits = await branchCommitsAhead(
+          sandbox,
+          TARGET_BRANCH,
+          issue.branch,
+        );
+
+        if (commits.length === 0) {
+          // Branch has nothing the target doesn't already have.
+          return { branch: issue.branch, commits };
+        }
+
+        // The branch carries commits to review. A reviewer failure (prompt too
+        // long, transient API error, etc.) must NOT discard the implementer's
+        // committed work: log it and fall through so the branch still reaches
+        // the merge phase with its commits intact.
+        try {
+          await sandbox.run({
             name: "reviewer",
             maxIterations: 1,
             agent: sandcastle.claudeCode("claude-opus-4-8"),
@@ -145,16 +209,21 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
               BRANCH: issue.branch,
             },
           });
-
-          // Merge commits from both runs so the merge phase sees all of them.
-          // Each sandbox.run() only returns commits from its own run.
-          return {
-            ...review,
-            commits: [...implement.commits, ...review.commits],
-          };
+        } catch (err) {
+          console.error(
+            `  ⚠ reviewer failed on ${issue.branch}: ${
+              err instanceof Error ? err.message : err
+            }. Keeping committed work for merge.`,
+          );
         }
 
-        return implement;
+        // Re-read the branch state: the reviewer may have added refinement
+        // commits. Reporting the branch's true ahead-of-target set means the
+        // merge phase picks up all of it regardless of which run produced what.
+        return {
+          branch: issue.branch,
+          commits: await branchCommitsAhead(sandbox, TARGET_BRANCH, issue.branch),
+        };
       } finally {
         await sandbox.close();
       }

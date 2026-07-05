@@ -37,6 +37,26 @@ If applicable, use RGR to complete the task.
 
 Before committing, run `npm run typecheck` and `npm run test` to ensure the tests pass.
 
+## Verifying UI changes
+
+If your change affects the web UI and you want to confirm it end-to-end, a
+headless Chromium and **all of its OS dependencies are already installed** in
+this sandbox. The browser lives at the path in env `PLAYWRIGHT_BROWSERS_PATH`,
+and the matching Playwright version is in env `PLAYWRIGHT_VERSION`. To drive the
+app:
+
+1. Add only the Playwright JS package (the browser itself is already downloaded):
+   `npm i -D playwright@$PLAYWRIGHT_VERSION`
+2. Start the dev server (e.g. `npx vite` in `web/`) and drive it with a short
+   script, mocking `/api/topology` as needed.
+
+Do **NOT** run `playwright install-deps`, download `.deb` packages, fetch system
+libraries, or otherwise bootstrap a browser by hand — that is already done, and
+attempting it will burn your entire context window. If UI verification still
+fails for any reason, fall back to `npm run typecheck` + `npm run test`, note the
+blocker in your commit message, and move on. Never spend the run fighting
+browser setup.
+
 # COMMIT
 
 Make a git commit. The commit message must:
