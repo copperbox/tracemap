@@ -7,9 +7,6 @@ RUN apt-get update && apt-get install -y \
   jq \
   && rm -rf /var/lib/apt/lists/*
 
-# Install uv - needed to install graphify
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
 # Install GitHub CLI
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -17,6 +14,13 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
   | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
   && apt-get update && apt-get install -y gh \
   && rm -rf /var/lib/apt/lists/*
+
+# Install uv system-wide (as root) so it lands on the default PATH and is
+# available to the agent user regardless of $HOME. Installing it after the
+# USER switch is fragile: uv installs to $HOME/.local/bin, and the value of
+# $HOME after `USER` depends on the builder, so uv can end up off-PATH.
+RUN curl -LsSf https://astral.sh/uv/install.sh \
+  | env UV_INSTALL_DIR=/usr/local/bin INSTALLER_NO_MODIFY_PATH=1 sh
 
 # Build-args for UID/GID alignment: sandcastle docker build-image
 # defaults these to the host user's UID/GID so image-built files
@@ -28,6 +32,10 @@ ARG AGENT_GID=1000
 RUN groupmod -o -g $AGENT_GID node && usermod -o -u $AGENT_UID -g $AGENT_GID -d /home/agent -m -l agent node
 USER ${AGENT_UID}:${AGENT_GID}
 
+# Pin HOME so per-user installs (Claude CLI, `uv tool install`, graphify)
+# reliably land in /home/agent/.local/bin, which is added to PATH below.
+ENV HOME=/home/agent
+
 # Install Claude Code CLI
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
@@ -36,7 +44,7 @@ ENV PATH="/home/agent/.local/bin:$PATH"
 
 WORKDIR /home/agent
 
-# Install Graphify and setup in current project for claude
+# Install Graphify (uv is already installed system-wide above).
 RUN uv tool install graphifyy
 RUN graphify install --project && graphify claude install
 
