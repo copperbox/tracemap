@@ -17,6 +17,7 @@
   "15": "Charts & Hover Sync",
   "16": "Service Registry (OTLP)",
   "17": "OTLP Ingest & Normalization",
+  "18": "TopBar.tsx",
   "19": "Simulated Error Catalog",
   "20": "Sim Trace Payloads",
   "21": "Map Camera & Pan/Zoom",
@@ -36,5 +37,5 @@
   "35": "Web HTML Entry",
   "36": "Vite Env Types",
   "37": "Vite Config",
-  "42": "index.ts"
+  "38": "PreferencesMenu.tsx"
 }

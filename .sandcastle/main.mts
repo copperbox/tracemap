@@ -24,9 +24,11 @@
 // Or add to package.json:
 //   "scripts": { "sandcastle": "npx tsx .sandcastle/main.mts" }
 
+import { exit } from "node:process";
 import * as sandcastle from "@ai-hero/sandcastle";
 import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 import { z } from "zod";
+import { checkTasks } from "./check-tasks.mts";
 
 // The planner emits its plan as JSON inside <plan> tags; Output.object extracts
 // and validates it against this schema. We use Zod here, but any Standard
@@ -45,6 +47,13 @@ const planSchema = z.object({
 // Maximum number of plan→execute→merge cycles before stopping.
 // Raise this if your backlog is large; lower it for a quick smoke-test run.
 const MAX_ITERATIONS = 10;
+
+// Exit code used when there is no work to do (no Sandcastle-labelled issues, or
+// every open issue is blocked). Distinct from 0 (worked through the backlog
+// cleanly) and 1 (a crash/thrown error) so a supervising loop — e.g.
+// scripts/sandcastle-loop.sh — can tell "idle, stop polling" apart from both a
+// normal completion and a real failure.
+const IDLE_EXIT_CODE = 3;
 
 // The branch that completed work is reviewed against and merged into. Must match
 // the repo's base branch (Sandcastle also injects it into the reviewer/merger
@@ -96,11 +105,30 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   console.log(`\n=== Iteration ${iteration}/${MAX_ITERATIONS} ===\n`);
 
   // -------------------------------------------------------------------------
+  // Phase 0: Pre-flight issue check
+  //
+  // Fetch the Sandcastle-labelled open issues on the HOST before spinning up
+  // any sandbox. If there are none, there is nothing to plan — skip the entire
+  // plan→execute→merge cycle so we don't pay for a needless planner run.
+  // -------------------------------------------------------------------------
+  const openIssues = await checkTasks();
+
+  if (openIssues.length === 0) {
+    console.log("No open Sandcastle-labelled issues to work on. Exiting.");
+    exit(IDLE_EXIT_CODE);
+  }
+
+  console.log(`Found ${openIssues.length} Sandcastle-labelled open issue(s).`);
+
+  // -------------------------------------------------------------------------
   // Phase 1: Plan
   //
   // The planning agent (opus, for deeper reasoning) reads the open issue list,
   // builds a dependency graph, and selects the issues that can be worked in
   // parallel right now (i.e., no blocking dependencies on other open issues).
+  //
+  // The issue list is fetched once above and injected via promptArgs, so the
+  // planner prompt doesn't re-invoke gh itself.
   //
   // It outputs a <plan> JSON block — Output.object parses and validates it.
   // -------------------------------------------------------------------------
@@ -114,6 +142,11 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     // Opus for planning: dependency analysis benefits from deeper reasoning.
     agent: sandcastle.claudeCode("claude-opus-4-8"),
     promptFile: "./.sandcastle/plan-prompt.md",
+    promptArgs: {
+      // The pre-filtered issue list, injected into the {{ISSUES_JSON}}
+      // placeholder in plan-prompt.md.
+      ISSUES_JSON: JSON.stringify(openIssues, null, 2),
+    },
     // Extract and validate the <plan> JSON into a typed object. Throws
     // StructuredOutputError if the tag is missing, the JSON is malformed, or
     // validation fails — which aborts the loop.
@@ -125,7 +158,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   if (issues.length === 0) {
     // No unblocked work — either everything is done or everything is blocked.
     console.log("No unblocked issues to work on. Exiting.");
-    break;
+    exit(IDLE_EXIT_CODE);
   }
 
   console.log(
