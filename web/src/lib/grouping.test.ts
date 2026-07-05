@@ -134,6 +134,25 @@ describe('buildGraph', () => {
     expect(g.nodes.some((n) => n.key === 'api.stripe.com' && n.kind === 'service')).toBe(true);
   });
 
+  it('tags each service node with its owning team name', () => {
+    const g = buildGraph(topo(services, edges), { mergedTeams: [] });
+    expect(g.nodes.find((n) => n.key === 'checkout-svc')?.teamName).toBe('Checkout');
+    expect(g.nodes.find((n) => n.key === 'catalog-svc')?.teamName).toBe('Catalog');
+    // teamless external has no team name
+    expect(g.nodes.find((n) => n.key === 'api.stripe.com')?.teamName).toBeNull();
+  });
+
+  it('keeps every team individual when team grouping is disabled', () => {
+    const g = buildGraph(topo(services, edges), { mergedTeams: [1, 2], teamGrouping: false });
+    // no meganodes even though both teams are "merged"
+    expect(g.nodes.every((n) => n.kind === 'service')).toBe(true);
+    expect(g.nodes.map((n) => n.key).sort()).toEqual(
+      ['api.stripe.com', 'catalog-svc', 'checkout-svc', 'orders-svc'].sort(),
+    );
+    expect(g.edges).toHaveLength(4);
+    expect(g.nodes.find((n) => n.key === 'checkout-svc')?.teamName).toBe('Checkout');
+  });
+
   it('externals assigned to a team fold into that meganode', () => {
     const withTeam = services.map((s) => (s.id === 'api.stripe.com' ? { ...s, teamId: 1 } : s));
     const g = buildGraph(topo(withTeam, edges), { mergedTeams: [1, 2] });

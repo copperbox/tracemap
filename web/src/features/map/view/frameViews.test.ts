@@ -9,6 +9,7 @@ const node = (over: Partial<GraphNode> = {}): GraphNode => ({
   key: 'svc-a',
   kind: 'service',
   teamId: 1,
+  teamName: null,
   label: 'svc-a',
   type: 'service',
   status: 'ok',

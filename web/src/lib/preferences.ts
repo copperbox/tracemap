@@ -23,11 +23,18 @@ export const LABEL_ZOOM_FACTOR: Record<LabelZoomLevel, number> = {
 export interface Prefs {
   theme: Theme;
   labelZoom: LabelZoomLevel;
+  /**
+   * Whether the map wraps each team's services in a merge-able ownership
+   * container. When off, services stay individual and each carries its owning
+   * team as a subtitle instead.
+   */
+  teamGrouping: boolean;
 }
 
 export const DEFAULT_PREFS: Prefs = {
   theme: 'dark',
   labelZoom: 'default',
+  teamGrouping: true,
 };
 
 const PREFS_KEY = 'tracemap.prefs';
@@ -47,6 +54,8 @@ export function loadPrefs(): Prefs {
       labelZoom: LABEL_ZOOM_LEVELS.includes(raw.labelZoom as LabelZoomLevel)
         ? (raw.labelZoom as LabelZoomLevel)
         : DEFAULT_PREFS.labelZoom,
+      teamGrouping:
+        typeof raw.teamGrouping === 'boolean' ? raw.teamGrouping : DEFAULT_PREFS.teamGrouping,
     };
   } catch {
     return { ...DEFAULT_PREFS };

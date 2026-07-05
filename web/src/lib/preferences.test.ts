@@ -34,8 +34,8 @@ describe('loadPrefs', () => {
   });
 
   it('parses stored preferences', () => {
-    stubStorage({ [KEY]: JSON.stringify({ theme: 'light', labelZoom: 'far' }) });
-    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'far' });
+    stubStorage({ [KEY]: JSON.stringify({ theme: 'light', labelZoom: 'far', teamGrouping: false }) });
+    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'far', teamGrouping: false });
   });
 
   it('returns defaults for corrupt JSON', () => {
@@ -45,20 +45,26 @@ describe('loadPrefs', () => {
 
   it('falls back field-by-field for unknown enum values', () => {
     stubStorage({ [KEY]: JSON.stringify({ theme: 'light', labelZoom: 'bogus' }) });
-    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'default' });
+    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'default', teamGrouping: true });
   });
 
   it('fills missing fields with defaults', () => {
     stubStorage({ [KEY]: JSON.stringify({ theme: 'light' }) });
-    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'default' });
+    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'default', teamGrouping: true });
+  });
+
+  it('defaults team grouping on, and ignores a non-boolean value', () => {
+    expect(DEFAULT_PREFS.teamGrouping).toBe(true);
+    stubStorage({ [KEY]: JSON.stringify({ teamGrouping: 'nope' }) });
+    expect(loadPrefs().teamGrouping).toBe(true);
   });
 });
 
 describe('savePrefs', () => {
   it('round-trips through load', () => {
     stubStorage();
-    savePrefs({ theme: 'light', labelZoom: 'close' });
-    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'close' });
+    savePrefs({ theme: 'light', labelZoom: 'close', teamGrouping: false });
+    expect(loadPrefs()).toEqual({ theme: 'light', labelZoom: 'close', teamGrouping: false });
   });
 
   it('writes under the stable storage key', () => {

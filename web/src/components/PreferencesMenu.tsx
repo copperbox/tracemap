@@ -16,6 +16,11 @@ const LABEL_ZOOM_OPTIONS: { value: LabelZoomLevel; label: string }[] = [
   { value: 'close', label: 'Zoomed in' },
 ];
 
+const TEAM_GROUPING_OPTIONS: { value: boolean; label: string }[] = [
+  { value: true, label: 'On' },
+  { value: false, label: 'Off' },
+];
+
 /**
  * The header preferences cog: opens a popover with the persisted user
  * preferences (theme, map label zoom threshold).
@@ -25,6 +30,8 @@ export function PreferencesMenu() {
   const setTheme = useStore((s) => s.setTheme);
   const labelZoom = useStore((s) => s.labelZoom);
   const setLabelZoom = useStore((s) => s.setLabelZoom);
+  const teamGrouping = useStore((s) => s.teamGrouping);
+  const setTeamGrouping = useStore((s) => s.setTeamGrouping);
 
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -105,6 +112,29 @@ export function PreferencesMenu() {
               ))}
             </div>
             <div className={styles.hint}>How far you must zoom in before node labels show</div>
+          </div>
+
+          <div className={styles.row}>
+            <div className={styles.rowLabel}>Team grouping</div>
+            <div className={styles.segment} role="radiogroup" aria-label="Team grouping">
+              {TEAM_GROUPING_OPTIONS.map((opt) => (
+                <button
+                  type="button"
+                  key={String(opt.value)}
+                  role="radio"
+                  aria-checked={teamGrouping === opt.value}
+                  className={
+                    teamGrouping === opt.value
+                      ? `${styles.segBtn} ${styles.segBtnActive}`
+                      : styles.segBtn
+                  }
+                  onClick={() => setTeamGrouping(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.hint}>Wrap each team's services in a merge-able container</div>
           </div>
         </div>
       )}

@@ -7,6 +7,7 @@ const node = (key: string, rps: number, community?: number): GraphNode => ({
   kind: 'service',
   serviceId: key,
   teamId: 1,
+  teamName: null,
   label: key.toUpperCase(),
   type: 'service',
   status: 'ok',

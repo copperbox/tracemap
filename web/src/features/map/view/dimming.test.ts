@@ -8,6 +8,7 @@ const svc = (key: string, teamId: number | null, label = key): GraphNode => ({
   kind: 'service',
   serviceId: key,
   teamId,
+  teamName: null,
   label,
   type: 'service',
   status: 'ok',

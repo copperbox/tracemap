@@ -7,6 +7,7 @@ const node = (key: string, kind: 'service' | 'group' = 'service', memberIds: str
   kind,
   serviceId: kind === 'service' ? key : undefined,
   teamId: 1,
+  teamName: null,
   label: key,
   type: kind === 'group' ? 'group' : 'service',
   status: 'ok',
