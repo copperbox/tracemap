@@ -1,5 +1,6 @@
 /**
- * localStorage persistence for app-wide user preferences (theme, label zoom).
+ * localStorage persistence for app-wide user preferences (theme, label zoom,
+ * team grouping).
  * Loaded once when the store initializes; saved on every preference change.
  */
 

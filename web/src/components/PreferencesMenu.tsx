@@ -23,7 +23,7 @@ const TEAM_GROUPING_OPTIONS: { value: boolean; label: string }[] = [
 
 /**
  * The header preferences cog: opens a popover with the persisted user
- * preferences (theme, map label zoom threshold).
+ * preferences (theme, map label zoom threshold, team grouping).
  */
 export function PreferencesMenu() {
   const theme = useStore((s) => s.theme);
