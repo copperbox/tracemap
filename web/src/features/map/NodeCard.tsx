@@ -12,6 +12,7 @@ export function NodeCard({
   tick,
   dim,
   selected,
+  teamLabel,
   compact,
   fade,
   ghost,
@@ -26,6 +27,8 @@ export function NodeCard({
   tick: number;
   dim: boolean;
   selected: boolean;
+  /** Owning team shown as a subtitle under the name (team grouping off only). */
+  teamLabel?: string | null;
   /** Zoomed too far out to read text: hide the labels (keeping the card's
    *  footprint) so the map reads as clean status nodes rather than a blur. */
   compact?: boolean;
@@ -105,6 +108,7 @@ export function NodeCard({
           <span className={`${styles.statusDot} ${dotCls}`} />
         </div>
         <div className={`${styles.name} ${isGroup ? styles.nameGroup : ''}`}>{node.label}</div>
+        {teamLabel && <div className={styles.team}>{teamLabel}</div>}
         <div className={styles.metrics}>
           <span>{fmtRps(node.rps * jit(node.key, tick))}/s</span>
           <span className={styles.sep}>{DOT}</span>

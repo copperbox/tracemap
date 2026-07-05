@@ -36,6 +36,10 @@ interface AppState {
   theme: Theme;
   /** Required zoom before map node labels render (user preference, persisted). */
   labelZoom: LabelZoomLevel;
+  /** Whether the map wraps each team's services in a merge-able container
+   *  (user preference, persisted). Off draws every service individually with
+   *  its owning team as a subtitle. */
+  teamGrouping: boolean;
   tick: number;
   range: TimeRange;
   openTraceId: string | null;
@@ -63,6 +67,7 @@ interface AppState {
   setMergedTeams: (teamIds: number[]) => void;
   setTheme: (t: Theme) => void;
   setLabelZoom: (l: LabelZoomLevel) => void;
+  setTeamGrouping: (on: boolean) => void;
   bumpTick: () => void;
   setRange: (r: TimeRange) => void;
   openTrace: (traceId: string | null) => void;
@@ -87,6 +92,7 @@ export const useStore = create<AppState>((set) => ({
   mergedTeams: [],
   theme: prefs.theme,
   labelZoom: prefs.labelZoom,
+  teamGrouping: prefs.teamGrouping,
   tick: 0,
   range: DEFAULT_RANGE,
   openTraceId: null,
@@ -142,13 +148,18 @@ export const useStore = create<AppState>((set) => ({
   setTheme: (theme) =>
     set((s) => {
       document.body.setAttribute('data-theme', theme);
-      savePrefs({ theme, labelZoom: s.labelZoom });
+      savePrefs({ theme, labelZoom: s.labelZoom, teamGrouping: s.teamGrouping });
       return { theme };
     }),
   setLabelZoom: (labelZoom) =>
     set((s) => {
-      savePrefs({ theme: s.theme, labelZoom });
+      savePrefs({ theme: s.theme, labelZoom, teamGrouping: s.teamGrouping });
       return { labelZoom };
+    }),
+  setTeamGrouping: (teamGrouping) =>
+    set((s) => {
+      savePrefs({ theme: s.theme, labelZoom: s.labelZoom, teamGrouping });
+      return { teamGrouping };
     }),
   bumpTick: () => set((s) => ({ tick: s.tick + 1 })),
   setRange: (range) => set({ range }),

@@ -9,8 +9,8 @@
       "source_file": "server/package.json",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "server_package",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_json",
+      "community": 8,
       "norm_label": "package.json"
     },
     {
@@ -19,8 +19,8 @@
       "source_file": "server/package.json",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "server_package_name",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_name",
+      "community": 8,
       "norm_label": "name"
     },
     {
@@ -29,8 +29,8 @@
       "source_file": "server/package.json",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "server_package_version",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_version",
+      "community": 8,
       "norm_label": "version"
     },
     {
@@ -39,8 +39,8 @@
       "source_file": "server/package.json",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "server_package_private",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_private",
+      "community": 8,
       "norm_label": "private"
     },
     {
@@ -49,8 +49,8 @@
       "source_file": "server/package.json",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "server_package_type",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_type",
+      "community": 8,
       "norm_label": "type"
     },
     {
@@ -59,8 +59,8 @@
       "source_file": "server/package.json",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "server_package_scripts",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts",
+      "community": 8,
       "norm_label": "scripts"
     },
     {
@@ -69,8 +69,8 @@
       "source_file": "server/package.json",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "server_package_scripts_dev",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_dev",
+      "community": 8,
       "norm_label": "dev"
     },
     {
@@ -79,8 +79,8 @@
       "source_file": "server/package.json",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "server_package_scripts_start",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_start",
+      "community": 8,
       "norm_label": "start"
     },
     {
@@ -89,8 +89,8 @@
       "source_file": "server/package.json",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "server_package_scripts_build",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_build",
+      "community": 8,
       "norm_label": "build"
     },
     {
@@ -99,8 +99,8 @@
       "source_file": "server/package.json",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "server_package_scripts_migrate",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_migrate",
+      "community": 8,
       "norm_label": "migrate"
     },
     {
@@ -109,8 +109,8 @@
       "source_file": "server/package.json",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "server_package_scripts_simulate",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_simulate",
+      "community": 8,
       "norm_label": "simulate"
     },
     {
@@ -119,8 +119,8 @@
       "source_file": "server/package.json",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "server_package_scripts_test",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_test",
+      "community": 8,
       "norm_label": "test"
     },
     {
@@ -129,8 +129,8 @@
       "source_file": "server/package.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "server_package_scripts_typecheck",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_scripts_typecheck",
+      "community": 8,
       "norm_label": "typecheck"
     },
     {
@@ -139,8 +139,8 @@
       "source_file": "server/package.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "server_package_dependencies",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_dependencies",
+      "community": 8,
       "norm_label": "dependencies"
     },
     {
@@ -149,8 +149,8 @@
       "source_file": "server/package.json",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "server_package_dependencies_fastify_cors",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_dependencies_fastify_cors",
+      "community": 8,
       "norm_label": "@fastify/cors"
     },
     {
@@ -159,8 +159,8 @@
       "source_file": "server/package.json",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "server_package_dependencies_fastify",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_dependencies_fastify",
+      "community": 8,
       "norm_label": "fastify"
     },
     {
@@ -169,8 +169,8 @@
       "source_file": "server/package.json",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "server_package_dependencies_pg",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_dependencies_pg",
+      "community": 8,
       "norm_label": "pg"
     },
     {
@@ -179,8 +179,8 @@
       "source_file": "server/package.json",
       "source_location": "L19",
       "_origin": "ast",
-      "id": "server_package_dependencies_protobufjs",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_dependencies_protobufjs",
+      "community": 8,
       "norm_label": "protobufjs"
     },
     {
@@ -189,8 +189,8 @@
       "source_file": "server/package.json",
       "source_location": "L21",
       "_origin": "ast",
-      "id": "server_package_devdependencies",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies",
+      "community": 8,
       "norm_label": "devdependencies"
     },
     {
@@ -199,8 +199,8 @@
       "source_file": "server/package.json",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "server_package_devdependencies_types_node",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies_types_node",
+      "community": 8,
       "norm_label": "@types/node"
     },
     {
@@ -209,8 +209,8 @@
       "source_file": "server/package.json",
       "source_location": "L23",
       "_origin": "ast",
-      "id": "server_package_devdependencies_types_pg",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies_types_pg",
+      "community": 8,
       "norm_label": "@types/pg"
     },
     {
@@ -219,8 +219,8 @@
       "source_file": "server/package.json",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "server_package_devdependencies_tsx",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies_tsx",
+      "community": 8,
       "norm_label": "tsx"
     },
     {
@@ -229,8 +229,8 @@
       "source_file": "server/package.json",
       "source_location": "L25",
       "_origin": "ast",
-      "id": "server_package_devdependencies_typescript",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies_typescript",
+      "community": 8,
       "norm_label": "typescript"
     },
     {
@@ -239,8 +239,8 @@
       "source_file": "server/package.json",
       "source_location": "L26",
       "_origin": "ast",
-      "id": "server_package_devdependencies_vitest",
-      "community": 9,
+      "id": "home_dan_projects_tracemap_server_package_devdependencies_vitest",
+      "community": 8,
       "norm_label": "vitest"
     },
     {
@@ -860,7 +860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_config",
-      "community": 30,
+      "community": 42,
       "norm_label": "config.ts"
     },
     {
@@ -870,7 +870,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_config_config",
-      "community": 30,
+      "community": 42,
       "norm_label": "config"
     },
     {
@@ -880,7 +880,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_db_migrate",
-      "community": 30,
+      "community": 42,
       "norm_label": "migrate.ts"
     },
     {
@@ -890,7 +890,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_db_migrate_migrations_dir",
-      "community": 30,
+      "community": 42,
       "norm_label": "migrations_dir"
     },
     {
@@ -900,7 +900,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "server_src_db_migrate_migrate",
-      "community": 30,
+      "community": 42,
       "norm_label": "migrate()"
     },
     {
@@ -940,7 +940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_index",
-      "community": 30,
+      "community": 42,
       "norm_label": "index.ts"
     },
     {
@@ -950,7 +950,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "server_src_index_main",
-      "community": 30,
+      "community": 42,
       "norm_label": "main()"
     },
     {
@@ -1010,7 +1010,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "server_src_otlp_decode_normalizedspan",
-      "community": 17,
+      "community": 12,
       "norm_label": "normalizedspan"
     },
     {
@@ -1020,7 +1020,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "server_src_otlp_decode_normalizedresourcespans",
-      "community": 17,
+      "community": 12,
       "norm_label": "normalizedresourcespans"
     },
     {
@@ -1030,7 +1030,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "server_src_otlp_decode_normalizedmetricpoint",
-      "community": 17,
+      "community": 12,
       "norm_label": "normalizedmetricpoint"
     },
     {
@@ -1180,7 +1180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_test",
-      "community": 22,
+      "community": 24,
       "norm_label": "edgeresolver.test.ts"
     },
     {
@@ -1190,7 +1190,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_test_client",
-      "community": 22,
+      "community": 24,
       "norm_label": "client()"
     },
     {
@@ -1200,7 +1200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver",
-      "community": 22,
+      "community": 24,
       "norm_label": "edgeresolver.ts"
     },
     {
@@ -1210,7 +1210,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_clientspaninfo",
-      "community": 22,
+      "community": 24,
       "norm_label": "clientspaninfo"
     },
     {
@@ -1220,7 +1220,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeobservation",
-      "community": 22,
+      "community": 24,
       "norm_label": "edgeobservation"
     },
     {
@@ -1230,7 +1230,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_heldclient",
-      "community": 22,
+      "community": 24,
       "norm_label": "heldclient"
     },
     {
@@ -1240,7 +1240,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_heldserver",
-      "community": 22,
+      "community": 24,
       "norm_label": "heldserver"
     },
     {
@@ -1250,7 +1250,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver",
-      "community": 22,
+      "community": 24,
       "norm_label": "edgeresolver"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_constructor",
-      "community": 22,
+      "community": 24,
       "norm_label": ".constructor()"
     },
     {
@@ -1270,7 +1270,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_onclientspan",
-      "community": 22,
+      "community": 24,
       "norm_label": ".onclientspan()"
     },
     {
@@ -1280,7 +1280,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_onserverspan",
-      "community": 22,
+      "community": 24,
       "norm_label": ".onserverspan()"
     },
     {
@@ -1290,7 +1290,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_flush",
-      "community": 22,
+      "community": 24,
       "norm_label": ".flush()"
     },
     {
@@ -1300,7 +1300,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_pendingcount",
-      "community": 22,
+      "community": 24,
       "norm_label": ".pendingcount()"
     },
     {
@@ -1310,7 +1310,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "server_src_otlp_edgeresolver_edgeresolver_observation",
-      "community": 22,
+      "community": 24,
       "norm_label": ".observation()"
     },
     {
@@ -1320,7 +1320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_infer_test",
-      "community": 24,
+      "community": 30,
       "norm_label": "infer.test.ts"
     },
     {
@@ -1330,7 +1330,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_src_otlp_infer_test_nointernal",
-      "community": 24,
+      "community": 30,
       "norm_label": "nointernal()"
     },
     {
@@ -1340,7 +1340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_infer",
-      "community": 24,
+      "community": 30,
       "norm_label": "infer.ts"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "server_src_otlp_infer_servicetype",
-      "community": 16,
+      "community": 22,
       "norm_label": "servicetype"
     },
     {
@@ -1360,7 +1360,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "server_src_otlp_infer_peerguess",
-      "community": 22,
+      "community": 24,
       "norm_label": "peerguess"
     },
     {
@@ -1370,7 +1370,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "server_src_otlp_infer_db_system_type",
-      "community": 24,
+      "community": 30,
       "norm_label": "db_system_type"
     },
     {
@@ -1380,7 +1380,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "server_src_otlp_infer_messaging_type",
-      "community": 24,
+      "community": 30,
       "norm_label": "messaging_type"
     },
     {
@@ -1390,7 +1390,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "server_src_otlp_infer_attrstr",
-      "community": 24,
+      "community": 30,
       "norm_label": "attrstr()"
     },
     {
@@ -1400,7 +1400,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "server_src_otlp_infer_stripport",
-      "community": 24,
+      "community": 30,
       "norm_label": "stripport()"
     },
     {
@@ -1410,7 +1410,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "server_src_otlp_infer_hostof",
-      "community": 24,
+      "community": 30,
       "norm_label": "hostof()"
     },
     {
@@ -1420,7 +1420,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "server_src_otlp_infer_hostlabel",
-      "community": 24,
+      "community": 30,
       "norm_label": "hostlabel()"
     },
     {
@@ -1430,7 +1430,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "server_src_otlp_infer_inferpeer",
-      "community": 24,
+      "community": 30,
       "norm_label": "inferpeer()"
     },
     {
@@ -1440,7 +1440,7 @@
       "source_location": "L148",
       "_origin": "ast",
       "id": "server_src_otlp_infer_inferowntype",
-      "community": 24,
+      "community": 30,
       "norm_label": "inferowntype()"
     },
     {
@@ -1450,7 +1450,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "server_src_otlp_infer_runtimeof",
-      "community": 24,
+      "community": 30,
       "norm_label": "runtimeof()"
     },
     {
@@ -1460,7 +1460,7 @@
       "source_location": "L172",
       "_origin": "ast",
       "id": "server_src_otlp_infer_teamof",
-      "community": 24,
+      "community": 30,
       "norm_label": "teamof()"
     },
     {
@@ -1470,7 +1470,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "server_src_otlp_infer_regionof",
-      "community": 24,
+      "community": 30,
       "norm_label": "regionof()"
     },
     {
@@ -1480,7 +1480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_ingest",
-      "community": 17,
+      "community": 26,
       "norm_label": "ingest.ts"
     },
     {
@@ -1490,7 +1490,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_edgeresolver",
-      "community": 1,
+      "community": 26,
       "norm_label": "edgeresolver"
     },
     {
@@ -1500,7 +1500,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_edgeeventbuffer",
-      "community": 17,
+      "community": 26,
       "norm_label": "edgeeventbuffer"
     },
     {
@@ -1510,7 +1510,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_edgecounts",
-      "community": 17,
+      "community": 26,
       "norm_label": "edgecounts"
     },
     {
@@ -1520,7 +1520,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_flushedgeevents",
-      "community": 17,
+      "community": 26,
       "norm_label": "flushedgeevents()"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_flushedgeupserts",
-      "community": 17,
+      "community": 26,
       "norm_label": "flushedgeupserts()"
     },
     {
@@ -1540,7 +1540,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_startingestloop",
-      "community": 17,
+      "community": 26,
       "norm_label": "startingestloop()"
     },
     {
@@ -1550,7 +1550,7 @@
       "source_location": "L89",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_stopingestloop",
-      "community": 17,
+      "community": 26,
       "norm_label": "stopingestloop()"
     },
     {
@@ -1560,7 +1560,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_nanotoms",
-      "community": 17,
+      "community": 26,
       "norm_label": "nanotoms()"
     },
     {
@@ -1570,7 +1570,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_durationms",
-      "community": 17,
+      "community": 26,
       "norm_label": "durationms()"
     },
     {
@@ -1580,7 +1580,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_httpstatusof",
-      "community": 17,
+      "community": 26,
       "norm_label": "httpstatusof()"
     },
     {
@@ -1590,7 +1590,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_iserrorspan",
-      "community": 17,
+      "community": 26,
       "norm_label": "iserrorspan()"
     },
     {
@@ -1600,7 +1600,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_ingeststats",
-      "community": 17,
+      "community": 26,
       "norm_label": "ingeststats"
     },
     {
@@ -1610,7 +1610,7 @@
       "source_location": "L123",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_ingesttraces",
-      "community": 17,
+      "community": 26,
       "norm_label": "ingesttraces()"
     },
     {
@@ -1630,7 +1630,7 @@
       "source_location": "L249",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_flushallfortest",
-      "community": 17,
+      "community": 26,
       "norm_label": "flushallfortest()"
     },
     {
@@ -1640,7 +1640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test",
-      "community": 16,
+      "community": 22,
       "norm_label": "registry.test.ts"
     },
     {
@@ -1650,7 +1650,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_querymock",
-      "community": 16,
+      "community": 22,
       "norm_label": "{ querymock }"
     },
     {
@@ -1660,7 +1660,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_loadrow",
-      "community": 16,
+      "community": 22,
       "norm_label": "loadrow"
     },
     {
@@ -1670,7 +1670,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_stubdb",
-      "community": 16,
+      "community": 22,
       "norm_label": "stubdb()"
     },
     {
@@ -1680,7 +1680,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_callsmatching",
-      "community": 16,
+      "community": 22,
       "norm_label": "callsmatching()"
     },
     {
@@ -1690,7 +1690,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_registry",
-      "community": 16,
+      "community": 22,
       "norm_label": "registry.ts"
     },
     {
@@ -1700,7 +1700,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "server_src_otlp_registry_knownservice",
-      "community": 16,
+      "community": 22,
       "norm_label": "knownservice"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry",
-      "community": 16,
+      "community": 22,
       "norm_label": "serviceregistry"
     },
     {
@@ -1720,7 +1720,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_load",
-      "community": 16,
+      "community": 22,
       "norm_label": ".load()"
     },
     {
@@ -1730,7 +1730,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_reloadaliases",
-      "community": 16,
+      "community": 22,
       "norm_label": ".reloadaliases()"
     },
     {
@@ -1740,7 +1740,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_resolve",
-      "community": 16,
+      "community": 22,
       "norm_label": ".resolve()"
     },
     {
@@ -1750,7 +1750,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_isinternal",
-      "community": 16,
+      "community": 22,
       "norm_label": ".isinternal()"
     },
     {
@@ -1760,7 +1760,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_has",
-      "community": 16,
+      "community": 22,
       "norm_label": ".has()"
     },
     {
@@ -1770,7 +1770,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_ensure",
-      "community": 16,
+      "community": 22,
       "norm_label": ".ensure()"
     },
     {
@@ -1780,7 +1780,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_teamidfor",
-      "community": 16,
+      "community": 22,
       "norm_label": ".teamidfor()"
     },
     {
@@ -1790,7 +1790,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_assignteamifmissing",
-      "community": 16,
+      "community": 22,
       "norm_label": ".assignteamifmissing()"
     },
     {
@@ -1800,7 +1800,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "server_src_otlp_registry_registry",
-      "community": 16,
+      "community": 22,
       "norm_label": "registry"
     },
     {
@@ -2799,8 +2799,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "server_tsconfig",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_json",
+      "community": 16,
       "norm_label": "tsconfig.json"
     },
     {
@@ -2809,8 +2809,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "community": 16,
       "norm_label": "compileroptions"
     },
     {
@@ -2819,8 +2819,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_target",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_target",
+      "community": 16,
       "norm_label": "target"
     },
     {
@@ -2829,8 +2829,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_module",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_module",
+      "community": 16,
       "norm_label": "module"
     },
     {
@@ -2839,8 +2839,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_moduleresolution",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_moduleresolution",
+      "community": 16,
       "norm_label": "moduleresolution"
     },
     {
@@ -2849,8 +2849,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_lib",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_lib",
+      "community": 16,
       "norm_label": "lib"
     },
     {
@@ -2859,8 +2859,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_outdir",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_outdir",
+      "community": 16,
       "norm_label": "outdir"
     },
     {
@@ -2869,8 +2869,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_rootdir",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_rootdir",
+      "community": 16,
       "norm_label": "rootdir"
     },
     {
@@ -2879,8 +2879,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_strict",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_strict",
+      "community": 16,
       "norm_label": "strict"
     },
     {
@@ -2889,8 +2889,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_esmoduleinterop",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_esmoduleinterop",
+      "community": 16,
       "norm_label": "esmoduleinterop"
     },
     {
@@ -2899,8 +2899,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_skiplibcheck",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_skiplibcheck",
+      "community": 16,
       "norm_label": "skiplibcheck"
     },
     {
@@ -2909,8 +2909,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_resolvejsonmodule",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_resolvejsonmodule",
+      "community": 16,
       "norm_label": "resolvejsonmodule"
     },
     {
@@ -2919,8 +2919,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_forceconsistentcasinginfilenames",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "community": 16,
       "norm_label": "forceconsistentcasinginfilenames"
     },
     {
@@ -2929,8 +2929,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_declaration",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_declaration",
+      "community": 16,
       "norm_label": "declaration"
     },
     {
@@ -2939,8 +2939,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "server_tsconfig_compileroptions_sourcemap",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_compileroptions_sourcemap",
+      "community": 16,
       "norm_label": "sourcemap"
     },
     {
@@ -2949,8 +2949,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "server_tsconfig_include",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_include",
+      "community": 16,
       "norm_label": "include"
     },
     {
@@ -2959,8 +2959,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L18",
       "_origin": "ast",
-      "id": "server_tsconfig_exclude",
-      "community": 18,
+      "id": "home_dan_projects_tracemap_server_tsconfig_exclude",
+      "community": 16,
       "norm_label": "exclude"
     },
     {
@@ -2969,8 +2969,8 @@
       "source_file": "web/package.json",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "web_package",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_json",
+      "community": 13,
       "norm_label": "package.json"
     },
     {
@@ -2979,8 +2979,8 @@
       "source_file": "web/package.json",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "web_package_name",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_name",
+      "community": 13,
       "norm_label": "name"
     },
     {
@@ -2989,8 +2989,8 @@
       "source_file": "web/package.json",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "web_package_version",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_version",
+      "community": 13,
       "norm_label": "version"
     },
     {
@@ -2999,8 +2999,8 @@
       "source_file": "web/package.json",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "web_package_private",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_private",
+      "community": 13,
       "norm_label": "private"
     },
     {
@@ -3009,8 +3009,8 @@
       "source_file": "web/package.json",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "web_package_type",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_type",
+      "community": 13,
       "norm_label": "type"
     },
     {
@@ -3019,8 +3019,8 @@
       "source_file": "web/package.json",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "web_package_scripts",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts",
+      "community": 13,
       "norm_label": "scripts"
     },
     {
@@ -3029,8 +3029,8 @@
       "source_file": "web/package.json",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "web_package_scripts_dev",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts_dev",
+      "community": 13,
       "norm_label": "dev"
     },
     {
@@ -3039,8 +3039,8 @@
       "source_file": "web/package.json",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "web_package_scripts_build",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts_build",
+      "community": 13,
       "norm_label": "build"
     },
     {
@@ -3049,8 +3049,8 @@
       "source_file": "web/package.json",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "web_package_scripts_preview",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts_preview",
+      "community": 13,
       "norm_label": "preview"
     },
     {
@@ -3059,8 +3059,8 @@
       "source_file": "web/package.json",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "web_package_scripts_test",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts_test",
+      "community": 13,
       "norm_label": "test"
     },
     {
@@ -3069,8 +3069,8 @@
       "source_file": "web/package.json",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "web_package_scripts_typecheck",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_scripts_typecheck",
+      "community": 13,
       "norm_label": "typecheck"
     },
     {
@@ -3079,8 +3079,8 @@
       "source_file": "web/package.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "web_package_dependencies",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_dependencies",
+      "community": 13,
       "norm_label": "dependencies"
     },
     {
@@ -3089,8 +3089,8 @@
       "source_file": "web/package.json",
       "source_location": "L14",
       "_origin": "ast",
-      "id": "web_package_dependencies_d3_force",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_dependencies_d3_force",
+      "community": 13,
       "norm_label": "d3-force"
     },
     {
@@ -3099,8 +3099,8 @@
       "source_file": "web/package.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "web_package_dependencies_react",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_dependencies_react",
+      "community": 13,
       "norm_label": "react"
     },
     {
@@ -3109,8 +3109,8 @@
       "source_file": "web/package.json",
       "source_location": "L16",
       "_origin": "ast",
-      "id": "web_package_dependencies_react_dom",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_dependencies_react_dom",
+      "community": 13,
       "norm_label": "react-dom"
     },
     {
@@ -3119,8 +3119,8 @@
       "source_file": "web/package.json",
       "source_location": "L17",
       "_origin": "ast",
-      "id": "web_package_dependencies_zustand",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_dependencies_zustand",
+      "community": 13,
       "norm_label": "zustand"
     },
     {
@@ -3129,8 +3129,8 @@
       "source_file": "web/package.json",
       "source_location": "L19",
       "_origin": "ast",
-      "id": "web_package_devdependencies",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies",
+      "community": 13,
       "norm_label": "devdependencies"
     },
     {
@@ -3139,8 +3139,8 @@
       "source_file": "web/package.json",
       "source_location": "L20",
       "_origin": "ast",
-      "id": "web_package_devdependencies_types_d3_force",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_types_d3_force",
+      "community": 13,
       "norm_label": "@types/d3-force"
     },
     {
@@ -3149,8 +3149,8 @@
       "source_file": "web/package.json",
       "source_location": "L21",
       "_origin": "ast",
-      "id": "web_package_devdependencies_types_react",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_types_react",
+      "community": 13,
       "norm_label": "@types/react"
     },
     {
@@ -3159,8 +3159,8 @@
       "source_file": "web/package.json",
       "source_location": "L22",
       "_origin": "ast",
-      "id": "web_package_devdependencies_types_react_dom",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_types_react_dom",
+      "community": 13,
       "norm_label": "@types/react-dom"
     },
     {
@@ -3169,8 +3169,8 @@
       "source_file": "web/package.json",
       "source_location": "L23",
       "_origin": "ast",
-      "id": "web_package_devdependencies_vitejs_plugin_react",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_vitejs_plugin_react",
+      "community": 13,
       "norm_label": "@vitejs/plugin-react"
     },
     {
@@ -3179,8 +3179,8 @@
       "source_file": "web/package.json",
       "source_location": "L24",
       "_origin": "ast",
-      "id": "web_package_devdependencies_typescript",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_typescript",
+      "community": 13,
       "norm_label": "typescript"
     },
     {
@@ -3189,8 +3189,8 @@
       "source_file": "web/package.json",
       "source_location": "L25",
       "_origin": "ast",
-      "id": "web_package_devdependencies_vite",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_vite",
+      "community": 13,
       "norm_label": "vite"
     },
     {
@@ -3199,8 +3199,8 @@
       "source_file": "web/package.json",
       "source_location": "L26",
       "_origin": "ast",
-      "id": "web_package_devdependencies_vitest",
-      "community": 10,
+      "id": "home_dan_projects_tracemap_web_package_devdependencies_vitest",
+      "community": 13,
       "norm_label": "vitest"
     },
     {
@@ -3230,7 +3230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_client",
-      "community": 0,
+      "community": 18,
       "norm_label": "client.ts"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_api_client_get",
-      "community": 0,
+      "community": 18,
       "norm_label": "get()"
     },
     {
@@ -3250,7 +3250,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_api_client_send",
-      "community": 0,
+      "community": 18,
       "norm_label": "send()"
     },
     {
@@ -3270,7 +3270,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_types",
-      "community": 0,
+      "community": 18,
       "norm_label": "types.ts"
     },
     {
@@ -3290,7 +3290,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_api_types_livemetrics",
-      "community": 0,
+      "community": 18,
       "norm_label": "livemetrics"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_api_types_topologyservice",
-      "community": 3,
+      "community": 4,
       "norm_label": "topologyservice"
     },
     {
@@ -3320,7 +3320,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "web_src_api_types_team",
-      "community": 0,
+      "community": 7,
       "norm_label": "team"
     },
     {
@@ -3340,7 +3340,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "web_src_api_types_servicelistitem",
-      "community": 0,
+      "community": 18,
       "norm_label": "servicelistitem"
     },
     {
@@ -3350,7 +3350,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "web_src_api_types_servicelist",
-      "community": 0,
+      "community": 18,
       "norm_label": "servicelist"
     },
     {
@@ -3360,7 +3360,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_src_api_types_seriespoint",
-      "community": 0,
+      "community": 2,
       "norm_label": "seriespoint"
     },
     {
@@ -3370,7 +3370,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "web_src_api_types_neighboredge",
-      "community": 0,
+      "community": 18,
       "norm_label": "neighboredge"
     },
     {
@@ -3380,7 +3380,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "web_src_api_types_servicedetail",
-      "community": 0,
+      "community": 18,
       "norm_label": "servicedetail"
     },
     {
@@ -3390,7 +3390,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "web_src_api_types_errorcount",
-      "community": 0,
+      "community": 18,
       "norm_label": "errorcount"
     },
     {
@@ -3410,7 +3410,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "web_src_api_types_errorbreakdown",
-      "community": 0,
+      "community": 18,
       "norm_label": "errorbreakdown"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_api_types_tracelistitem",
-      "community": 0,
+      "community": 18,
       "norm_label": "tracelistitem"
     },
     {
@@ -3430,7 +3430,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "web_src_api_types_tracespan",
-      "community": 0,
+      "community": 39,
       "norm_label": "tracespan"
     },
     {
@@ -3440,7 +3440,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "web_src_api_types_tracedetail",
-      "community": 0,
+      "community": 39,
       "norm_label": "tracedetail"
     },
     {
@@ -3500,7 +3500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_icon",
-      "community": 4,
+      "community": 40,
       "norm_label": "icon.tsx"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_components_icon_type_icons",
-      "community": 4,
+      "community": 40,
       "norm_label": "type_icons"
     },
     {
@@ -3520,7 +3520,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_components_icon_type_labels",
-      "community": 0,
+      "community": 40,
       "norm_label": "type_labels"
     },
     {
@@ -3530,7 +3530,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "web_src_components_icon_typeicon",
-      "community": 4,
+      "community": 40,
       "norm_label": "typeicon()"
     },
     {
@@ -3540,7 +3540,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "web_src_components_icon_closeicon",
-      "community": 4,
+      "community": 40,
       "norm_label": "closeicon()"
     },
     {
@@ -3550,7 +3550,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_components_icon_chevronicon",
-      "community": 4,
+      "community": 40,
       "norm_label": "chevronicon()"
     },
     {
@@ -3560,7 +3560,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "web_src_components_icon_backicon",
-      "community": 4,
+      "community": 40,
       "norm_label": "backicon()"
     },
     {
@@ -3580,7 +3580,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "web_src_components_icon_resetlayouticon",
-      "community": 4,
+      "community": 32,
       "norm_label": "resetlayouticon()"
     },
     {
@@ -3590,7 +3590,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "web_src_components_icon_fiticon",
-      "community": 4,
+      "community": 32,
       "norm_label": "fiticon()"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_components_icon_themeicon",
-      "community": 4,
+      "community": 2,
       "norm_label": "themeicon()"
     },
     {
@@ -3610,7 +3610,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "web_src_components_icon_settingsicon",
-      "community": 4,
+      "community": 2,
       "norm_label": "settingsicon()"
     },
     {
@@ -3620,7 +3620,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_components_icon_flowgraphicon",
-      "community": 4,
+      "community": 32,
       "norm_label": "flowgraphicon()"
     },
     {
@@ -3630,7 +3630,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "web_src_components_icon_communitygraphicon",
-      "community": 4,
+      "community": 32,
       "norm_label": "communitygraphicon()"
     },
     {
@@ -3650,7 +3650,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "web_src_components_icon_groupexpandicon",
-      "community": 4,
+      "community": 25,
       "norm_label": "groupexpandicon()"
     },
     {
@@ -3660,7 +3660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu",
-      "community": 4,
+      "community": 2,
       "norm_label": "preferencesmenu.tsx"
     },
     {
@@ -3670,7 +3670,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_theme_options",
-      "community": 4,
+      "community": 2,
       "norm_label": "theme_options"
     },
     {
@@ -3680,17 +3680,27 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_label_zoom_options",
-      "community": 4,
+      "community": 2,
       "norm_label": "label_zoom_options"
+    },
+    {
+      "label": "TEAM_GROUPING_OPTIONS",
+      "file_type": "code",
+      "source_file": "web/src/components/PreferencesMenu.tsx",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "web_src_components_preferencesmenu_team_grouping_options",
+      "community": 2,
+      "norm_label": "team_grouping_options"
     },
     {
       "label": "PreferencesMenu()",
       "file_type": "code",
       "source_file": "web/src/components/PreferencesMenu.tsx",
-      "source_location": "L23",
+      "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_preferencesmenu",
-      "community": 4,
+      "community": 2,
       "norm_label": "preferencesmenu()"
     },
     {
@@ -3700,7 +3710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_sloring",
-      "community": 0,
+      "community": 38,
       "norm_label": "sloring.tsx"
     },
     {
@@ -3710,7 +3720,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_components_sloring_sloring",
-      "community": 0,
+      "community": 38,
       "norm_label": "sloring()"
     },
     {
@@ -3790,7 +3800,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "web_src_components_topbar_healthpopover",
-      "community": 0,
+      "community": 4,
       "norm_label": "healthpopover()"
     },
     {
@@ -3880,7 +3890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_layeredmap",
-      "community": 13,
+      "community": 25,
       "norm_label": "layeredmap.tsx"
     },
     {
@@ -3910,7 +3920,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_features_map_mapdrawer_mapdrawer",
-      "community": 0,
+      "community": 10,
       "norm_label": "mapdrawer()"
     },
     {
@@ -3940,7 +3950,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_nodecard",
-      "community": 0,
+      "community": 10,
       "norm_label": "nodecard.tsx"
     },
     {
@@ -3950,7 +3960,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_map_nodecard_nodecard",
-      "community": 0,
+      "community": 10,
       "norm_label": "nodecard()"
     },
     {
@@ -3960,7 +3970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe",
-      "community": 4,
+      "community": 25,
       "norm_label": "teamframe.tsx"
     },
     {
@@ -3970,7 +3980,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe_teamframebox",
-      "community": 4,
+      "community": 25,
       "norm_label": "teamframebox()"
     },
     {
@@ -3980,7 +3990,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe_teamframebar",
-      "community": 4,
+      "community": 25,
       "norm_label": "teamframebar()"
     },
     {
@@ -4010,7 +4020,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_deprow",
-      "community": 4,
+      "community": 40,
       "norm_label": "deprow.tsx"
     },
     {
@@ -4020,7 +4030,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_deprow_deprow",
-      "community": 4,
+      "community": 40,
       "norm_label": "deprow()"
     },
     {
@@ -4030,7 +4040,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_drawerheader",
-      "community": 4,
+      "community": 40,
       "norm_label": "drawerheader.tsx"
     },
     {
@@ -4040,7 +4050,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_drawerheader_drawerheader",
-      "community": 4,
+      "community": 40,
       "norm_label": "drawerheader()"
     },
     {
@@ -4130,7 +4140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_statuspill",
-      "community": 0,
+      "community": 38,
       "norm_label": "statuspill.tsx"
     },
     {
@@ -4140,7 +4150,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_statuspill_statuspill",
-      "community": 0,
+      "community": 38,
       "norm_label": "statuspill()"
     },
     {
@@ -4220,7 +4230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph",
-      "community": 3,
+      "community": 32,
       "norm_label": "forcegraph.tsx"
     },
     {
@@ -4230,7 +4240,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_palette",
-      "community": 3,
+      "community": 32,
       "norm_label": "palette"
     },
     {
@@ -4240,7 +4250,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_forcegraph",
-      "community": 3,
+      "community": 32,
       "norm_label": "forcegraph()"
     },
     {
@@ -4250,7 +4260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcelegend",
-      "community": 0,
+      "community": 38,
       "norm_label": "forcelegend.tsx"
     },
     {
@@ -4260,7 +4270,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcelegend_forcelegend",
-      "community": 0,
+      "community": 38,
       "norm_label": "forcelegend()"
     },
     {
@@ -4410,7 +4420,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_forcenodeinput",
-      "community": 27,
+      "community": 21,
       "norm_label": "forcenodeinput"
     },
     {
@@ -4420,7 +4430,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_forcelinkinput",
-      "community": 27,
+      "community": 21,
       "norm_label": "forcelinkinput"
     },
     {
@@ -4460,7 +4470,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_useforcesimulation",
-      "community": 27,
+      "community": 21,
       "norm_label": "useforcesimulation.ts"
     },
     {
@@ -4470,7 +4480,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_force_useforcesimulation_simnode",
-      "community": 27,
+      "community": 21,
       "norm_label": "simnode"
     },
     {
@@ -4480,7 +4490,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_features_map_force_useforcesimulation_simlink",
-      "community": 27,
+      "community": 21,
       "norm_label": "simlink"
     },
     {
@@ -4490,7 +4500,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "web_src_features_map_force_useforcesimulation_hash01",
-      "community": 27,
+      "community": 21,
       "norm_label": "hash01()"
     },
     {
@@ -4500,7 +4510,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "web_src_features_map_force_useforcesimulation_useforcesimulation",
-      "community": 27,
+      "community": 21,
       "norm_label": "useforcesimulation()"
     },
     {
@@ -4510,7 +4520,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelabellayer",
-      "community": 0,
+      "community": 10,
       "norm_label": "edgelabellayer.tsx"
     },
     {
@@ -4520,7 +4530,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelabellayer_edgelabellayer",
-      "community": 0,
+      "community": 10,
       "norm_label": "edgelabellayer()"
     },
     {
@@ -4530,7 +4540,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelayer",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgelayer.tsx"
     },
     {
@@ -4540,7 +4550,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelayer_edgelayer",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgelayer()"
     },
     {
@@ -4550,7 +4560,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_graphmodetoggle",
-      "community": 4,
+      "community": 32,
       "norm_label": "graphmodetoggle.tsx"
     },
     {
@@ -4560,7 +4570,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_map_view_graphmodetoggle_graphmodetoggle",
-      "community": 4,
+      "community": 32,
       "norm_label": "graphmodetoggle()"
     },
     {
@@ -4570,7 +4580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_isolatebanner",
-      "community": 13,
+      "community": 25,
       "norm_label": "isolatebanner.tsx"
     },
     {
@@ -4580,7 +4590,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_map_view_isolatebanner_isolatebanner",
-      "community": 13,
+      "community": 25,
       "norm_label": "isolatebanner()"
     },
     {
@@ -4590,7 +4600,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_legend",
-      "community": 13,
+      "community": 25,
       "norm_label": "legend.tsx"
     },
     {
@@ -4600,7 +4610,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_view_legend_legend",
-      "community": 13,
+      "community": 25,
       "norm_label": "legend()"
     },
     {
@@ -4690,7 +4700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomcontrols",
-      "community": 4,
+      "community": 32,
       "norm_label": "zoomcontrols.tsx"
     },
     {
@@ -4700,7 +4710,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomcontrols_zoomcontrols",
-      "community": 4,
+      "community": 32,
       "norm_label": "zoomcontrols()"
     },
     {
@@ -4710,7 +4720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomhint",
-      "community": 13,
+      "community": 25,
       "norm_label": "zoomhint.tsx"
     },
     {
@@ -4720,7 +4730,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomhint_zoomhint",
-      "community": 13,
+      "community": 25,
       "norm_label": "zoomhint()"
     },
     {
@@ -4837,7 +4847,7 @@
       "label": "group()",
       "file_type": "code",
       "source_file": "web/src/features/map/view/dimming.test.ts",
-      "source_location": "L22",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_features_map_view_dimming_test_group",
       "community": 3,
@@ -4847,7 +4857,7 @@
       "label": "graph",
       "file_type": "code",
       "source_file": "web/src/features/map/view/dimming.test.ts",
-      "source_location": "L25",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_dimming_test_graph",
       "community": 3,
@@ -4880,7 +4890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_test",
-      "community": 13,
+      "community": 32,
       "norm_label": "dotgrid.test.ts"
     },
     {
@@ -4890,7 +4900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid",
-      "community": 13,
+      "community": 32,
       "norm_label": "dotgrid.ts"
     },
     {
@@ -4900,7 +4910,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_dotalphascale",
-      "community": 13,
+      "community": 32,
       "norm_label": "dotalphascale()"
     },
     {
@@ -4910,7 +4920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_test",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgeviews.test.ts"
     },
     {
@@ -4920,7 +4930,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_test_edge",
-      "community": 13,
+      "community": 41,
       "norm_label": "edge()"
     },
     {
@@ -4930,7 +4940,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_test_geom",
-      "community": 13,
+      "community": 41,
       "norm_label": "geom"
     },
     {
@@ -4940,7 +4950,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_test_geoms",
-      "community": 13,
+      "community": 41,
       "norm_label": "geoms"
     },
     {
@@ -4950,7 +4960,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_test_base",
-      "community": 13,
+      "community": 41,
       "norm_label": "base"
     },
     {
@@ -4960,7 +4970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgeviews.ts"
     },
     {
@@ -4970,7 +4980,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_edgeview",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgeview"
     },
     {
@@ -4980,7 +4990,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_buildedgeviews",
-      "community": 13,
+      "community": 25,
       "norm_label": "buildedgeviews()"
     },
     {
@@ -5097,7 +5107,7 @@
       "label": "team",
       "file_type": "code",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_team",
       "community": 7,
@@ -5107,7 +5117,7 @@
       "label": "posMap()",
       "file_type": "code",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L25",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_posmap",
       "community": 7,
@@ -5117,7 +5127,7 @@
       "label": "never()",
       "file_type": "code",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L26",
+      "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_never",
       "community": 7,
@@ -5150,7 +5160,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_buildframeviews",
-      "community": 7,
+      "community": 25,
       "norm_label": "buildframeviews()"
     },
     {
@@ -5177,7 +5187,7 @@
       "label": "edge()",
       "file_type": "code",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "web_src_features_map_view_isolategraph_test_edge",
       "community": 3,
@@ -5187,7 +5197,7 @@
       "label": "graph",
       "file_type": "code",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L37",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_features_map_view_isolategraph_test_graph",
       "community": 3,
@@ -5197,7 +5207,7 @@
       "label": "keys()",
       "file_type": "code",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L50",
+      "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_features_map_view_isolategraph_test_keys",
       "community": 3,
@@ -5230,7 +5240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_test",
-      "community": 7,
+      "community": 23,
       "norm_label": "nodebounds.test.ts"
     },
     {
@@ -5240,7 +5250,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds",
-      "community": 7,
+      "community": 23,
       "norm_label": "nodebounds.ts"
     },
     {
@@ -5250,7 +5260,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_bounds",
-      "community": 7,
+      "community": 23,
       "norm_label": "bounds"
     },
     {
@@ -5260,7 +5270,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_nodecardbounds",
-      "community": 7,
+      "community": 25,
       "norm_label": "nodecardbounds()"
     },
     {
@@ -5640,7 +5650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal",
-      "community": 11,
+      "community": 18,
       "norm_label": "editservicemodal.tsx"
     },
     {
@@ -5650,7 +5660,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_types",
-      "community": 11,
+      "community": 18,
       "norm_label": "types"
     },
     {
@@ -5660,7 +5670,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_editservicemodal",
-      "community": 11,
+      "community": 18,
       "norm_label": "editservicemodal()"
     },
     {
@@ -5670,7 +5680,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_field",
-      "community": 11,
+      "community": 18,
       "norm_label": "field.tsx"
     },
     {
@@ -5680,7 +5690,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_field_field",
-      "community": 11,
+      "community": 18,
       "norm_label": "field()"
     },
     {
@@ -5690,7 +5700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage",
-      "community": 8,
+      "community": 9,
       "norm_label": "servicepage.tsx"
     },
     {
@@ -5700,7 +5710,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage_chartgrid",
-      "community": 8,
+      "community": 9,
       "norm_label": "chartgrid"
     },
     {
@@ -5710,7 +5720,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage_editservicemodal",
-      "community": 8,
+      "community": 9,
       "norm_label": "editservicemodal"
     },
     {
@@ -5720,7 +5730,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage_servicepage",
-      "community": 8,
+      "community": 9,
       "norm_label": "servicepage()"
     },
     {
@@ -5760,7 +5770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel_test",
-      "community": 0,
+      "community": 2,
       "norm_label": "errlevel.test.ts"
     },
     {
@@ -5770,7 +5780,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel",
-      "community": 0,
+      "community": 2,
       "norm_label": "errlevel.ts"
     },
     {
@@ -5780,7 +5790,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel_errlevel",
-      "community": 0,
+      "community": 2,
       "norm_label": "errlevel()"
     },
     {
@@ -5790,7 +5800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_test",
-      "community": 0,
+      "community": 2,
       "norm_label": "rangeedges.test.ts"
     },
     {
@@ -5800,7 +5810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges",
-      "community": 0,
+      "community": 2,
       "norm_label": "rangeedges.ts"
     },
     {
@@ -5810,7 +5820,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_rangeedgelabels",
-      "community": 0,
+      "community": 2,
       "norm_label": "rangeedgelabels()"
     },
     {
@@ -5820,7 +5830,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid",
-      "community": 0,
+      "community": 2,
       "norm_label": "chartgrid.tsx"
     },
     {
@@ -5830,7 +5840,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_legend",
-      "community": 0,
+      "community": 2,
       "norm_label": "legend"
     },
     {
@@ -5840,7 +5850,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_bar_colors",
-      "community": 0,
+      "community": 2,
       "norm_label": "bar_colors"
     },
     {
@@ -5850,7 +5860,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_chartgrid",
-      "community": 0,
+      "community": 2,
       "norm_label": "chartgrid()"
     },
     {
@@ -5860,7 +5870,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_kpicards",
-      "community": 0,
+      "community": 10,
       "norm_label": "kpicards.tsx"
     },
     {
@@ -5870,7 +5880,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_service_sections_kpicards_kpicards",
-      "community": 0,
+      "community": 10,
       "norm_label": "kpicards()"
     },
     {
@@ -5880,7 +5890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_neighborspanel",
-      "community": 0,
+      "community": 10,
       "norm_label": "neighborspanel.tsx"
     },
     {
@@ -5890,7 +5900,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_service_sections_neighborspanel_neighborspanel",
-      "community": 0,
+      "community": 10,
       "norm_label": "neighborspanel()"
     },
     {
@@ -5900,7 +5910,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable",
-      "community": 0,
+      "community": 10,
       "norm_label": "operationstable.tsx"
     },
     {
@@ -5910,7 +5920,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_headers",
-      "community": 0,
+      "community": 10,
       "norm_label": "headers"
     },
     {
@@ -5920,7 +5930,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_operationstable",
-      "community": 0,
+      "community": 10,
       "norm_label": "operationstable()"
     },
     {
@@ -5930,7 +5940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceerrorspanel",
-      "community": 0,
+      "community": 9,
       "norm_label": "serviceerrorspanel.tsx"
     },
     {
@@ -5940,7 +5950,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceerrorspanel_serviceerrorspanel",
-      "community": 8,
+      "community": 9,
       "norm_label": "serviceerrorspanel()"
     },
     {
@@ -5950,7 +5960,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader",
-      "community": 0,
+      "community": 38,
       "norm_label": "serviceheader.tsx"
     },
     {
@@ -5960,7 +5970,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader_serviceheader",
-      "community": 0,
+      "community": 38,
       "norm_label": "serviceheader()"
     },
     {
@@ -5970,7 +5980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons",
-      "community": 8,
+      "community": 9,
       "norm_label": "skeletons.tsx"
     },
     {
@@ -5980,7 +5990,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_block",
-      "community": 8,
+      "community": 9,
       "norm_label": "block()"
     },
     {
@@ -5990,7 +6000,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_headerskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "headerskeleton()"
     },
     {
@@ -6000,7 +6010,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_kpiskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "kpiskeleton()"
     },
     {
@@ -6010,7 +6020,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_chartskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "chartskeleton()"
     },
     {
@@ -6020,7 +6030,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_neighborsskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "neighborsskeleton()"
     },
     {
@@ -6030,7 +6040,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_operationsskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "operationsskeleton()"
     },
     {
@@ -6040,7 +6050,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_errorsskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "errorsskeleton()"
     },
     {
@@ -6050,7 +6060,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_tracesskeleton",
-      "community": 8,
+      "community": 9,
       "norm_label": "tracesskeleton()"
     },
     {
@@ -6060,7 +6070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel",
-      "community": 0,
+      "community": 18,
       "norm_label": "tracespanel.tsx"
     },
     {
@@ -6070,7 +6080,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_headers",
-      "community": 0,
+      "community": 18,
       "norm_label": "headers"
     },
     {
@@ -6080,7 +6090,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_tracespanel",
-      "community": 0,
+      "community": 38,
       "norm_label": "tracespanel()"
     },
     {
@@ -6090,7 +6100,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage",
-      "community": 0,
+      "community": 10,
       "norm_label": "servicespage.tsx"
     },
     {
@@ -6100,7 +6110,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage_headers",
-      "community": 0,
+      "community": 10,
       "norm_label": "headers"
     },
     {
@@ -6110,7 +6120,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage_servicespage",
-      "community": 0,
+      "community": 10,
       "norm_label": "servicespage()"
     },
     {
@@ -6120,7 +6130,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow",
-      "community": 0,
+      "community": 39,
       "norm_label": "spanrow.tsx"
     },
     {
@@ -6130,7 +6140,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow_spanrow",
-      "community": 0,
+      "community": 39,
       "norm_label": "spanrow()"
     },
     {
@@ -6140,7 +6150,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal",
-      "community": 0,
+      "community": 39,
       "norm_label": "tracemodal.tsx"
     },
     {
@@ -6150,7 +6160,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal_tracemodal",
-      "community": 0,
+      "community": 2,
       "norm_label": "tracemodal()"
     },
     {
@@ -6160,7 +6170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test",
-      "community": 0,
+      "community": 39,
       "norm_label": "buildrows.test.ts"
     },
     {
@@ -6170,7 +6180,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_span",
-      "community": 0,
+      "community": 39,
       "norm_label": "span()"
     },
     {
@@ -6180,7 +6190,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_at",
-      "community": 0,
+      "community": 39,
       "norm_label": "at()"
     },
     {
@@ -6190,7 +6200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows",
-      "community": 0,
+      "community": 39,
       "norm_label": "buildrows.ts"
     },
     {
@@ -6200,7 +6210,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_row",
-      "community": 0,
+      "community": 39,
       "norm_label": "row"
     },
     {
@@ -6210,7 +6220,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_buildrows",
-      "community": 0,
+      "community": 39,
       "norm_label": "buildrows()"
     },
     {
@@ -6237,7 +6247,7 @@
       "label": "groupNode()",
       "file_type": "code",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L22",
+      "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_lib_clusterlayout_test_groupnode",
       "community": 23,
@@ -6247,7 +6257,7 @@
       "label": "edge()",
       "file_type": "code",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L37",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "web_src_lib_clusterlayout_test_edge",
       "community": 23,
@@ -6257,7 +6267,7 @@
       "label": "frameRect()",
       "file_type": "code",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L52",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "web_src_lib_clusterlayout_test_framerect",
       "community": 23,
@@ -6267,7 +6277,7 @@
       "label": "Rect",
       "file_type": "code",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L63",
+      "source_location": "L65",
       "_origin": "ast",
       "id": "web_src_lib_clusterlayout_test_rect",
       "community": 23,
@@ -6277,7 +6287,7 @@
       "label": "overlaps()",
       "file_type": "code",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L64",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "web_src_lib_clusterlayout_test_overlaps",
       "community": 23,
@@ -6370,7 +6380,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_community_test",
-      "community": 3,
+      "community": 32,
       "norm_label": "community.test.ts"
     },
     {
@@ -6380,7 +6390,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_community_test_e",
-      "community": 3,
+      "community": 32,
       "norm_label": "e()"
     },
     {
@@ -6390,7 +6400,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_community",
-      "community": 3,
+      "community": 32,
       "norm_label": "community.ts"
     },
     {
@@ -6400,7 +6410,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_lib_community_communityedge",
-      "community": 3,
+      "community": 32,
       "norm_label": "communityedge"
     },
     {
@@ -6410,7 +6420,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_lib_community_communityresult",
-      "community": 3,
+      "community": 32,
       "norm_label": "communityresult"
     },
     {
@@ -6420,7 +6430,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "web_src_lib_community_detectcommunities",
-      "community": 3,
+      "community": 32,
       "norm_label": "detectcommunities()"
     },
     {
@@ -6480,7 +6490,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_lib_edgegeometry_pt",
-      "community": 5,
+      "community": 41,
       "norm_label": "pt"
     },
     {
@@ -6510,7 +6520,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "web_src_lib_edgegeometry_edgegeometry",
-      "community": 13,
+      "community": 41,
       "norm_label": "edgegeometry"
     },
     {
@@ -6640,7 +6650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_format_test",
-      "community": 0,
+      "community": 10,
       "norm_label": "format.test.ts"
     },
     {
@@ -6650,7 +6660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_format",
-      "community": 0,
+      "community": 10,
       "norm_label": "format.ts"
     },
     {
@@ -6660,7 +6670,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtrps",
-      "community": 0,
+      "community": 10,
       "norm_label": "fmtrps()"
     },
     {
@@ -6670,7 +6680,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtms",
-      "community": 0,
+      "community": 10,
       "norm_label": "fmtms()"
     },
     {
@@ -6690,7 +6700,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_lib_format_fmterr",
-      "community": 0,
+      "community": 10,
       "norm_label": "fmterr()"
     },
     {
@@ -6710,7 +6720,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtago",
-      "community": 0,
+      "community": 38,
       "norm_label": "fmtago()"
     },
     {
@@ -6720,7 +6730,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "web_src_lib_format_jit",
-      "community": 0,
+      "community": 10,
       "norm_label": "jit()"
     },
     {
@@ -6787,17 +6797,17 @@
       "label": "GraphEdge",
       "file_type": "code",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L30",
+      "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_lib_grouping_graphedge",
-      "community": 13,
+      "community": 32,
       "norm_label": "graphedge"
     },
     {
       "label": "Graph",
       "file_type": "code",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L44",
+      "source_location": "L46",
       "_origin": "ast",
       "id": "web_src_lib_grouping_graph",
       "community": 3,
@@ -6807,7 +6817,7 @@
       "label": "groupKey()",
       "file_type": "code",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L50",
+      "source_location": "L52",
       "_origin": "ast",
       "id": "web_src_lib_grouping_groupkey",
       "community": 25,
@@ -6817,7 +6827,7 @@
       "label": "buildGraph()",
       "file_type": "code",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L54",
+      "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_lib_grouping_buildgraph",
       "community": 3,
@@ -6967,7 +6977,7 @@
       "label": "Theme",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L6",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_lib_preferences_theme",
       "community": 2,
@@ -6977,7 +6987,7 @@
       "label": "LabelZoomLevel",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L14",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_preferences_labelzoomlevel",
       "community": 2,
@@ -6987,7 +6997,7 @@
       "label": "LABEL_ZOOM_FACTOR",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L16",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_lib_preferences_label_zoom_factor",
       "community": 2,
@@ -6997,7 +7007,7 @@
       "label": "Prefs",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_lib_preferences_prefs",
       "community": 2,
@@ -7007,7 +7017,7 @@
       "label": "DEFAULT_PREFS",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L28",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "web_src_lib_preferences_default_prefs",
       "community": 2,
@@ -7017,7 +7027,7 @@
       "label": "THEMES",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L35",
+      "source_location": "L43",
       "_origin": "ast",
       "id": "web_src_lib_preferences_themes",
       "community": 2,
@@ -7027,7 +7037,7 @@
       "label": "LABEL_ZOOM_LEVELS",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L36",
+      "source_location": "L44",
       "_origin": "ast",
       "id": "web_src_lib_preferences_label_zoom_levels",
       "community": 2,
@@ -7037,7 +7047,7 @@
       "label": "loadPrefs()",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L42",
+      "source_location": "L50",
       "_origin": "ast",
       "id": "web_src_lib_preferences_loadprefs",
       "community": 2,
@@ -7047,7 +7057,7 @@
       "label": "savePrefs()",
       "file_type": "code",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L56",
+      "source_location": "L66",
       "_origin": "ast",
       "id": "web_src_lib_preferences_saveprefs",
       "community": 2,
@@ -7190,7 +7200,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_status",
-      "community": 0,
+      "community": 38,
       "norm_label": "status.ts"
     },
     {
@@ -7200,7 +7210,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_lib_status_stcolor",
-      "community": 0,
+      "community": 10,
       "norm_label": "stcolor()"
     },
     {
@@ -7210,7 +7220,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_lib_status_stbg",
-      "community": 0,
+      "community": 38,
       "norm_label": "stbg()"
     },
     {
@@ -7220,7 +7230,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_status_stlabel",
-      "community": 0,
+      "community": 38,
       "norm_label": "stlabel()"
     },
     {
@@ -7240,7 +7250,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_status_sloview",
-      "community": 0,
+      "community": 38,
       "norm_label": "sloview"
     },
     {
@@ -7280,7 +7290,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_lib_teamfilter_teamfiltervalue",
-      "community": 2,
+      "community": 11,
       "norm_label": "teamfiltervalue"
     },
     {
@@ -7410,7 +7420,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_lib_timerange_resolverange",
-      "community": 8,
+      "community": 9,
       "norm_label": "resolverange()"
     },
     {
@@ -7420,7 +7430,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_lib_timerange_rangelabel",
-      "community": 0,
+      "community": 2,
       "norm_label": "rangelabel()"
     },
     {
@@ -7430,7 +7440,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_lib_timerange_isliverange",
-      "community": 0,
+      "community": 2,
       "norm_label": "isliverange()"
     },
     {
@@ -7457,7 +7467,7 @@
       "label": "snap()",
       "file_type": "code",
       "source_file": "web/src/lib/transition.test.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "web_src_lib_transition_test_snap",
       "community": 7,
@@ -7560,7 +7570,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource_test",
-      "community": 8,
+      "community": 9,
       "norm_label": "resource.test.ts"
     },
     {
@@ -7570,7 +7580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource",
-      "community": 8,
+      "community": 9,
       "norm_label": "resource.ts"
     },
     {
@@ -7580,7 +7590,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcestate",
-      "community": 8,
+      "community": 9,
       "norm_label": "resourcestate"
     },
     {
@@ -7590,7 +7600,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_state_resource_resourceaction",
-      "community": 8,
+      "community": 9,
       "norm_label": "resourceaction"
     },
     {
@@ -7600,7 +7610,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_state_resource_initialresource",
-      "community": 8,
+      "community": 9,
       "norm_label": "initialresource()"
     },
     {
@@ -7610,7 +7620,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcereducer",
-      "community": 8,
+      "community": 9,
       "norm_label": "resourcereducer()"
     },
     {
@@ -7620,7 +7630,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcephase",
-      "community": 8,
+      "community": 9,
       "norm_label": "resourcephase"
     },
     {
@@ -7807,7 +7817,7 @@
       "label": "prefs",
       "file_type": "code",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L74",
+      "source_location": "L79",
       "_origin": "ast",
       "id": "web_src_state_store_prefs",
       "community": 2,
@@ -7817,7 +7827,7 @@
       "label": "useStore",
       "file_type": "code",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L76",
+      "source_location": "L81",
       "_origin": "ast",
       "id": "web_src_state_store_usestore",
       "community": 2,
@@ -7890,7 +7900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_useresource",
-      "community": 8,
+      "community": 9,
       "norm_label": "useresource.ts"
     },
     {
@@ -7900,7 +7910,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_state_useresource_useresourceopts",
-      "community": 8,
+      "community": 9,
       "norm_label": "useresourceopts"
     },
     {
@@ -7910,7 +7920,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_state_useresource_useresource",
-      "community": 8,
+      "community": 9,
       "norm_label": "useresource()"
     },
     {
@@ -8029,8 +8039,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "web_tsconfig",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_json",
+      "community": 17,
       "norm_label": "tsconfig.json"
     },
     {
@@ -8039,8 +8049,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L2",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "community": 17,
       "norm_label": "compileroptions"
     },
     {
@@ -8049,8 +8059,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L3",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_target",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_target",
+      "community": 17,
       "norm_label": "target"
     },
     {
@@ -8059,8 +8069,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L4",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_lib",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_lib",
+      "community": 17,
       "norm_label": "lib"
     },
     {
@@ -8069,8 +8079,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L5",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_module",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_module",
+      "community": 17,
       "norm_label": "module"
     },
     {
@@ -8079,8 +8089,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L6",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_moduleresolution",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_moduleresolution",
+      "community": 17,
       "norm_label": "moduleresolution"
     },
     {
@@ -8089,8 +8099,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_jsx",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_jsx",
+      "community": 17,
       "norm_label": "jsx"
     },
     {
@@ -8099,8 +8109,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_strict",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_strict",
+      "community": 17,
       "norm_label": "strict"
     },
     {
@@ -8109,8 +8119,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_noemit",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_noemit",
+      "community": 17,
       "norm_label": "noemit"
     },
     {
@@ -8119,8 +8129,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L10",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_skiplibcheck",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_skiplibcheck",
+      "community": 17,
       "norm_label": "skiplibcheck"
     },
     {
@@ -8129,8 +8139,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L11",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_esmoduleinterop",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_esmoduleinterop",
+      "community": 17,
       "norm_label": "esmoduleinterop"
     },
     {
@@ -8139,8 +8149,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L12",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_forceconsistentcasinginfilenames",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "community": 17,
       "norm_label": "forceconsistentcasinginfilenames"
     },
     {
@@ -8149,8 +8159,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L13",
       "_origin": "ast",
-      "id": "web_tsconfig_compileroptions_usedefineforclassfields",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_compileroptions_usedefineforclassfields",
+      "community": 17,
       "norm_label": "usedefineforclassfields"
     },
     {
@@ -8159,8 +8169,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L15",
       "_origin": "ast",
-      "id": "web_tsconfig_include",
-      "community": 26,
+      "id": "home_dan_projects_tracemap_web_tsconfig_include",
+      "community": 17,
       "norm_label": "include"
     },
     {
@@ -8242,9 +8252,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "web_index_app",
       "community": 35,
-      "norm_label": "tracemap web app html entry"
+      "norm_label": "tracemap web app html entry",
+      "id": "web_index_app"
     },
     {
       "label": "React Root Mount Element",
@@ -8255,9 +8265,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "web_index_root",
       "community": 35,
-      "norm_label": "react root mount element"
+      "norm_label": "react root mount element",
+      "id": "web_index_root"
     },
     {
       "label": "main.tsx Frontend Entry Module",
@@ -8268,9 +8278,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "id": "web_src_main_entry",
       "community": 35,
-      "norm_label": "main.tsx frontend entry module"
+      "norm_label": "main.tsx frontend entry module",
+      "id": "web_src_main_entry"
     }
   ],
   "links": [
@@ -8280,8 +8290,8 @@
       "source_file": "server/package.json",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_dependencies",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_dependencies",
       "confidence_score": 1.0
     },
     {
@@ -8290,8 +8300,8 @@
       "source_file": "server/package.json",
       "source_location": "L21",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_devdependencies",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies",
       "confidence_score": 1.0
     },
     {
@@ -8300,8 +8310,8 @@
       "source_file": "server/package.json",
       "source_location": "L2",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_name",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_name",
       "confidence_score": 1.0
     },
     {
@@ -8310,8 +8320,8 @@
       "source_file": "server/package.json",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_private",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_private",
       "confidence_score": 1.0
     },
     {
@@ -8320,8 +8330,8 @@
       "source_file": "server/package.json",
       "source_location": "L6",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_scripts",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_scripts",
       "confidence_score": 1.0
     },
     {
@@ -8330,8 +8340,8 @@
       "source_file": "server/package.json",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_type",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_type",
       "confidence_score": 1.0
     },
     {
@@ -8340,8 +8350,8 @@
       "source_file": "server/package.json",
       "source_location": "L3",
       "weight": 1.0,
-      "source": "server_package",
-      "target": "server_package_version",
+      "source": "home_dan_projects_tracemap_server_package_json",
+      "target": "home_dan_projects_tracemap_server_package_version",
       "confidence_score": 1.0
     },
     {
@@ -8350,8 +8360,8 @@
       "source_file": "server/package.json",
       "source_location": "L9",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_build",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_build",
       "confidence_score": 1.0
     },
     {
@@ -8360,8 +8370,8 @@
       "source_file": "server/package.json",
       "source_location": "L7",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_dev",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_dev",
       "confidence_score": 1.0
     },
     {
@@ -8370,8 +8380,8 @@
       "source_file": "server/package.json",
       "source_location": "L10",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_migrate",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_migrate",
       "confidence_score": 1.0
     },
     {
@@ -8380,8 +8390,8 @@
       "source_file": "server/package.json",
       "source_location": "L11",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_simulate",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_simulate",
       "confidence_score": 1.0
     },
     {
@@ -8390,8 +8400,8 @@
       "source_file": "server/package.json",
       "source_location": "L8",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_start",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_start",
       "confidence_score": 1.0
     },
     {
@@ -8400,8 +8410,8 @@
       "source_file": "server/package.json",
       "source_location": "L12",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_test",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_test",
       "confidence_score": 1.0
     },
     {
@@ -8410,8 +8420,8 @@
       "source_file": "server/package.json",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "server_package_scripts",
-      "target": "server_package_scripts_typecheck",
+      "source": "home_dan_projects_tracemap_server_package_scripts",
+      "target": "home_dan_projects_tracemap_server_package_scripts_typecheck",
       "confidence_score": 1.0
     },
     {
@@ -8420,8 +8430,8 @@
       "source_file": "server/package.json",
       "source_location": "L17",
       "weight": 1.0,
-      "source": "server_package_dependencies",
-      "target": "server_package_dependencies_fastify",
+      "source": "home_dan_projects_tracemap_server_package_dependencies",
+      "target": "home_dan_projects_tracemap_server_package_dependencies_fastify",
       "confidence_score": 1.0
     },
     {
@@ -8430,8 +8440,8 @@
       "source_file": "server/package.json",
       "source_location": "L16",
       "weight": 1.0,
-      "source": "server_package_dependencies",
-      "target": "server_package_dependencies_fastify_cors",
+      "source": "home_dan_projects_tracemap_server_package_dependencies",
+      "target": "home_dan_projects_tracemap_server_package_dependencies_fastify_cors",
       "confidence_score": 1.0
     },
     {
@@ -8440,8 +8450,8 @@
       "source_file": "server/package.json",
       "source_location": "L18",
       "weight": 1.0,
-      "source": "server_package_dependencies",
-      "target": "server_package_dependencies_pg",
+      "source": "home_dan_projects_tracemap_server_package_dependencies",
+      "target": "home_dan_projects_tracemap_server_package_dependencies_pg",
       "confidence_score": 1.0
     },
     {
@@ -8450,8 +8460,8 @@
       "source_file": "server/package.json",
       "source_location": "L19",
       "weight": 1.0,
-      "source": "server_package_dependencies",
-      "target": "server_package_dependencies_protobufjs",
+      "source": "home_dan_projects_tracemap_server_package_dependencies",
+      "target": "home_dan_projects_tracemap_server_package_dependencies_protobufjs",
       "confidence_score": 1.0
     },
     {
@@ -8460,8 +8470,8 @@
       "source_file": "server/package.json",
       "source_location": "L24",
       "weight": 1.0,
-      "source": "server_package_devdependencies",
-      "target": "server_package_devdependencies_tsx",
+      "source": "home_dan_projects_tracemap_server_package_devdependencies",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies_tsx",
       "confidence_score": 1.0
     },
     {
@@ -8470,8 +8480,8 @@
       "source_file": "server/package.json",
       "source_location": "L22",
       "weight": 1.0,
-      "source": "server_package_devdependencies",
-      "target": "server_package_devdependencies_types_node",
+      "source": "home_dan_projects_tracemap_server_package_devdependencies",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies_types_node",
       "confidence_score": 1.0
     },
     {
@@ -8480,8 +8490,8 @@
       "source_file": "server/package.json",
       "source_location": "L23",
       "weight": 1.0,
-      "source": "server_package_devdependencies",
-      "target": "server_package_devdependencies_types_pg",
+      "source": "home_dan_projects_tracemap_server_package_devdependencies",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies_types_pg",
       "confidence_score": 1.0
     },
     {
@@ -8490,8 +8500,8 @@
       "source_file": "server/package.json",
       "source_location": "L25",
       "weight": 1.0,
-      "source": "server_package_devdependencies",
-      "target": "server_package_devdependencies_typescript",
+      "source": "home_dan_projects_tracemap_server_package_devdependencies",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies_typescript",
       "confidence_score": 1.0
     },
     {
@@ -8500,8 +8510,8 @@
       "source_file": "server/package.json",
       "source_location": "L26",
       "weight": 1.0,
-      "source": "server_package_devdependencies",
-      "target": "server_package_devdependencies_vitest",
+      "source": "home_dan_projects_tracemap_server_package_devdependencies",
+      "target": "home_dan_projects_tracemap_server_package_devdependencies_vitest",
       "confidence_score": 1.0
     },
     {
@@ -15311,8 +15321,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L2",
       "weight": 1.0,
-      "source": "server_tsconfig",
-      "target": "server_tsconfig_compileroptions",
+      "source": "home_dan_projects_tracemap_server_tsconfig_json",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
       "confidence_score": 1.0
     },
     {
@@ -15321,8 +15331,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L18",
       "weight": 1.0,
-      "source": "server_tsconfig",
-      "target": "server_tsconfig_exclude",
+      "source": "home_dan_projects_tracemap_server_tsconfig_json",
+      "target": "home_dan_projects_tracemap_server_tsconfig_exclude",
       "confidence_score": 1.0
     },
     {
@@ -15331,8 +15341,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L17",
       "weight": 1.0,
-      "source": "server_tsconfig",
-      "target": "server_tsconfig_include",
+      "source": "home_dan_projects_tracemap_server_tsconfig_json",
+      "target": "home_dan_projects_tracemap_server_tsconfig_include",
       "confidence_score": 1.0
     },
     {
@@ -15341,8 +15351,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_declaration",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_declaration",
       "confidence_score": 1.0
     },
     {
@@ -15351,8 +15361,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L10",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_esmoduleinterop",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_esmoduleinterop",
       "confidence_score": 1.0
     },
     {
@@ -15361,8 +15371,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_forceconsistentcasinginfilenames",
       "confidence_score": 1.0
     },
     {
@@ -15371,8 +15381,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L6",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_lib",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_lib",
       "confidence_score": 1.0
     },
     {
@@ -15381,8 +15391,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_module",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_module",
       "confidence_score": 1.0
     },
     {
@@ -15391,8 +15401,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_moduleresolution",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_moduleresolution",
       "confidence_score": 1.0
     },
     {
@@ -15401,8 +15411,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L7",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_outdir",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_outdir",
       "confidence_score": 1.0
     },
     {
@@ -15411,8 +15421,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L12",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_resolvejsonmodule",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_resolvejsonmodule",
       "confidence_score": 1.0
     },
     {
@@ -15421,8 +15431,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L8",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_rootdir",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_rootdir",
       "confidence_score": 1.0
     },
     {
@@ -15431,8 +15441,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L11",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_skiplibcheck",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_skiplibcheck",
       "confidence_score": 1.0
     },
     {
@@ -15441,8 +15451,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_sourcemap",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_sourcemap",
       "confidence_score": 1.0
     },
     {
@@ -15451,8 +15461,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L9",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_strict",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_strict",
       "confidence_score": 1.0
     },
     {
@@ -15461,8 +15471,8 @@
       "source_file": "server/tsconfig.json",
       "source_location": "L3",
       "weight": 1.0,
-      "source": "server_tsconfig_compileroptions",
-      "target": "server_tsconfig_compileroptions_target",
+      "source": "home_dan_projects_tracemap_server_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_server_tsconfig_compileroptions_target",
       "confidence_score": 1.0
     },
     {
@@ -15471,8 +15481,8 @@
       "source_file": "web/package.json",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_dependencies",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_dependencies",
       "confidence_score": 1.0
     },
     {
@@ -15481,8 +15491,8 @@
       "source_file": "web/package.json",
       "source_location": "L19",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_devdependencies",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies",
       "confidence_score": 1.0
     },
     {
@@ -15491,8 +15501,8 @@
       "source_file": "web/package.json",
       "source_location": "L2",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_name",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_name",
       "confidence_score": 1.0
     },
     {
@@ -15501,8 +15511,8 @@
       "source_file": "web/package.json",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_private",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_private",
       "confidence_score": 1.0
     },
     {
@@ -15511,8 +15521,8 @@
       "source_file": "web/package.json",
       "source_location": "L6",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_scripts",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_scripts",
       "confidence_score": 1.0
     },
     {
@@ -15521,8 +15531,8 @@
       "source_file": "web/package.json",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_type",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_type",
       "confidence_score": 1.0
     },
     {
@@ -15531,8 +15541,8 @@
       "source_file": "web/package.json",
       "source_location": "L3",
       "weight": 1.0,
-      "source": "web_package",
-      "target": "web_package_version",
+      "source": "home_dan_projects_tracemap_web_package_json",
+      "target": "home_dan_projects_tracemap_web_package_version",
       "confidence_score": 1.0
     },
     {
@@ -15541,8 +15551,8 @@
       "source_file": "web/package.json",
       "source_location": "L8",
       "weight": 1.0,
-      "source": "web_package_scripts",
-      "target": "web_package_scripts_build",
+      "source": "home_dan_projects_tracemap_web_package_scripts",
+      "target": "home_dan_projects_tracemap_web_package_scripts_build",
       "confidence_score": 1.0
     },
     {
@@ -15551,8 +15561,8 @@
       "source_file": "web/package.json",
       "source_location": "L7",
       "weight": 1.0,
-      "source": "web_package_scripts",
-      "target": "web_package_scripts_dev",
+      "source": "home_dan_projects_tracemap_web_package_scripts",
+      "target": "home_dan_projects_tracemap_web_package_scripts_dev",
       "confidence_score": 1.0
     },
     {
@@ -15561,8 +15571,8 @@
       "source_file": "web/package.json",
       "source_location": "L9",
       "weight": 1.0,
-      "source": "web_package_scripts",
-      "target": "web_package_scripts_preview",
+      "source": "home_dan_projects_tracemap_web_package_scripts",
+      "target": "home_dan_projects_tracemap_web_package_scripts_preview",
       "confidence_score": 1.0
     },
     {
@@ -15571,8 +15581,8 @@
       "source_file": "web/package.json",
       "source_location": "L10",
       "weight": 1.0,
-      "source": "web_package_scripts",
-      "target": "web_package_scripts_test",
+      "source": "home_dan_projects_tracemap_web_package_scripts",
+      "target": "home_dan_projects_tracemap_web_package_scripts_test",
       "confidence_score": 1.0
     },
     {
@@ -15581,8 +15591,8 @@
       "source_file": "web/package.json",
       "source_location": "L11",
       "weight": 1.0,
-      "source": "web_package_scripts",
-      "target": "web_package_scripts_typecheck",
+      "source": "home_dan_projects_tracemap_web_package_scripts",
+      "target": "home_dan_projects_tracemap_web_package_scripts_typecheck",
       "confidence_score": 1.0
     },
     {
@@ -15591,8 +15601,8 @@
       "source_file": "web/package.json",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "web_package_dependencies",
-      "target": "web_package_dependencies_d3_force",
+      "source": "home_dan_projects_tracemap_web_package_dependencies",
+      "target": "home_dan_projects_tracemap_web_package_dependencies_d3_force",
       "confidence_score": 1.0
     },
     {
@@ -15601,8 +15611,8 @@
       "source_file": "web/package.json",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "web_package_dependencies",
-      "target": "web_package_dependencies_react",
+      "source": "home_dan_projects_tracemap_web_package_dependencies",
+      "target": "home_dan_projects_tracemap_web_package_dependencies_react",
       "confidence_score": 1.0
     },
     {
@@ -15611,8 +15621,8 @@
       "source_file": "web/package.json",
       "source_location": "L16",
       "weight": 1.0,
-      "source": "web_package_dependencies",
-      "target": "web_package_dependencies_react_dom",
+      "source": "home_dan_projects_tracemap_web_package_dependencies",
+      "target": "home_dan_projects_tracemap_web_package_dependencies_react_dom",
       "confidence_score": 1.0
     },
     {
@@ -15621,8 +15631,8 @@
       "source_file": "web/package.json",
       "source_location": "L17",
       "weight": 1.0,
-      "source": "web_package_dependencies",
-      "target": "web_package_dependencies_zustand",
+      "source": "home_dan_projects_tracemap_web_package_dependencies",
+      "target": "home_dan_projects_tracemap_web_package_dependencies_zustand",
       "confidence_score": 1.0
     },
     {
@@ -15631,8 +15641,8 @@
       "source_file": "web/package.json",
       "source_location": "L20",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_types_d3_force",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_types_d3_force",
       "confidence_score": 1.0
     },
     {
@@ -15641,8 +15651,8 @@
       "source_file": "web/package.json",
       "source_location": "L21",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_types_react",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_types_react",
       "confidence_score": 1.0
     },
     {
@@ -15651,8 +15661,8 @@
       "source_file": "web/package.json",
       "source_location": "L22",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_types_react_dom",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_types_react_dom",
       "confidence_score": 1.0
     },
     {
@@ -15661,8 +15671,8 @@
       "source_file": "web/package.json",
       "source_location": "L24",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_typescript",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_typescript",
       "confidence_score": 1.0
     },
     {
@@ -15671,8 +15681,8 @@
       "source_file": "web/package.json",
       "source_location": "L25",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_vite",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_vite",
       "confidence_score": 1.0
     },
     {
@@ -15681,8 +15691,8 @@
       "source_file": "web/package.json",
       "source_location": "L23",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_vitejs_plugin_react",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_vitejs_plugin_react",
       "confidence_score": 1.0
     },
     {
@@ -15691,8 +15701,8 @@
       "source_file": "web/package.json",
       "source_location": "L26",
       "weight": 1.0,
-      "source": "web_package_devdependencies",
-      "target": "web_package_devdependencies_vitest",
+      "source": "home_dan_projects_tracemap_web_package_devdependencies",
+      "target": "home_dan_projects_tracemap_web_package_devdependencies_vitest",
       "confidence_score": 1.0
     },
     {
@@ -16680,7 +16690,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L34",
+      "source_location": "L36",
       "weight": 1.0,
       "source": "web_src_lib_grouping_graphedge",
       "target": "web_src_api_types_status",
@@ -16691,7 +16701,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L20",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "web_src_lib_grouping_graphnode",
       "target": "web_src_api_types_status",
@@ -16768,7 +16778,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L27",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "web_src_lib_grouping_graphnode",
       "target": "web_src_api_types_topologyservice",
@@ -16834,7 +16844,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L41",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "web_src_lib_grouping_graphedge",
       "target": "web_src_api_types_topologyedge",
@@ -17914,10 +17924,20 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/components/PreferencesMenu.tsx",
-      "source_location": "L23",
+      "source_location": "L28",
       "weight": 1.0,
       "source": "web_src_components_preferencesmenu",
       "target": "web_src_components_preferencesmenu_preferencesmenu",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/components/PreferencesMenu.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "web_src_components_preferencesmenu",
+      "target": "web_src_components_preferencesmenu_team_grouping_options",
       "confidence_score": 1.0
     },
     {
@@ -18002,7 +18022,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/components/PreferencesMenu.tsx",
-      "source_location": "L24",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "web_src_components_preferencesmenu_preferencesmenu",
       "target": "web_src_state_store_usestore"
@@ -19551,7 +19571,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L253",
+      "source_location": "L254",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_camera_fitzoom"
@@ -19562,7 +19582,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L220",
+      "source_location": "L221",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_dimming_builddimmer"
@@ -19573,7 +19593,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L371",
+      "source_location": "L374",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_dotgrid_dotalphascale"
@@ -19584,7 +19604,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L302",
+      "source_location": "L303",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_edgeviews_buildedgeviews"
@@ -19595,7 +19615,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L218",
+      "source_location": "L219",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_focusset_computefocusset"
@@ -19606,7 +19626,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L313",
+      "source_location": "L316",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_frameviews_buildframeviews"
@@ -19617,7 +19637,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_isolategraph_isolategraph"
@@ -19628,7 +19648,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L247",
+      "source_location": "L248",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_nodebounds_nodecardbounds"
@@ -19639,7 +19659,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L157",
+      "source_location": "L158",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_pinnedpositions_clearpinnedpositions"
@@ -19650,7 +19670,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L93",
+      "source_location": "L94",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_pinnedpositions_loadpinnedpositions"
@@ -19661,7 +19681,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L180",
+      "source_location": "L181",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_usegraphtransition_usegraphtransition"
@@ -19672,7 +19692,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L170",
+      "source_location": "L171",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_usemergehandoff_usemergehandoff"
@@ -19683,7 +19703,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L94",
+      "source_location": "L95",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_usenodedrag_usenodedrag"
@@ -19694,7 +19714,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L74",
+      "source_location": "L75",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_usepanzoom_usepanzoom"
@@ -19705,7 +19725,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L329",
+      "source_location": "L332",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_viewport_rectsoverlap"
@@ -19716,7 +19736,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L322",
+      "source_location": "L325",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_features_map_view_viewport_visibleworldrect"
@@ -19727,7 +19747,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L145",
+      "source_location": "L146",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_lib_clusterlayout_layoutclusteredgraph"
@@ -19738,7 +19758,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L294",
+      "source_location": "L295",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_lib_edgegeometry_computeedgegeometries"
@@ -19749,7 +19769,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L99",
+      "source_location": "L100",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_lib_grouping_buildgraph"
@@ -19760,7 +19780,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L228",
+      "source_location": "L229",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_lib_grouping_groupkey"
@@ -19771,7 +19791,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "web/src/features/map/LayeredMap.tsx",
-      "source_location": "L261",
+      "source_location": "L262",
       "weight": 1.0,
       "source": "web_src_features_map_layeredmap_layeredmap",
       "target": "web_src_lib_transition_centeron"
@@ -20582,7 +20602,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/NodeCard.tsx",
-      "source_location": "L114",
+      "source_location": "L118",
       "weight": 1.0,
       "source": "web_src_features_map_nodecard_nodecard",
       "target": "web_src_lib_format_fmterr"
@@ -20593,7 +20613,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/NodeCard.tsx",
-      "source_location": "L111",
+      "source_location": "L115",
       "weight": 1.0,
       "source": "web_src_features_map_nodecard_nodecard",
       "target": "web_src_lib_format_fmtms"
@@ -20604,7 +20624,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/NodeCard.tsx",
-      "source_location": "L109",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "web_src_features_map_nodecard_nodecard",
       "target": "web_src_lib_format_fmtrps"
@@ -20615,7 +20635,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/NodeCard.tsx",
-      "source_location": "L109",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "web_src_features_map_nodecard_nodecard",
       "target": "web_src_lib_format_jit"
@@ -22739,7 +22759,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/dimming.test.ts",
-      "source_location": "L25",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "web_src_features_map_view_dimming_test",
       "target": "web_src_features_map_view_dimming_test_graph",
@@ -22749,7 +22769,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/dimming.test.ts",
-      "source_location": "L22",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "web_src_features_map_view_dimming_test",
       "target": "web_src_features_map_view_dimming_test_group",
@@ -22825,7 +22845,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/dimming.test.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "web_src_features_map_view_dimming_test_group",
       "target": "web_src_features_map_view_dimming_test_svc",
@@ -23414,7 +23434,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L26",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "web_src_features_map_view_frameviews_test",
       "target": "web_src_features_map_view_frameviews_test_never",
@@ -23434,7 +23454,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L25",
+      "source_location": "L26",
       "weight": 1.0,
       "source": "web_src_features_map_view_frameviews_test",
       "target": "web_src_features_map_view_frameviews_test_posmap",
@@ -23444,7 +23464,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/frameViews.test.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "web_src_features_map_view_frameviews_test",
       "target": "web_src_features_map_view_frameviews_test_team",
@@ -23650,7 +23670,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "web_src_features_map_view_isolategraph_test",
       "target": "web_src_features_map_view_isolategraph_test_edge",
@@ -23660,7 +23680,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L37",
+      "source_location": "L38",
       "weight": 1.0,
       "source": "web_src_features_map_view_isolategraph_test",
       "target": "web_src_features_map_view_isolategraph_test_graph",
@@ -23670,7 +23690,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L50",
+      "source_location": "L51",
       "weight": 1.0,
       "source": "web_src_features_map_view_isolategraph_test",
       "target": "web_src_features_map_view_isolategraph_test_keys",
@@ -23680,7 +23700,7 @@
       "relation": "indirect_call",
       "confidence": "INFERRED",
       "source_file": "web/src/features/map/view/isolateGraph.test.ts",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0,
       "context": "argument",
       "source": "web_src_features_map_view_isolategraph_test",
@@ -26860,7 +26880,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L37",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "web_src_lib_clusterlayout_test",
       "target": "web_src_lib_clusterlayout_test_edge",
@@ -26870,7 +26890,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L52",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "web_src_lib_clusterlayout_test",
       "target": "web_src_lib_clusterlayout_test_framerect",
@@ -26880,7 +26900,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L22",
+      "source_location": "L23",
       "weight": 1.0,
       "source": "web_src_lib_clusterlayout_test",
       "target": "web_src_lib_clusterlayout_test_groupnode",
@@ -26890,7 +26910,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L64",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "web_src_lib_clusterlayout_test",
       "target": "web_src_lib_clusterlayout_test_overlaps",
@@ -26900,7 +26920,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/clusterLayout.test.ts",
-      "source_location": "L63",
+      "source_location": "L65",
       "weight": 1.0,
       "source": "web_src_lib_clusterlayout_test",
       "target": "web_src_lib_clusterlayout_test_rect",
@@ -27202,7 +27222,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L133",
+      "source_location": "L148",
       "weight": 1.0,
       "source": "web_src_lib_grouping_buildgraph",
       "target": "web_src_lib_community_test_e"
@@ -27786,7 +27806,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L54",
+      "source_location": "L56",
       "weight": 1.0,
       "source": "web_src_lib_grouping",
       "target": "web_src_lib_grouping_buildgraph",
@@ -27796,7 +27816,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L44",
+      "source_location": "L46",
       "weight": 1.0,
       "source": "web_src_lib_grouping",
       "target": "web_src_lib_grouping_graph",
@@ -27806,7 +27826,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L30",
+      "source_location": "L32",
       "weight": 1.0,
       "source": "web_src_lib_grouping",
       "target": "web_src_lib_grouping_graphedge",
@@ -27826,7 +27846,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L50",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "web_src_lib_grouping",
       "target": "web_src_lib_grouping_groupkey",
@@ -27925,7 +27945,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L63",
+      "source_location": "L76",
       "weight": 1.0,
       "source": "web_src_lib_grouping_buildgraph",
       "target": "web_src_lib_grouping_groupkey",
@@ -27937,7 +27957,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/lib/grouping.ts",
-      "source_location": "L104",
+      "source_location": "L119",
       "weight": 1.0,
       "source": "web_src_lib_grouping_buildgraph",
       "target": "web_src_lib_status_worst"
@@ -28136,7 +28156,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L28",
+      "source_location": "L35",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_default_prefs",
@@ -28146,7 +28166,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L16",
+      "source_location": "L17",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_label_zoom_factor",
@@ -28156,7 +28176,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L36",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_label_zoom_levels",
@@ -28166,7 +28186,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L14",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_labelzoomlevel",
@@ -28176,7 +28196,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L42",
+      "source_location": "L50",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_loadprefs",
@@ -28186,7 +28206,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_prefs",
@@ -28196,7 +28216,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L56",
+      "source_location": "L66",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_saveprefs",
@@ -28206,7 +28226,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_theme",
@@ -28216,7 +28236,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L35",
+      "source_location": "L43",
       "weight": 1.0,
       "source": "web_src_lib_preferences",
       "target": "web_src_lib_preferences_themes",
@@ -28283,7 +28303,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "web_src_lib_preferences_loadprefs",
       "target": "web_src_lib_preferences_themes"
@@ -28294,7 +28314,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/lib/preferences.ts",
-      "source_location": "L47",
+      "source_location": "L55",
       "weight": 1.0,
       "source": "web_src_lib_preferences_loadprefs",
       "target": "web_src_lib_preferences_label_zoom_levels"
@@ -28903,7 +28923,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L40",
+      "source_location": "L44",
       "weight": 1.0,
       "source": "web_src_state_store_appstate",
       "target": "web_src_lib_timerange_timerange",
@@ -29022,7 +29042,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/lib/transition.test.ts",
-      "source_location": "L21",
+      "source_location": "L22",
       "weight": 1.0,
       "source": "web_src_lib_transition_test",
       "target": "web_src_lib_transition_test_snap",
@@ -29549,7 +29569,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L48",
+      "source_location": "L52",
       "weight": 1.0,
       "source": "web_src_state_store_appstate",
       "target": "web_src_state_routing_routestate",
@@ -29700,7 +29720,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L74",
+      "source_location": "L79",
       "weight": 1.0,
       "source": "web_src_state_store",
       "target": "web_src_state_store_prefs",
@@ -29720,7 +29740,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/store.ts",
-      "source_location": "L76",
+      "source_location": "L81",
       "weight": 1.0,
       "source": "web_src_state_store",
       "target": "web_src_state_store_usestore",
@@ -29993,8 +30013,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L2",
       "weight": 1.0,
-      "source": "web_tsconfig",
-      "target": "web_tsconfig_compileroptions",
+      "source": "home_dan_projects_tracemap_web_tsconfig_json",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
       "confidence_score": 1.0
     },
     {
@@ -30003,8 +30023,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L15",
       "weight": 1.0,
-      "source": "web_tsconfig",
-      "target": "web_tsconfig_include",
+      "source": "home_dan_projects_tracemap_web_tsconfig_json",
+      "target": "home_dan_projects_tracemap_web_tsconfig_include",
       "confidence_score": 1.0
     },
     {
@@ -30013,8 +30033,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L11",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_esmoduleinterop",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_esmoduleinterop",
       "confidence_score": 1.0
     },
     {
@@ -30023,8 +30043,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L12",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_forceconsistentcasinginfilenames",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_forceconsistentcasinginfilenames",
       "confidence_score": 1.0
     },
     {
@@ -30033,8 +30053,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L7",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_jsx",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_jsx",
       "confidence_score": 1.0
     },
     {
@@ -30043,8 +30063,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_lib",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_lib",
       "confidence_score": 1.0
     },
     {
@@ -30053,8 +30073,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L5",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_module",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_module",
       "confidence_score": 1.0
     },
     {
@@ -30063,8 +30083,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L6",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_moduleresolution",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_moduleresolution",
       "confidence_score": 1.0
     },
     {
@@ -30073,8 +30093,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L9",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_noemit",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_noemit",
       "confidence_score": 1.0
     },
     {
@@ -30083,8 +30103,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L10",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_skiplibcheck",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_skiplibcheck",
       "confidence_score": 1.0
     },
     {
@@ -30093,8 +30113,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L8",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_strict",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_strict",
       "confidence_score": 1.0
     },
     {
@@ -30103,8 +30123,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L3",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_target",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_target",
       "confidence_score": 1.0
     },
     {
@@ -30113,8 +30133,8 @@
       "source_file": "web/tsconfig.json",
       "source_location": "L13",
       "weight": 1.0,
-      "source": "web_tsconfig_compileroptions",
-      "target": "web_tsconfig_compileroptions_usedefineforclassfields",
+      "source": "home_dan_projects_tracemap_web_tsconfig_compileroptions",
+      "target": "home_dan_projects_tracemap_web_tsconfig_compileroptions_usedefineforclassfields",
       "confidence_score": 1.0
     },
     {
@@ -30139,5 +30159,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "76bc74a86adbd06455ed89dbbdd4484b2e5d1303"
+  "built_at_commit": "1b5bf4dea35c573e6ac28e835768a11e3730fc74"
 }

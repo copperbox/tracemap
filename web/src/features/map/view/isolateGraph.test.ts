@@ -7,6 +7,7 @@ const node = (key: string): GraphNode => ({
   kind: 'service',
   serviceId: key,
   teamId: null,
+  teamName: null,
   label: key,
   type: 'service',
   status: 'ok',

@@ -15,6 +15,8 @@ export interface GraphNode {
   kind: 'service' | 'group';
   serviceId?: string;
   teamId: number | null;
+  /** Owning team's display name (null for teamless services and group nodes). */
+  teamName: string | null;
   label: string;
   type: string; // service type, or 'group'
   status: Status;
@@ -51,10 +53,21 @@ export function groupKey(teamId: number): string {
   return `group:${teamId}`;
 }
 
-export function buildGraph(topo: Topology, opts: { mergedTeams: number[] }): Graph {
+export function buildGraph(
+  topo: Topology,
+  opts: { mergedTeams: number[]; teamGrouping?: boolean },
+): Graph {
+  const teamGrouping = opts.teamGrouping ?? true;
   const teamName = new Map(topo.teams.map((t) => [t.id, t.name]));
+  const nameOfTeam = (teamId: number | null): string | null =>
+    teamId == null ? null : teamName.get(teamId) ?? null;
+  // With grouping off, no team ever collapses into a meganode -- services stay
+  // individual and merge state is ignored until grouping is turned back on.
   const collapsed = (svc: TopologyService): boolean =>
-    svc.teamId != null && teamName.has(svc.teamId) && opts.mergedTeams.includes(svc.teamId);
+    teamGrouping &&
+    svc.teamId != null &&
+    teamName.has(svc.teamId) &&
+    opts.mergedTeams.includes(svc.teamId);
 
   const byId = new Map(topo.services.map((s) => [s.id, s]));
   const nodeKeyOf = (serviceId: string): string => {
@@ -77,6 +90,7 @@ export function buildGraph(topo: Topology, opts: { mergedTeams: number[] }): Gra
         kind: 'service',
         serviceId: svc.id,
         teamId: svc.teamId,
+        teamName: nameOfTeam(svc.teamId),
         label: svc.name,
         type: svc.type,
         status: svc.status,
@@ -99,6 +113,7 @@ export function buildGraph(topo: Topology, opts: { mergedTeams: number[] }): Gra
       key: groupKey(teamId),
       kind: 'group',
       teamId,
+      teamName: null,
       label: teamName.get(teamId) ?? `team ${teamId}`,
       type: 'group',
       status: worst(members.map((m) => m.status)),

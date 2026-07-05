@@ -33,6 +33,7 @@
    type icon + status dot stay visible, so the map reads as clean status nodes. */
 .compact .typeLabel,
 .compact .name,
+.compact .team,
 .compact .metrics,
 .compact .members,
 .compact .toggleBtn {
@@ -121,6 +122,18 @@
 
 .nameGroup {
   font-size: 14.5px;
+}
+
+/* Owning-team subtitle, shown under the name when team grouping is off. Subtle
+   so it reads as secondary metadata, not part of the service name. */
+.team {
+  margin: -1px 0 4px;
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  letter-spacing: .02em;
+  color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .metrics {

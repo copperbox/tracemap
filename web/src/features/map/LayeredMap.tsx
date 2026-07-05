@@ -65,6 +65,7 @@ export function LayeredMap() {
   const graphType = useStore((s) => s.graphType);
   const setGraphType = useStore((s) => s.setGraphType);
   const labelZoom = useStore((s) => s.labelZoom);
+  const teamGrouping = useStore((s) => s.teamGrouping);
 
   // Effective label threshold: the tuned default scaled by the user preference
   // ('always' zeroes it out, so labels never hide).
@@ -96,9 +97,9 @@ export function LayeredMap() {
   const fullGraph = useMemo(
     () =>
       topology
-        ? buildGraph(topology, { mergedTeams })
+        ? buildGraph(topology, { mergedTeams, teamGrouping })
         : { nodes: [] as GraphNode[], edges: [] as GraphEdge[], nodeKeyOf: (id: string) => id },
-    [topology, mergedTeams],
+    [topology, mergedTeams, teamGrouping],
   );
 
   // Isolation prunes the graph to one dependency tree BEFORE layout, so the
@@ -310,7 +311,9 @@ export function LayeredMap() {
   const teams = topology?.teams ?? [];
   const allMerged = teams.length > 0 && teams.every((t) => mergedTeams.includes(t.id));
 
-  const frameViews = buildFrameViews(teams, graph.nodes, displayPos, dimmed);
+  // Ownership frames are the visual half of team grouping; with grouping off
+  // the map draws bare service cards (each labelled with its team) and no frames.
+  const frameViews = teamGrouping ? buildFrameViews(teams, graph.nodes, displayPos, dimmed) : [];
 
   // ---- viewport culling ----
   // Edge geometry and anchor spreading stay computed over the FULL graph above
@@ -430,6 +433,7 @@ export function LayeredMap() {
                 tick={tick}
                 dim={dimmed(n.key)}
                 selected={selNodeKey === n.key}
+                teamLabel={teamGrouping ? null : n.teamName}
                 compact={labelsHidden}
                 fade={animating && animRef.current?.appear.has(n.key) ? eased : undefined}
                 onDragStart={(ev) => {
@@ -480,6 +484,7 @@ export function LayeredMap() {
           teams={teams}
           teamFilter={teamFilter}
           allMerged={allMerged}
+          showMerge={teamGrouping}
           onToggleMergeAll={() => {
             fitPendingRef.current = true;
             setMergedTeams(allMerged ? [] : teams.map((t) => t.id));
