@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphEdge, GraphNode } from './grouping';
 import { FRAME_PAD, FRAME_TITLE_H, layoutClusteredGraph } from './clusterLayout';
-import { GROUP_H, GROUP_W, NODE_H, NODE_W } from './layout';
+import { GROUP_H, GROUP_W, layoutGraph, NODE_H, NODE_W } from './layout';
 
 const svcNode = (key: string, teamId: number | null): GraphNode => ({
   key,
@@ -170,6 +170,41 @@ describe('layoutClusteredGraph', () => {
     // so toggling team 2 does not relocate it across the map
     expect(Math.sign(u[0] - u[1])).toBe(Math.sign(m[0] - m[1]));
     expect(Math.sign(u[1] - u[2])).toBe(Math.sign(m[1] - m[2]));
+  });
+
+  describe('with team grouping off', () => {
+    // A plain layered layout over every node, with no team clustering -- the
+    // "different algorithm" the flat mode is expected to reproduce.
+    const flatReference = () => {
+      const keys = [...nodes].map((n) => n.key).sort((a, b) => a.localeCompare(b));
+      const keySet = new Set(keys);
+      const deps = new Map<string, string[]>();
+      for (const e of [...edges].sort((a, b) => a.key.localeCompare(b.key))) {
+        if (!keySet.has(e.sourceKey) || !keySet.has(e.targetKey)) continue;
+        const arr = deps.get(e.sourceKey) ?? [];
+        arr.push(e.targetKey);
+        deps.set(e.sourceKey, arr);
+      }
+      const dims = new Map(nodes.map((n) => [n.key, { w: NODE_W, h: NODE_H }]));
+      return layoutGraph({ keys, deps, dims });
+    };
+
+    it('positions every node', () => {
+      const { pos } = layoutClusteredGraph(nodes, edges, { teamGrouping: false });
+      for (const n of nodes) expect(pos.has(n.key)).toBe(true);
+    });
+
+    it('lays services out flat, ignoring team clusters', () => {
+      const flat = layoutClusteredGraph(nodes, edges, { teamGrouping: false });
+      const plain = flatReference();
+      expect([...flat.pos.entries()]).toEqual([...plain.pos.entries()]);
+    });
+
+    it('produces a different layout than the grouped one', () => {
+      const grouped = layoutClusteredGraph(nodes, edges);
+      const flat = layoutClusteredGraph(nodes, edges, { teamGrouping: false });
+      expect([...flat.pos.entries()]).not.toEqual([...grouped.pos.entries()]);
+    });
   });
 
   it('is deterministic for the same input', () => {

@@ -126,10 +126,11 @@ export function LayeredMap() {
   // memo on a sorted structural signature stops nodes drifting on their own.
   const layoutSig = useMemo(
     () =>
+      (teamGrouping ? 'grouped#' : 'flat#') +
       [...graph.nodes.map((n) => n.key)].sort().join('|') +
       '#' +
       [...graph.edges.map((e) => e.key)].sort().join('|'),
-    [graph],
+    [graph, teamGrouping],
   );
 
   // The layout is a pure function of structure (layoutSig), but a plain useMemo
@@ -143,7 +144,7 @@ export function LayeredMap() {
     const cache = layoutCache.current;
     const cached = cache.get(layoutSig);
     if (cached) return cached;
-    const result = layoutClusteredGraph(graph.nodes, graph.edges);
+    const result = layoutClusteredGraph(graph.nodes, graph.edges, { teamGrouping });
     cache.set(layoutSig, result);
     if (cache.size > 32) cache.delete(cache.keys().next().value as string);
     return result;
@@ -204,6 +205,17 @@ export function LayeredMap() {
     prevIsolateRef.current = isolateId;
     fitView();
   }, [isolateId, fitView]);
+
+  // Toggling team grouping swaps the layout algorithm (clustered frames <->
+  // flat team-agnostic flow), a wholesale re-flow of the whole map. Reframe onto
+  // the freshly computed layout so the new arrangement is visible immediately.
+  // Skips the initial mount (first-data fit handles that).
+  const prevGroupingRef = useRef(teamGrouping);
+  useEffect(() => {
+    if (prevGroupingRef.current === teamGrouping) return;
+    prevGroupingRef.current = teamGrouping;
+    fitView();
+  }, [teamGrouping, fitView]);
 
   // Drop a stale isolate id (e.g. a deep link to a service that no longer
   // exists, or one swallowed by a merged team) so the URL and map agree. Guard

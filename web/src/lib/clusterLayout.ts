@@ -22,8 +22,36 @@ export const FRAME_TITLE_H = 36;
  */
 const clusterOf = (n: GraphNode): string => (n.teamId != null ? `team:${n.teamId}` : n.key);
 
-export function layoutClusteredGraph(nodes: GraphNode[], edges: GraphEdge[]): LayoutResult {
+/**
+ * Flat layered layout used when team grouping is OFF. With no frames to draw,
+ * there is no reason to keep teammates adjacent -- so every service is its own
+ * cluster and the whole graph goes through a single team-agnostic flow layout.
+ * This deliberately yields a different arrangement than the grouped layout, so
+ * toggling grouping visibly re-flows the map instead of leaving nodes in place.
+ */
+function layoutFlatGraph(nodes: GraphNode[], edges: GraphEdge[]): LayoutResult {
+  const keys = [...nodes].map((n) => n.key).sort((a, b) => a.localeCompare(b));
+  const keySet = new Set(keys);
+  const deps = new Map<string, string[]>();
+  for (const e of [...edges].sort((a, b) => a.key.localeCompare(b.key))) {
+    if (!keySet.has(e.sourceKey) || !keySet.has(e.targetKey)) continue;
+    const arr = deps.get(e.sourceKey) ?? [];
+    arr.push(e.targetKey);
+    deps.set(e.sourceKey, arr);
+  }
+  const dims = new Map(
+    nodes.map((n) => [n.key, n.kind === 'group' ? { w: GROUP_W, h: GROUP_H } : { w: NODE_W, h: NODE_H }]),
+  );
+  return layoutGraph({ keys, deps, dims });
+}
+
+export function layoutClusteredGraph(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  opts: { teamGrouping?: boolean } = {},
+): LayoutResult {
   if (!nodes.length) return { pos: new Map(), bbox: { x0: 0, y0: 0, x1: 0, y1: 0 } };
+  if (opts.teamGrouping === false) return layoutFlatGraph(nodes, edges);
 
   const nodeByKey = new Map(nodes.map((n) => [n.key, n]));
   const members = new Map<string, GraphNode[]>();
