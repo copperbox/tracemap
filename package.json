@@ -14,9 +14,17 @@
     "migrate": "npm run migrate --workspace server",
     "simulate": "cd server && tsx src/sim/simulate.ts",
     "test": "npm run test --workspace server && npm run test --workspace web",
-    "build": "npm run build --workspace server && npm run build --workspace web"
+    "build": "npm run build --workspace server && npm run build --workspace web",
+    "typecheck": "npm-run-all typecheck:server typecheck:web",
+    "typecheck:server": "npm run typecheck --workspace server",
+    "typecheck:web": "npm run typecheck --workspace web",
+    "sandcastle": "npx tsx ./sandcastle/main.mts"
   },
   "devDependencies": {
+    "@ai-hero/sandcastle": "^0.12.0",
     "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }

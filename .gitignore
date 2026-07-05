@@ -1,6 +1,7 @@
 .claude/
 .pi/
-graphify-out/
+graphify-out/cost.json
+# graphify-out/cache/
 design_handoff_lattice_observability/
 prompt.txt
 node_modules/

@@ -1,0 +1,8 @@
+# Ignore all except server and web source
+*
+!server
+!server/src
+!server/src/**
+!web
+!web/src
+!web/src/**
