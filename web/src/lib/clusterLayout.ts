@@ -22,6 +22,27 @@ export const FRAME_TITLE_H = 36;
  */
 const clusterOf = (n: GraphNode): string => (n.teamId != null ? `team:${n.teamId}` : n.key);
 
+/** Layout footprint of a node: meganodes get the larger group box. */
+const dimsOf = (n: GraphNode): { w: number; h: number } =>
+  n.kind === 'group' ? { w: GROUP_W, h: GROUP_H } : { w: NODE_W, h: NODE_H };
+
+/**
+ * Adjacency map (source -> targets) over the given sorted edges, restricted to
+ * edges whose endpoints both appear in `keys`. Iterating pre-sorted edges keeps
+ * the result deterministic.
+ */
+function depsWithin(keys: string[], sortedEdges: GraphEdge[]): Map<string, string[]> {
+  const keySet = new Set(keys);
+  const deps = new Map<string, string[]>();
+  for (const e of sortedEdges) {
+    if (!keySet.has(e.sourceKey) || !keySet.has(e.targetKey)) continue;
+    const arr = deps.get(e.sourceKey) ?? [];
+    arr.push(e.targetKey);
+    deps.set(e.sourceKey, arr);
+  }
+  return deps;
+}
+
 /**
  * Flat layered layout used when team grouping is OFF. With no frames to draw,
  * there is no reason to keep teammates adjacent -- so every service is its own
@@ -30,18 +51,10 @@ const clusterOf = (n: GraphNode): string => (n.teamId != null ? `team:${n.teamId
  * toggling grouping visibly re-flows the map instead of leaving nodes in place.
  */
 function layoutFlatGraph(nodes: GraphNode[], edges: GraphEdge[]): LayoutResult {
-  const keys = [...nodes].map((n) => n.key).sort((a, b) => a.localeCompare(b));
-  const keySet = new Set(keys);
-  const deps = new Map<string, string[]>();
-  for (const e of [...edges].sort((a, b) => a.key.localeCompare(b.key))) {
-    if (!keySet.has(e.sourceKey) || !keySet.has(e.targetKey)) continue;
-    const arr = deps.get(e.sourceKey) ?? [];
-    arr.push(e.targetKey);
-    deps.set(e.sourceKey, arr);
-  }
-  const dims = new Map(
-    nodes.map((n) => [n.key, n.kind === 'group' ? { w: GROUP_W, h: GROUP_H } : { w: NODE_W, h: NODE_H }]),
-  );
+  const keys = nodes.map((n) => n.key).sort((a, b) => a.localeCompare(b));
+  const sortedEdges = [...edges].sort((a, b) => a.key.localeCompare(b.key));
+  const deps = depsWithin(keys, sortedEdges);
+  const dims = new Map(nodes.map((n) => [n.key, dimsOf(n)]));
   return layoutGraph({ keys, deps, dims });
 }
 
@@ -72,18 +85,11 @@ export function layoutClusteredGraph(
     const lone = mem.length === 1 && (mem[0].kind === 'group' || mem[0].teamId == null) ? mem[0] : null;
     if (lone) {
       // standalone cluster: a merged team's meganode or a teamless service
-      dims.set(ck, lone.kind === 'group' ? { w: GROUP_W, h: GROUP_H } : { w: NODE_W, h: NODE_H });
+      dims.set(ck, dimsOf(lone));
       continue;
     }
     const keys = mem.map((m) => m.key);
-    const keySet = new Set(keys);
-    const deps = new Map<string, string[]>();
-    for (const e of sortedEdges) {
-      if (!keySet.has(e.sourceKey) || !keySet.has(e.targetKey)) continue;
-      const arr = deps.get(e.sourceKey) ?? [];
-      arr.push(e.targetKey);
-      deps.set(e.sourceKey, arr);
-    }
+    const deps = depsWithin(keys, sortedEdges);
     const local = layoutGraph({ keys, deps });
     for (const k of keys) {
       const p = local.pos.get(k) as { x: number; y: number };

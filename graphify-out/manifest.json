@@ -765,8 +765,8 @@
     "semantic_hash": ""
   },
   "web/src/lib/clusterLayout.ts": {
-    "mtime": 1783241400.6319797,
-    "ast_hash": "e56d55e3221913854f0cb22e69d28075",
+    "mtime": 1783241883.6194847,
+    "ast_hash": "a699ff7b63a24ef9ca02eba6e7c13366",
     "semantic_hash": ""
   },
   "web/src/lib/combobox.test.ts": {
