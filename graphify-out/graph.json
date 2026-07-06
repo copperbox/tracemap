@@ -1350,7 +1350,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "server_src_otlp_infer_servicetype",
-      "community": 1,
+      "community": 25,
       "norm_label": "servicetype"
     },
     {
@@ -1640,7 +1640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test",
-      "community": 1,
+      "community": 25,
       "norm_label": "registry.test.ts"
     },
     {
@@ -1650,7 +1650,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_querymock",
-      "community": 1,
+      "community": 25,
       "norm_label": "{ querymock }"
     },
     {
@@ -1660,7 +1660,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_loadrow",
-      "community": 1,
+      "community": 25,
       "norm_label": "loadrow"
     },
     {
@@ -1670,7 +1670,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_stubdb",
-      "community": 1,
+      "community": 25,
       "norm_label": "stubdb()"
     },
     {
@@ -1680,7 +1680,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "server_src_otlp_registry_test_callsmatching",
-      "community": 1,
+      "community": 25,
       "norm_label": "callsmatching()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry",
-      "community": 1,
+      "community": 25,
       "norm_label": "serviceregistry"
     },
     {
@@ -1720,7 +1720,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_load",
-      "community": 1,
+      "community": 25,
       "norm_label": ".load()"
     },
     {
@@ -1730,7 +1730,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_reloadaliases",
-      "community": 1,
+      "community": 25,
       "norm_label": ".reloadaliases()"
     },
     {
@@ -1740,7 +1740,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_resolve",
-      "community": 1,
+      "community": 25,
       "norm_label": ".resolve()"
     },
     {
@@ -1750,7 +1750,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_isinternal",
-      "community": 1,
+      "community": 25,
       "norm_label": ".isinternal()"
     },
     {
@@ -1760,7 +1760,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_has",
-      "community": 1,
+      "community": 25,
       "norm_label": ".has()"
     },
     {
@@ -1770,7 +1770,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_ensure",
-      "community": 1,
+      "community": 25,
       "norm_label": ".ensure()"
     },
     {
@@ -1780,7 +1780,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_teamidfor",
-      "community": 1,
+      "community": 25,
       "norm_label": ".teamidfor()"
     },
     {
@@ -1790,7 +1790,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "server_src_otlp_registry_serviceregistry_assignteamifmissing",
-      "community": 1,
+      "community": 25,
       "norm_label": ".assignteamifmissing()"
     },
     {
@@ -3280,7 +3280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_types_status",
-      "community": 25,
+      "community": 4,
       "norm_label": "status"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_api_types_topologyservice",
-      "community": 25,
+      "community": 4,
       "norm_label": "topologyservice"
     },
     {
@@ -3360,7 +3360,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_src_api_types_seriespoint",
-      "community": 30,
+      "community": 0,
       "norm_label": "seriespoint"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_api_types_tracelistitem",
-      "community": 22,
+      "community": 38,
       "norm_label": "tracelistitem"
     },
     {
@@ -3440,7 +3440,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "web_src_api_types_tracedetail",
-      "community": 0,
+      "community": 22,
       "norm_label": "tracedetail"
     },
     {
@@ -3570,7 +3570,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "web_src_components_icon_searchicon",
-      "community": 25,
+      "community": 4,
       "norm_label": "searchicon()"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_components_icon_themeicon",
-      "community": 9,
+      "community": 4,
       "norm_label": "themeicon()"
     },
     {
@@ -3610,7 +3610,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "web_src_components_icon_settingsicon",
-      "community": 9,
+      "community": 4,
       "norm_label": "settingsicon()"
     },
     {
@@ -3640,7 +3640,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "web_src_components_icon_logoicon",
-      "community": 25,
+      "community": 4,
       "norm_label": "logoicon()"
     },
     {
@@ -3660,7 +3660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu",
-      "community": 9,
+      "community": 4,
       "norm_label": "preferencesmenu.tsx"
     },
     {
@@ -3670,7 +3670,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_theme_options",
-      "community": 9,
+      "community": 4,
       "norm_label": "theme_options"
     },
     {
@@ -3680,7 +3680,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_label_zoom_options",
-      "community": 9,
+      "community": 4,
       "norm_label": "label_zoom_options"
     },
     {
@@ -3690,7 +3690,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_team_grouping_options",
-      "community": 9,
+      "community": 4,
       "norm_label": "team_grouping_options"
     },
     {
@@ -3700,7 +3700,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_preferencesmenu",
-      "community": 9,
+      "community": 4,
       "norm_label": "preferencesmenu()"
     },
     {
@@ -3710,7 +3710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_sloring",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloring.tsx"
     },
     {
@@ -3720,7 +3720,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_components_sloring_sloring",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloring()"
     },
     {
@@ -3770,7 +3770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_topbar",
-      "community": 25,
+      "community": 4,
       "norm_label": "topbar.tsx"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_components_topbar_status_noun",
-      "community": 25,
+      "community": 4,
       "norm_label": "status_noun"
     },
     {
@@ -3790,7 +3790,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_topbar_healthchip",
-      "community": 25,
+      "community": 4,
       "norm_label": "healthchip()"
     },
     {
@@ -3930,7 +3930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_mapview",
-      "community": 10,
+      "community": 9,
       "norm_label": "mapview.tsx"
     },
     {
@@ -4230,7 +4230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph",
-      "community": 10,
+      "community": 3,
       "norm_label": "forcegraph.tsx"
     },
     {
@@ -4240,7 +4240,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_palette",
-      "community": 10,
+      "community": 3,
       "norm_label": "palette"
     },
     {
@@ -4250,7 +4250,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_forcegraph",
-      "community": 10,
+      "community": 3,
       "norm_label": "forcegraph()"
     },
     {
@@ -4390,7 +4390,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_test",
-      "community": 10,
+      "community": 3,
       "norm_label": "forcenodes.test.ts"
     },
     {
@@ -4400,7 +4400,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_test_node",
-      "community": 10,
+      "community": 3,
       "norm_label": "node()"
     },
     {
@@ -4410,7 +4410,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes",
-      "community": 10,
+      "community": 3,
       "norm_label": "forcenodes.ts"
     },
     {
@@ -4440,7 +4440,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_noderadius",
-      "community": 10,
+      "community": 3,
       "norm_label": "noderadius()"
     },
     {
@@ -4450,7 +4450,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_buildforcenodes",
-      "community": 10,
+      "community": 3,
       "norm_label": "buildforcenodes()"
     },
     {
@@ -4460,7 +4460,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_buildforcelinks",
-      "community": 10,
+      "community": 3,
       "norm_label": "buildforcelinks()"
     },
     {
@@ -4570,7 +4570,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_map_view_graphmodetoggle_graphmodetoggle",
-      "community": 10,
+      "community": 4,
       "norm_label": "graphmodetoggle()"
     },
     {
@@ -4710,7 +4710,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomcontrols_zoomcontrols",
-      "community": 10,
+      "community": 4,
       "norm_label": "zoomcontrols()"
     },
     {
@@ -4890,7 +4890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_test",
-      "community": 10,
+      "community": 17,
       "norm_label": "dotgrid.test.ts"
     },
     {
@@ -4900,7 +4900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid",
-      "community": 10,
+      "community": 17,
       "norm_label": "dotgrid.ts"
     },
     {
@@ -4910,7 +4910,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_dotalphascale",
-      "community": 10,
+      "community": 17,
       "norm_label": "dotalphascale()"
     },
     {
@@ -5090,7 +5090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test",
-      "community": 7,
+      "community": 18,
       "norm_label": "frameviews.test.ts"
     },
     {
@@ -5100,7 +5100,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_node",
-      "community": 7,
+      "community": 18,
       "norm_label": "node()"
     },
     {
@@ -5110,7 +5110,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_team",
-      "community": 7,
+      "community": 18,
       "norm_label": "team"
     },
     {
@@ -5120,7 +5120,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_posmap",
-      "community": 7,
+      "community": 18,
       "norm_label": "posmap()"
     },
     {
@@ -5130,7 +5130,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_test_never",
-      "community": 7,
+      "community": 18,
       "norm_label": "never()"
     },
     {
@@ -5140,7 +5140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews",
-      "community": 7,
+      "community": 17,
       "norm_label": "frameviews.ts"
     },
     {
@@ -5150,7 +5150,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_frameview",
-      "community": 7,
+      "community": 17,
       "norm_label": "frameview"
     },
     {
@@ -5160,7 +5160,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_buildframeviews",
-      "community": 7,
+      "community": 17,
       "norm_label": "buildframeviews()"
     },
     {
@@ -5240,7 +5240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_test",
-      "community": 7,
+      "community": 17,
       "norm_label": "nodebounds.test.ts"
     },
     {
@@ -5250,7 +5250,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds",
-      "community": 7,
+      "community": 17,
       "norm_label": "nodebounds.ts"
     },
     {
@@ -5260,7 +5260,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_bounds",
-      "community": 7,
+      "community": 17,
       "norm_label": "bounds"
     },
     {
@@ -5270,7 +5270,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_nodecardbounds",
-      "community": 7,
+      "community": 17,
       "norm_label": "nodecardbounds()"
     },
     {
@@ -5650,7 +5650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal",
-      "community": 0,
+      "community": 11,
       "norm_label": "editservicemodal.tsx"
     },
     {
@@ -5660,7 +5660,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_types",
-      "community": 0,
+      "community": 11,
       "norm_label": "types"
     },
     {
@@ -5670,7 +5670,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_editservicemodal",
-      "community": 0,
+      "community": 11,
       "norm_label": "editservicemodal()"
     },
     {
@@ -5680,7 +5680,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_field",
-      "community": 0,
+      "community": 11,
       "norm_label": "field.tsx"
     },
     {
@@ -5690,7 +5690,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_field_field",
-      "community": 0,
+      "community": 11,
       "norm_label": "field()"
     },
     {
@@ -5700,7 +5700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage",
-      "community": 9,
+      "community": 38,
       "norm_label": "servicepage.tsx"
     },
     {
@@ -5710,7 +5710,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage_chartgrid",
-      "community": 9,
+      "community": 38,
       "norm_label": "chartgrid"
     },
     {
@@ -5720,7 +5720,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_features_service_servicepage_editservicemodal",
-      "community": 9,
+      "community": 38,
       "norm_label": "editservicemodal"
     },
     {
@@ -5800,7 +5800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_test",
-      "community": 9,
+      "community": 30,
       "norm_label": "rangeedges.test.ts"
     },
     {
@@ -5810,7 +5810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges",
-      "community": 9,
+      "community": 30,
       "norm_label": "rangeedges.ts"
     },
     {
@@ -5820,7 +5820,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_rangeedgelabels",
-      "community": 9,
+      "community": 30,
       "norm_label": "rangeedgelabels()"
     },
     {
@@ -5910,7 +5910,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable",
-      "community": 13,
+      "community": 30,
       "norm_label": "operationstable.tsx"
     },
     {
@@ -5920,7 +5920,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_headers",
-      "community": 13,
+      "community": 30,
       "norm_label": "headers"
     },
     {
@@ -5930,7 +5930,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_operationstable",
-      "community": 13,
+      "community": 30,
       "norm_label": "operationstable()"
     },
     {
@@ -5950,7 +5950,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceerrorspanel_serviceerrorspanel",
-      "community": 9,
+      "community": 0,
       "norm_label": "serviceerrorspanel()"
     },
     {
@@ -5960,7 +5960,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader",
-      "community": 26,
+      "community": 38,
       "norm_label": "serviceheader.tsx"
     },
     {
@@ -5970,7 +5970,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader_serviceheader",
-      "community": 26,
+      "community": 38,
       "norm_label": "serviceheader()"
     },
     {
@@ -5980,7 +5980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons",
-      "community": 9,
+      "community": 38,
       "norm_label": "skeletons.tsx"
     },
     {
@@ -5990,7 +5990,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_block",
-      "community": 9,
+      "community": 38,
       "norm_label": "block()"
     },
     {
@@ -6000,7 +6000,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_headerskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "headerskeleton()"
     },
     {
@@ -6010,7 +6010,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_kpiskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "kpiskeleton()"
     },
     {
@@ -6020,7 +6020,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_chartskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "chartskeleton()"
     },
     {
@@ -6030,7 +6030,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_neighborsskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "neighborsskeleton()"
     },
     {
@@ -6040,7 +6040,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_operationsskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "operationsskeleton()"
     },
     {
@@ -6050,7 +6050,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_errorsskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "errorsskeleton()"
     },
     {
@@ -6060,7 +6060,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "web_src_features_service_sections_skeletons_tracesskeleton",
-      "community": 9,
+      "community": 38,
       "norm_label": "tracesskeleton()"
     },
     {
@@ -6070,7 +6070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel",
-      "community": 22,
+      "community": 38,
       "norm_label": "tracespanel.tsx"
     },
     {
@@ -6080,7 +6080,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_headers",
-      "community": 22,
+      "community": 38,
       "norm_label": "headers"
     },
     {
@@ -6090,7 +6090,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_tracespanel",
-      "community": 22,
+      "community": 38,
       "norm_label": "tracespanel()"
     },
     {
@@ -6750,7 +6750,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtago",
-      "community": 22,
+      "community": 38,
       "norm_label": "fmtago()"
     },
     {
@@ -6810,7 +6810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_grouping",
-      "community": 32,
+      "community": 3,
       "norm_label": "grouping.ts"
     },
     {
@@ -6830,7 +6830,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_lib_grouping_graphedge",
-      "community": 10,
+      "community": 3,
       "norm_label": "graphedge"
     },
     {
@@ -6850,7 +6850,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "web_src_lib_grouping_groupkey",
-      "community": 32,
+      "community": 17,
       "norm_label": "groupkey()"
     },
     {
@@ -6860,7 +6860,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_lib_grouping_buildgraph",
-      "community": 32,
+      "community": 3,
       "norm_label": "buildgraph()"
     },
     {
@@ -6870,7 +6870,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test",
-      "community": 25,
+      "community": 4,
       "norm_label": "healthsummary.test.ts"
     },
     {
@@ -6880,7 +6880,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test_svc",
-      "community": 25,
+      "community": 4,
       "norm_label": "svc()"
     },
     {
@@ -6890,7 +6890,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test_services",
-      "community": 25,
+      "community": 4,
       "norm_label": "services"
     },
     {
@@ -6900,7 +6900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary",
-      "community": 25,
+      "community": 4,
       "norm_label": "healthsummary.ts"
     },
     {
@@ -6910,7 +6910,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_unhealthyservice",
-      "community": 25,
+      "community": 4,
       "norm_label": "unhealthyservice"
     },
     {
@@ -6920,7 +6920,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_servicesbystatus",
-      "community": 25,
+      "community": 4,
       "norm_label": "servicesbystatus()"
     },
     {
@@ -7030,7 +7030,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_lib_preferences_label_zoom_factor",
-      "community": 10,
+      "community": 9,
       "norm_label": "label_zoom_factor"
     },
     {
@@ -7270,7 +7270,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_status_worst",
-      "community": 32,
+      "community": 3,
       "norm_label": "worst()"
     },
     {
@@ -7280,7 +7280,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_status_sloview",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloview"
     },
     {
@@ -7470,7 +7470,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_lib_timerange_isliverange",
-      "community": 9,
+      "community": 30,
       "norm_label": "isliverange()"
     },
     {
@@ -7520,7 +7520,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "web_src_lib_transition_pos",
-      "community": 7,
+      "community": 17,
       "norm_label": "pos"
     },
     {
@@ -7600,7 +7600,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource_test",
-      "community": 9,
+      "community": 25,
       "norm_label": "resource.test.ts"
     },
     {
@@ -7610,7 +7610,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource",
-      "community": 9,
+      "community": 25,
       "norm_label": "resource.ts"
     },
     {
@@ -7620,7 +7620,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcestate",
-      "community": 9,
+      "community": 25,
       "norm_label": "resourcestate"
     },
     {
@@ -7630,7 +7630,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_state_resource_resourceaction",
-      "community": 9,
+      "community": 25,
       "norm_label": "resourceaction"
     },
     {
@@ -7640,7 +7640,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_state_resource_initialresource",
-      "community": 9,
+      "community": 25,
       "norm_label": "initialresource()"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcereducer",
-      "community": 9,
+      "community": 25,
       "norm_label": "resourcereducer()"
     },
     {
@@ -7660,7 +7660,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcephase",
-      "community": 9,
+      "community": 25,
       "norm_label": "resourcephase"
     },
     {
@@ -7940,7 +7940,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_useresource",
-      "community": 9,
+      "community": 25,
       "norm_label": "useresource.ts"
     },
     {
@@ -7950,7 +7950,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_state_useresource_useresourceopts",
-      "community": 9,
+      "community": 25,
       "norm_label": "useresourceopts"
     },
     {
@@ -7960,7 +7960,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "web_src_state_useresource_useresource",
-      "community": 9,
+      "community": 25,
       "norm_label": "useresource()"
     },
     {
@@ -29671,6 +29671,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "web/src/state/store.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_state_store_test",
+      "target": "web_src_state_routing",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "web/src/state/urlSync.ts",
       "source_location": "L2",
       "weight": 1.0,
@@ -29820,6 +29831,17 @@
       "weight": 1.0,
       "source": "web_src_state_urlsync_initrouting",
       "target": "web_src_state_routing_routetourl"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/state/store.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_state_store_test",
+      "target": "web_src_state_routing_urltoroute",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -30328,5 +30350,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c9f3539038d5de2798355f872ef4715968cb7fe3"
+  "built_at_commit": "be8cdfe2d4825912fb7c3828cfde2c90801208ca"
 }

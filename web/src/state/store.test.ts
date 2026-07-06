@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useStore } from './store';
+import { urlToRoute } from './routing';
 
 // Reset the transient navigation slice before each case so tests don't leak
 // state into one another (zustand stores are module singletons).
@@ -20,5 +21,15 @@ describe('navigate', () => {
     useStore.setState({ serviceOpFilter: 'POST /charge' });
     useStore.getState().navigate('service', 'checkout');
     expect(useStore.getState().serviceOpFilter).toBeNull();
+  });
+});
+
+describe('applyRoute', () => {
+  it('clears any stale operation filter, since it is transient and not routable', () => {
+    useStore.setState({ serviceOpFilter: 'POST /charge' });
+    useStore.getState().applyRoute(urlToRoute('/service/api'));
+    const s = useStore.getState();
+    expect(s.serviceId).toBe('api');
+    expect(s.serviceOpFilter).toBeNull();
   });
 });

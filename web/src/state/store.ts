@@ -121,6 +121,9 @@ export const useStore = create<AppState>((set) => ({
     set({
       view: route.view,
       serviceId: route.serviceId,
+      // The op filter is transient and not part of the route, so a deep-link or
+      // browser back/forward always lands on an unfiltered service page.
+      serviceOpFilter: null,
       graphType: route.graphType,
       openTraceId: route.openTraceId,
       range: route.range,
