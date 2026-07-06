@@ -67,9 +67,13 @@ The outer loop runs up to `MAX_ITERATIONS` times. Each iteration:
 3. **Reconcile** — any issue labelled in-review whose feature PR is no longer
    open (you closed it unmerged) has the label removed, so it re-enters the
    queue.
-4. **Auto re-bump** — any ready feature PR whose version no longer exceeds
-   `main` (a sibling merged and took that version) is refreshed against `main`
-   and re-bumped. See [Version bumps](#version-bumps).
+4. **Keep ready PRs current with `main`** — for each **ready** (non-draft)
+   feature PR: if its version no longer exceeds `main` (a sibling merged and
+   took that version) it is **re-bumped** (which also merges `main` in); else if
+   it is merely **behind** `main` it is **refreshed** (merge `main` in, no
+   version change) so it stays conflict-free and tested against current `main`.
+   Drafts are left alone — they pick up `main` naturally as their issues
+   integrate. See [Version bumps](#version-bumps).
 
 If there are no queued issues, exit **3** (idle — see [Exit codes](#exit-codes)).
 
@@ -158,20 +162,27 @@ uses git integration state (not just labels). So:
 Recovery needs no separate reconciliation pass — it falls out of "unlabelled →
 requeued."
 
+**Leaked worktrees:** Sandcastle *preserves* a worktree when a run leaves
+uncommitted changes or is killed, and a leftover worktree blocks re-creating a
+sandbox on that branch. `removeLeakedWorktree(branch)` runs before every
+`createSandbox`, discarding any such leftover (committed work is already in the
+shared repo) so a feature can never get permanently wedged on one.
+
 ---
 
 ## Exit codes
 
 `main.mts` exits with:
 
-- **0** — reached `MAX_ITERATIONS` (there may be more to do; loop re-runs).
+- **0** — reached `MAX_ITERATIONS` (there may be more to do).
 - **1** — a crash / unhandled error.
 - **3** — idle: nothing queued or everything remaining is blocked/in-review.
 
-`scripts/sandcastle-loop.sh` re-runs on **0**, stops cleanly on **3**, and
-propagates any other non-zero as a failure. Because collisions and new work are
-only detected while the loop is running, restart the loop after you merge a PR if
-it has already idle-stopped.
+`scripts/sandcastle-loop.sh` runs `main.mts` continuously: it re-runs
+immediately on **0**, **sleeps `SANDCASTLE_IDLE_SLEEP` seconds (default 15) then
+re-checks on 3**, and stops only on any other non-zero (a real error) or Ctrl-C.
+So it keeps watching for newly-tagged issues and picks up re-bumps/new work
+without needing a restart.
 
 ---
 
@@ -187,7 +198,8 @@ it has already idle-stopped.
 | `review-prompt.md` | Per-issue reviewer. |
 | `merge-prompt.md` | Merge issue branches onto the feature branch. |
 | `release-prompt.md` | Version bump + PR description when a feature is complete. |
-| `rebump-prompt.md` | Merge latest `main` + re-bump a collided PR. |
+| `rebump-prompt.md` | Merge latest `main` + re-bump a version-collided PR. |
+| `refresh-prompt.md` | Merge latest `main` into a ready PR that fell behind (no re-bump). |
 | `tsconfig.json` | Type-check config for the `.mts` scripts. |
 | `../scripts/sandcastle-loop.sh` | Re-run `npm run sandcastle` until idle. |
 
@@ -199,7 +211,17 @@ In `main.mts`:
 
 - `MAX_ITERATIONS` — plan→deliver cycles per invocation.
 - `IDLE_EXIT_CODE` (3) — must match `scripts/sandcastle-loop.sh`.
-- `AGENT_MODEL` — the model used for every agent.
+- `AGENTS` — per-role model + reasoning effort (via `agentFor(role)`):
+
+  | Role | Model | Effort |
+  |---|---|---|
+  | planner | Opus 4.8 | high |
+  | implementer | Fable 5 | high |
+  | reviewer | Fable 5 | medium |
+  | merger | Opus 4.8 | medium |
+  | refresh | Opus 4.8 | medium |
+  | rebump | Sonnet 5 | medium |
+  | release | Sonnet 5 | low |
 - `hooks` / `copyToWorktree` — sandbox bootstrapping.
 
 In `feature-pr.mts`:
