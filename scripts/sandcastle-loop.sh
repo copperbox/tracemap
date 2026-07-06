@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Runs `npm run sandcastle` in a loop: as soon as it exits 0, run it again.
-# Exit code 3 means "idle" (no Sandcastle-labelled work left) -- a clean stop,
-# so the loop ends with status 0. Any other non-zero code is a real failure and
-# is propagated as this script's exit status.
+# Continuously runs `npm run sandcastle`, monitoring for Sandcastle-labelled work:
+#   - exit 0   (a full cycle ran)        -> run again immediately
+#   - exit 3   (idle, no work to do)     -> sleep, then re-check for new issues
+#   - any other non-zero (a real error)  -> stop and propagate the code
+# The loop only stops on a real failure or Ctrl-C; being idle is NOT a stop, so it
+# keeps watching for newly-tagged issues.
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
 
 # Must match IDLE_EXIT_CODE in .sandcastle/main.mts.
 IDLE_EXIT_CODE=3
+# Seconds to wait before re-checking when there is no work (override with env).
+IDLE_SLEEP_SECONDS="${SANDCASTLE_IDLE_SLEEP:-15}"
 
 run=0
 while true; do
@@ -17,8 +21,9 @@ while true; do
   npm run sandcastle
   code=$?
   if [ "$code" -eq "$IDLE_EXIT_CODE" ]; then
-    echo "=== sandcastle idle (no work left); stopping cleanly after $run run(s) ==="
-    exit 0
+    echo "=== no Sandcastle work; sleeping ${IDLE_SLEEP_SECONDS}s before re-checking ==="
+    sleep "$IDLE_SLEEP_SECONDS"
+    continue
   fi
   if [ "$code" -ne 0 ]; then
     echo "=== sandcastle exited with code $code; stopping after $run run(s) ==="

@@ -60,6 +60,7 @@ import {
   readReleaseLevel,
   readVersion,
   removeInReview,
+  removeLeakedWorktree,
   setPRBody,
   syncMainFromOrigin,
 } from "./feature-pr.mts";
@@ -151,6 +152,7 @@ async function withFeatureSandbox<T>(
   branch: string,
   fn: (sandbox: sandcastle.Sandbox) => Promise<T>,
 ): Promise<T> {
+  await removeLeakedWorktree(branch);
   const sandbox = await sandcastle.createSandbox({
     branch,
     sandbox: docker(),
@@ -172,6 +174,7 @@ async function implementAndReview(
   issue: PlanIssue,
 ): Promise<void> {
   const branch = issueBranch(issue.id);
+  await removeLeakedWorktree(branch);
   const sandbox = await sandcastle.createSandbox({
     branch,
     baseBranch: feature.branch,

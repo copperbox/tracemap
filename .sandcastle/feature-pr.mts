@@ -265,6 +265,30 @@ export async function branchExists(branch: string): Promise<boolean> {
   return res.code === 0;
 }
 
+// Remove any leftover git worktree that still has `branch` checked out. Sandcastle
+// preserves a worktree when a run leaves uncommitted changes or is killed; the
+// leftover then blocks creating a fresh sandbox on that branch ("already checked
+// out"), which otherwise wedges the feature into an infinite retry. Committed
+// work already lives in the shared repo, so discarding the worktree is safe. Call
+// this immediately before createSandbox for a branch.
+export async function removeLeakedWorktree(branch: string): Promise<void> {
+  const res = await git(["worktree", "list", "--porcelain"]);
+  if (res.code !== 0) return;
+
+  let path: string | null = null;
+  for (const line of res.stdout.split("\n")) {
+    if (line.startsWith("worktree ")) {
+      path = line.slice("worktree ".length).trim();
+    } else if (line.startsWith("branch ")) {
+      const ref = line.slice("branch ".length).trim();
+      if (ref === `refs/heads/${branch}` && path) {
+        await git(["worktree", "remove", "--force", path]);
+      }
+    }
+  }
+  await git(["worktree", "prune"]);
+}
+
 // Count commits reachable from `branch` but not `base` (i.e. `base..branch`).
 // Returns 0 on any error (e.g. a missing ref) so callers can treat "no work" and
 // "cannot tell" identically. This is the source of truth for integration state:

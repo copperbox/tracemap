@@ -158,20 +158,27 @@ uses git integration state (not just labels). So:
 Recovery needs no separate reconciliation pass — it falls out of "unlabelled →
 requeued."
 
+**Leaked worktrees:** Sandcastle *preserves* a worktree when a run leaves
+uncommitted changes or is killed, and a leftover worktree blocks re-creating a
+sandbox on that branch. `removeLeakedWorktree(branch)` runs before every
+`createSandbox`, discarding any such leftover (committed work is already in the
+shared repo) so a feature can never get permanently wedged on one.
+
 ---
 
 ## Exit codes
 
 `main.mts` exits with:
 
-- **0** — reached `MAX_ITERATIONS` (there may be more to do; loop re-runs).
+- **0** — reached `MAX_ITERATIONS` (there may be more to do).
 - **1** — a crash / unhandled error.
 - **3** — idle: nothing queued or everything remaining is blocked/in-review.
 
-`scripts/sandcastle-loop.sh` re-runs on **0**, stops cleanly on **3**, and
-propagates any other non-zero as a failure. Because collisions and new work are
-only detected while the loop is running, restart the loop after you merge a PR if
-it has already idle-stopped.
+`scripts/sandcastle-loop.sh` runs `main.mts` continuously: it re-runs
+immediately on **0**, **sleeps `SANDCASTLE_IDLE_SLEEP` seconds (default 15) then
+re-checks on 3**, and stops only on any other non-zero (a real error) or Ctrl-C.
+So it keeps watching for newly-tagged issues and picks up re-bumps/new work
+without needing a restart.
 
 ---
 
