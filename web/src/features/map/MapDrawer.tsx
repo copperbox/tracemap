@@ -181,7 +181,10 @@ export function MapDrawer({
             </div>
           </div>
 
-          <TopErrors ops={nodeErrors} />
+          <TopErrors
+            ops={nodeErrors}
+            onSelectOperation={(op) => navigate('service', s.id, op)}
+          />
 
           <div className={styles.footnote}>
             {`topology learned from ~${fmtCount(m.rps * 86400)} spans/day ${DOT} updated continuously`}

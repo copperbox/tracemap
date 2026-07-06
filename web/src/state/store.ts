@@ -19,6 +19,13 @@ interface AppState {
   view: View;
   graphType: GraphType;
   serviceId: string | null;
+  /**
+   * Pending recent-traces operation filter to apply when the service detail
+   * page next loads. Set when navigating from an erroring-operation link (e.g.
+   * the map drawer's top errors) so the trace list opens already filtered to
+   * that operation's failures. Transient -- deliberately kept out of the URL.
+   */
+  serviceOpFilter: string | null;
   topology: Topology | null;
   selection: Selection;
   hoverEdge: string | null;
@@ -46,7 +53,9 @@ interface AppState {
   ingesting: boolean;
 
   setTopology: (t: Topology) => void;
-  navigate: (view: View, serviceId?: string) => void;
+  /** Switch views; when going to a service, `opFilter` pre-filters its recent
+   *  traces to that operation's failures. */
+  navigate: (view: View, serviceId?: string, opFilter?: string) => void;
   /** Apply a deep-link route in one update (used by the URL <-> store sync on
    *  initial load and on browser back/forward). */
   applyRoute: (route: RouteState) => void;
@@ -82,6 +91,7 @@ export const useStore = create<AppState>((set) => ({
   view: 'map',
   graphType: 'map',
   serviceId: null,
+  serviceOpFilter: null,
   topology: null,
   selection: null,
   hoverEdge: null,
@@ -99,8 +109,14 @@ export const useStore = create<AppState>((set) => ({
   ingesting: false,
 
   setTopology: (topology) => set({ topology }),
-  navigate: (view, serviceId) =>
-    set({ view, serviceId: serviceId ?? null, openTraceId: null, selection: null }),
+  navigate: (view, serviceId, opFilter) =>
+    set({
+      view,
+      serviceId: serviceId ?? null,
+      serviceOpFilter: opFilter ?? null,
+      openTraceId: null,
+      selection: null,
+    }),
   applyRoute: (route) =>
     set({
       view: route.view,

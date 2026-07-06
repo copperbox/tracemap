@@ -32,6 +32,7 @@ const EditServiceModal = lazy(() =>
 
 export function ServicePage() {
   const serviceId = useStore((s) => s.serviceId);
+  const serviceOpFilter = useStore((s) => s.serviceOpFilter);
   const navigate = useStore((s) => s.navigate);
   const isolateOnMap = useStore((s) => s.isolateOnMap);
   const range = useStore((s) => s.range);
@@ -46,8 +47,11 @@ export function ServicePage() {
   const live = isLiveRange(range);
   const enabled = !!serviceId;
 
-  // Drop the trace filter when switching services.
-  useEffect(() => setOpFilter(null), [serviceId]);
+  // On each service switch, seed the trace filter from any pending navigation
+  // filter (e.g. a top-erroring-operation link from the map drawer), otherwise
+  // clear it. navigate() sets serviceId and serviceOpFilter together, so the
+  // fresh filter is in place by the time this fires.
+  useEffect(() => setOpFilter(serviceOpFilter), [serviceId, serviceOpFilter]);
 
   // Three independent resources so each section loads and reveals on its own
   // rather than the whole page blocking on one combined request.
