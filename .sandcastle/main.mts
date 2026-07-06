@@ -256,8 +256,9 @@ async function prepareRelease(
         agent: agentFor("release"),
         promptFile: "./.sandcastle/release-prompt.md",
         completionSignal: "</pr-description>",
+        // {{TARGET_BRANCH}} is a Sandcastle built-in (the host's active branch);
+        // it is injected automatically and must not be passed here.
         promptArgs: {
-          TARGET_BRANCH,
           ALREADY_BUMPED: String(alreadyBumped),
           ISSUES: members.map((m) => `- #${m.id} ${m.title}`).join("\n"),
         },
@@ -453,8 +454,8 @@ async function rebumpFeature(fp: FeaturePR): Promise<void> {
         agent: agentFor("rebump"),
         promptFile: "./.sandcastle/rebump-prompt.md",
         completionSignal: "</pr-description>",
+        // {{TARGET_BRANCH}} is a Sandcastle built-in; do not pass it here.
         promptArgs: {
-          TARGET_BRANCH,
           LEVEL: level,
           ISSUES: members.map((m) => `- #${m.id} ${m.title}`).join("\n"),
         },
@@ -512,7 +513,7 @@ async function refreshFeature(fp: FeaturePR): Promise<void> {
         maxIterations: 1,
         agent: agentFor("refresh"),
         promptFile: "./.sandcastle/refresh-prompt.md",
-        promptArgs: { TARGET_BRANCH },
+        // {{TARGET_BRANCH}} is a Sandcastle built-in; no promptArgs needed.
       });
     });
   } catch (err) {
