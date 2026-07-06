@@ -1,26 +1,24 @@
 # TASK
 
-Merge the following branches into the current branch:
+You are on the feature integration branch `{{FEATURE_BRANCH}}`. Merge the
+following issue branches into it (the current branch):
 
 {{BRANCHES}}
 
 For each branch:
 
 1. Run `git merge <branch> --no-edit`
-2. If there are merge conflicts, resolve them intelligently by reading both sides and choosing the correct resolution
-3. After resolving conflicts, run `npm run typecheck` and `npm run test` to verify everything works
+2. If there are merge conflicts, resolve them intelligently by reading both
+   sides and choosing the correct resolution
+3. After resolving conflicts, run `npm run typecheck` and `npm run test` to
+   verify everything works
 4. If tests fail, fix the issues before proceeding to the next branch
 
-After all branches are merged, make a single commit summarizing the merge.
+After all branches are merged, make a single commit summarizing the integration
+if the merges left anything staged.
 
-# CLOSE ISSUES
-
-For each branch that was merged, close its issue using the following command:
-
-`gh issue close <ID> --comment "Completed by Sandcastle"`
-
-Here are all the issues:
-
-{{ISSUES}}
+Do **not** merge into `main`, open a pull request, or close any issues -- those
+steps are handled outside this run. Your only job is to assemble the completed
+issue branches onto `{{FEATURE_BRANCH}}` with a green test suite.
 
 Once you've merged everything you can, output <promise>COMPLETE</promise>.

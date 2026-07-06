@@ -1,12 +1,16 @@
-// Pre-flight issue check for the Sandcastle planner.
+// Pre-flight issue queries for the Sandcastle planner, run on the HOST (before
+// any sandbox spins up).
 //
-// Runs `gh issue list` on the HOST (before any sandbox spins up), keeps only
-// the issues that actually carry the Sandcastle label, and returns just those.
-// main.mts uses the result to:
-//   (a) skip the entire plan->execute->merge cycle when nothing is labelled to
-//       work on, avoiding a needless planner run, and
-//   (b) feed the pre-fetched issue list straight into the planner prompt, so
-//       plan-prompt.md no longer has to invoke gh a second time itself.
+//   - checkTasks()              -> open, Sandcastle-labelled issues that are NOT
+//                                  already in review (i.e. not yet parked behind
+//                                  an open feature PR). This is the planner's
+//                                  work queue.
+//   - getInReviewIssueNumbers() -> open issues currently carrying the in-review
+//                                  label, used by main.mts to reconcile issues
+//                                  whose feature PR was closed without merging.
+//
+// PR-side helpers (opening/updating feature PRs, applying the in-review label)
+// live in feature-pr.mts.
 
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -15,7 +19,13 @@ const execFileAsync = promisify(execFile);
 
 // The label that marks an issue as fair game for Sandcastle. Matched
 // case-insensitively against each issue's label names.
-const SANDCASTLE_LABEL = "sandcastle";
+export const SANDCASTLE_LABEL = "Sandcastle";
+
+// Applied to an issue once its work has landed on a feature branch and been
+// rolled into a feature PR. In-review issues are excluded from the work queue so
+// the planner never re-does work that is already waiting for human review; the
+// label is removed again if that PR is closed without merging (see main.mts).
+export const IN_REVIEW_LABEL = "sandcastle:in-review";
 
 // The shape emitted by the gh --jq projection below, one entry per issue.
 export interface SandcastleIssue {
@@ -26,35 +36,63 @@ export interface SandcastleIssue {
   comments: string[];
 }
 
-// Fetch open issues from GitHub and keep only those carrying the Sandcastle
-// label. Returns an empty array when there is nothing to work on.
-export async function checkTasks(): Promise<SandcastleIssue[]> {
-  const { stdout } = await execFileAsync(
-    "gh",
-    [
-      "issue",
-      "list",
-      "--state",
-      "open",
-      "--label",
-      "Sandcastle",
-      "--limit",
-      "100",
-      "--json",
-      "number,title,body,labels,comments",
-      "--jq",
-      "[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]",
-    ],
+// Run a gh subcommand on the host and return stdout. execFile (no shell) means
+// arguments are passed literally, so issue bodies never get shell-interpreted.
+async function gh(args: string[]): Promise<string> {
+  const { stdout } = await execFileAsync("gh", args, {
+    encoding: "utf8",
     // Bodies + comments for 100 issues can be large; give the buffer headroom.
-    { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 },
-  );
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return stdout;
+}
+
+// Fetch open issues from GitHub and keep only those that carry the Sandcastle
+// label AND are not already in review. Returns an empty array when there is
+// nothing queued to work on.
+export async function checkTasks(): Promise<SandcastleIssue[]> {
+  const stdout = await gh([
+    "issue",
+    "list",
+    "--state",
+    "open",
+    "--label",
+    SANDCASTLE_LABEL,
+    "--limit",
+    "100",
+    "--json",
+    "number,title,body,labels,comments",
+    "--jq",
+    "[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]",
+  ]);
 
   const issues = JSON.parse(stdout) as SandcastleIssue[];
 
-  // The gh query already filters on --label Sandcastle, but re-check here so the
-  // returned list is guaranteed to contain only Sandcastle-labelled issues
-  // regardless of how the query is later tweaked.
-  return issues.filter((issue) =>
-    issue.labels.some((label) => label.toLowerCase() === SANDCASTLE_LABEL),
-  );
+  return issues.filter((issue) => {
+    const labels = issue.labels.map((l) => l.toLowerCase());
+    const isSandcastle = labels.includes(SANDCASTLE_LABEL.toLowerCase());
+    const inReview = labels.includes(IN_REVIEW_LABEL.toLowerCase());
+    return isSandcastle && !inReview;
+  });
+}
+
+// The open issue numbers currently labelled in-review. Used to detect issues
+// whose feature PR was closed unmerged (they must be requeued).
+export async function getInReviewIssueNumbers(): Promise<number[]> {
+  const stdout = await gh([
+    "issue",
+    "list",
+    "--state",
+    "open",
+    "--label",
+    IN_REVIEW_LABEL,
+    "--limit",
+    "100",
+    "--json",
+    "number",
+    "--jq",
+    "[.[].number]",
+  ]);
+
+  return JSON.parse(stdout) as number[];
 }
