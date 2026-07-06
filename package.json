@@ -18,7 +18,8 @@
     "typecheck": "npm-run-all typecheck:server typecheck:web",
     "typecheck:server": "npm run typecheck --workspace server",
     "typecheck:web": "npm run typecheck --workspace web",
-    "sandcastle": "npx tsx .sandcastle/main.mts"
+    "sandcastle": "npx tsx .sandcastle/main.mts",
+    "sandcastle:loop": "bash scripts/sandcastle-loop.sh"
   },
   "devDependencies": {
     "@ai-hero/sandcastle": "^0.12.0",
