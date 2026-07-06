@@ -105,9 +105,25 @@ const MAX_ITERATIONS = 10;
 // normal completion and a real failure.
 const IDLE_EXIT_CODE = 3;
 
-// The model used for every agent. Opus for deeper reasoning across planning,
-// implementation, review, integration, and PR authoring.
-const AGENT_MODEL = "claude-opus-4-8";
+// Per-role model + reasoning effort. Fable 5 writes and reviews the code; Opus
+// 4.8 handles the reasoning-heavy planning and the conflict-resolving merges;
+// Sonnet 5 (cheaper) handles the packaging steps. Effort is capped at "high"
+// (never xhigh/max) for cost, and dropped to medium/low on the simpler steps.
+const AGENTS = {
+  planner: { model: "claude-opus-4-8", effort: "high" },
+  implementer: { model: "claude-fable-5", effort: "high" },
+  reviewer: { model: "claude-fable-5", effort: "medium" },
+  merger: { model: "claude-opus-4-8", effort: "medium" },
+  refresh: { model: "claude-opus-4-8", effort: "medium" },
+  rebump: { model: "claude-sonnet-5", effort: "medium" },
+  release: { model: "claude-sonnet-5", effort: "low" },
+} as const;
+
+// The agent provider (model + effort) for a given role.
+function agentFor(role: keyof typeof AGENTS): sandcastle.AgentProvider {
+  const { model, effort } = AGENTS[role];
+  return sandcastle.claudeCode(model, { effort });
+}
 
 // Hooks run inside the sandbox before the agent starts each iteration.
 // npm install ensures the sandbox always has fresh dependencies.
@@ -186,7 +202,7 @@ async function implementAndReview(
     const implement = await sandbox.run({
       name: `implementer:${issue.id}`,
       maxIterations: 100,
-      agent: sandcastle.claudeCode(AGENT_MODEL),
+      agent: agentFor("implementer"),
       promptFile: "./.sandcastle/implement-prompt.md",
       promptArgs: {
         TASK_ID: issue.id,
@@ -209,7 +225,7 @@ async function implementAndReview(
       await sandbox.run({
         name: `reviewer:${issue.id}`,
         maxIterations: 1,
-        agent: sandcastle.claudeCode(AGENT_MODEL),
+        agent: agentFor("reviewer"),
         promptFile: "./.sandcastle/review-prompt.md",
         promptArgs: { BRANCH: branch },
       });
@@ -237,7 +253,7 @@ async function prepareRelease(
       const res = await sandbox.run({
         name: `release:${feature.slug}`,
         maxIterations: 1,
-        agent: sandcastle.claudeCode(AGENT_MODEL),
+        agent: agentFor("release"),
         promptFile: "./.sandcastle/release-prompt.md",
         completionSignal: "</pr-description>",
         promptArgs: {
@@ -385,7 +401,7 @@ async function runFeature(
       await sandbox.run({
         name: `merger:${feature.slug}`,
         maxIterations: 1,
-        agent: sandcastle.claudeCode(AGENT_MODEL),
+        agent: agentFor("merger"),
         promptFile: "./.sandcastle/merge-prompt.md",
         promptArgs: {
           FEATURE_BRANCH: feature.branch,
@@ -434,7 +450,7 @@ async function rebumpFeature(fp: FeaturePR): Promise<void> {
       const res = await sandbox.run({
         name: `rebump:${fp.slug}`,
         maxIterations: 1,
-        agent: sandcastle.claudeCode(AGENT_MODEL),
+        agent: agentFor("rebump"),
         promptFile: "./.sandcastle/rebump-prompt.md",
         completionSignal: "</pr-description>",
         promptArgs: {
@@ -484,6 +500,40 @@ async function rebumpFeature(fp: FeaturePR): Promise<void> {
   console.log(`  ↻ feature ${fp.slug}: PR #${fp.prNumber} re-bumped to v${release.version}.`);
 }
 
+// Refresh a ready feature PR that has fallen behind main (main advanced without
+// taking its version, so it does not need a re-bump -- just the merge). Merges
+// the latest main into the branch to keep the PR conflict-free and tested
+// against current main; no version change, PR stays ready.
+async function refreshFeature(fp: FeaturePR): Promise<void> {
+  try {
+    await withFeatureSandbox(fp.branch, async (sandbox) => {
+      await sandbox.run({
+        name: `refresh:${fp.slug}`,
+        maxIterations: 1,
+        agent: agentFor("refresh"),
+        promptFile: "./.sandcastle/refresh-prompt.md",
+        promptArgs: { TARGET_BRANCH },
+      });
+    });
+  } catch (err) {
+    console.error(
+      `  ⚠ refresh agent failed for ${fp.slug}: ${errMsg(err)}. Will retry next cycle.`,
+    );
+    return;
+  }
+
+  // Only publish if the branch actually caught up to main.
+  if ((await commitsAhead(fp.branch, TARGET_BRANCH)) > 0) {
+    console.warn(
+      `  ⚠ feature ${fp.slug}: still behind ${TARGET_BRANCH} after refresh; will retry next cycle.`,
+    );
+    return;
+  }
+
+  await pushBranch(fp.branch);
+  console.log(`  ⟲ feature ${fp.slug}: PR #${fp.prNumber} refreshed with ${TARGET_BRANCH}.`);
+}
+
 // ---------------------------------------------------------------------------
 // Main loop
 // ---------------------------------------------------------------------------
@@ -515,17 +565,24 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     }
   }
 
-  // Auto re-bump: any ready feature PR whose version now collides with main
-  // (because a sibling PR merged first) is refreshed against main and bumped
-  // again. Independent per feature, so one never blocks another.
-  const rebumps = await Promise.allSettled(
+  // Keep ready feature PRs current with main (independent per feature, so one
+  // never blocks another):
+  //   - version collision (a sibling merged and took the version) -> re-bump
+  //     (which also merges main in);
+  //   - otherwise merely behind main -> merge main in, no version change.
+  // Drafts are left alone: they refresh naturally as their issues integrate.
+  const refreshes = await Promise.allSettled(
     featurePRs.map(async (fp) => {
-      if (await needsRebump(fp.branch)) await rebumpFeature(fp);
+      if (await needsRebump(fp.branch)) {
+        await rebumpFeature(fp);
+      } else if (!fp.isDraft && (await commitsAhead(fp.branch, TARGET_BRANCH)) > 0) {
+        await refreshFeature(fp);
+      }
     }),
   );
-  for (const [i, outcome] of rebumps.entries()) {
+  for (const [i, outcome] of refreshes.entries()) {
     if (outcome.status === "rejected") {
-      console.error(`  ✗ re-bump ${featurePRs[i]!.slug} failed: ${outcome.reason}`);
+      console.error(`  ✗ refresh ${featurePRs[i]!.slug} failed: ${outcome.reason}`);
     }
   }
 
@@ -547,7 +604,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     sandbox: docker(),
     name: "planner",
     maxIterations: 1,
-    agent: sandcastle.claudeCode(AGENT_MODEL),
+    agent: agentFor("planner"),
     promptFile: "./.sandcastle/plan-prompt.md",
     promptArgs: {
       ISSUES_JSON: JSON.stringify(openIssues, null, 2),
