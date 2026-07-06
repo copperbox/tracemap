@@ -50,6 +50,7 @@ import {
   ensureFeatureBranch,
   ensureInReviewLabel,
   findFeaturePR,
+  getFeatureDoneIds,
   getOpenFeaturePRs,
   hasReleaseCommit,
   isIssueIntegrated,
@@ -423,17 +424,24 @@ async function runFeature(
   // Persist the in-review labels LAST. If the feature is fully done but NOT
   // confirmed ready (e.g. the version bump failed), withhold ALL labels so the
   // feature stays in the work queue and is retried next round. Otherwise label
-  // every newly-integrated member so its issue leaves the queue. Keeping this
-  // after finalize means a crash before "ready" leaves at least one member
-  // unlabelled, which requeues the feature -- so recovery needs no extra pass.
+  // every integrated member that isn't already labelled/closed so its issue
+  // leaves the queue. Keeping this after finalize means a crash before "ready"
+  // leaves at least one member unlabelled, which requeues the feature -- so
+  // recovery needs no extra pass.
+  //
+  // The skip guard here is label/closed state ONLY (getFeatureDoneIds), NOT the
+  // integration-aware doneAtStart: an issue integrated in an earlier round but
+  // never labelled (because the release agent kept failing) must still get
+  // labelled once the feature finally goes ready.
   if (allDone && !ready) {
     console.warn(
       `  ⚠ feature ${feature.slug}: not ready; leaving issues queued for retry.`,
     );
     return;
   }
+  const labelledOrClosed = await getFeatureDoneIds(memberIds);
   for (const id of memberIds) {
-    if (doneAtStart.has(id)) continue;
+    if (labelledOrClosed.has(id)) continue; // already in-review or closed
     if (await isIssueIntegrated(id, feature.branch)) await addInReview(id);
   }
 }
