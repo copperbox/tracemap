@@ -13,6 +13,7 @@ import type { TeamFilterValue } from '../lib/teamFilter';
  *   /communities          map view, force/communities graph
  *   /services             services list
  *   /service/<id>         service detail
+ *   /wallboard            wallboard (one card per service)
  *   ?trace=<id>           trace modal overlay (on any view)
  *   ?range=q.<ms>         quick time range (omitted when it equals the default)
  *   ?range=a.<from>.<to>  absolute time range (epoch ms)
@@ -103,6 +104,8 @@ export function routeToUrl(s: RouteState): string {
     path = `/service/${encodeURIComponent(s.serviceId)}`;
   } else if (s.view === 'services') {
     path = '/services';
+  } else if (s.view === 'wallboard') {
+    path = '/wallboard';
   } else if (s.view === 'map' && s.graphType === 'communities') {
     path = '/communities';
   } else {
@@ -136,6 +139,8 @@ export function urlToRoute(url: string): RouteState {
 
   if (segs[0] === 'services') {
     view = 'services';
+  } else if (segs[0] === 'wallboard') {
+    view = 'wallboard';
   } else if (segs[0] === 'service') {
     serviceId = segs[1] ? decodeURIComponent(segs[1]) : null;
     // /service with no id is meaningless -> fall back to the map.

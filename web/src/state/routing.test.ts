@@ -27,6 +27,26 @@ describe('routeToUrl', () => {
     expect(routeToUrl(route({ view: 'services' }))).toBe('/services');
   });
 
+  it('encodes the wallboard', () => {
+    expect(routeToUrl(route({ view: 'wallboard' }))).toBe('/wallboard');
+  });
+
+  it('carries range and team params on the wallboard', () => {
+    expect(
+      routeToUrl(
+        route({
+          view: 'wallboard',
+          range: { kind: 'quick', label: 'Last 1 hour', ms: 3_600_000 },
+          teamFilter: 'none',
+        }),
+      ),
+    ).toBe('/wallboard?range=q.3600000&team=none');
+  });
+
+  it('omits isolate on the wallboard', () => {
+    expect(routeToUrl(route({ view: 'wallboard', isolateId: 'checkout' }))).toBe('/wallboard');
+  });
+
   it('encodes a service detail with its id', () => {
     expect(routeToUrl(route({ view: 'service', serviceId: 'checkout' }))).toBe('/service/checkout');
   });
@@ -100,6 +120,20 @@ describe('urlToRoute', () => {
     expect(urlToRoute('/services')).toEqual(route({ view: 'services' }));
   });
 
+  it('parses the wallboard with its filters', () => {
+    expect(urlToRoute('/wallboard?team=none&range=q.3600000')).toEqual(
+      route({
+        view: 'wallboard',
+        range: { kind: 'quick', label: 'Last 1 hour', ms: 3_600_000 },
+        teamFilter: 'none',
+      }),
+    );
+  });
+
+  it('ignores the isolate param on the wallboard', () => {
+    expect(urlToRoute('/wallboard?isolate=checkout').isolateId).toBeNull();
+  });
+
   it('parses a service detail and decodes its id', () => {
     expect(urlToRoute('/service/cart%2Fv2%20svc')).toEqual(
       route({ view: 'service', serviceId: 'cart/v2 svc' }),
@@ -162,6 +196,8 @@ describe('routeToUrl <-> urlToRoute round trips', () => {
     base,
     route({ graphType: 'communities' }),
     route({ view: 'services' }),
+    route({ view: 'wallboard' }),
+    route({ view: 'wallboard', teamFilter: 'none', range: { kind: 'quick', label: 'Last 1 hour', ms: 3_600_000 } }),
     route({ view: 'service', serviceId: 'checkout-service' }),
     route({ view: 'service', serviceId: 'a/b c', openTraceId: 'deadbeef' }),
     route({ range: { kind: 'quick', label: 'Last 1 hour', ms: 3_600_000 } }),

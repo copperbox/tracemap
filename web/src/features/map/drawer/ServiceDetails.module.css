@@ -1,0 +1,73 @@
+.mode {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.footer {
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.label {
+  font: 600 9px 'JetBrains Mono', monospace;
+  letter-spacing: .16em;
+  color: var(--faint);
+}
+
+.sectionLabel {
+  composes: label;
+  margin-bottom: 6px;
+}
+
+.sloInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.sloTarget {
+  font: 600 12.5px 'Space Grotesk';
+  margin-top: 3px;
+}
+
+.sloTrack {
+  height: 5px;
+  background: var(--line);
+  border-radius: 4px;
+  margin-top: 9px;
+  overflow: hidden;
+}
+
+.sloFill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.sloBudget {
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  color: var(--dim);
+  margin-top: 5px;
+}
+
+.depList {
+  display: flex;
+  flex-direction: column;
+}
+
+.footnote {
+  font: 500 9.5px 'JetBrains Mono', monospace;
+  color: var(--faint);
+}

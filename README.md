@@ -87,6 +87,14 @@ working backwards from symptoms team by team.
   first. The shared searchable team filter scopes the table to one team -- or
   to "Unassigned" for services that belong to no team -- and the global search
   box narrows by name.
+- **Wallboard** (`/wallboard`) - the same services, filters, and worst-health-first
+  ranking as the list, rendered as a card grid readable from across the room:
+  one card per service with its status, error rate, p95, req/s, and 24h latency
+  sparkline, the whole card tinted when a service is degraded or critical.
+  Clicking a card slides in the same service inspector as the map's node
+  drawer (SLO, KPIs, sparklines, callers/dependencies, top erroring
+  operations); its dependency rows jump between cards, and the footer links
+  out to the full service page or the map isolated to that service's tree.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines (hovering one moves the
   crosshair on all of them so the same instant is easy to compare),
@@ -196,6 +204,7 @@ between views as expected.
 /communities          service map (force-directed, clustered by community)
 /services             services list
 /service/<id>         service detail
+/wallboard            wallboard (one card per service)
 
 ?trace=<id>           open a trace in the modal overlay (any view)
 ?range=q.<ms>         quick time range  (e.g. q.3600000 = last 1 hour)

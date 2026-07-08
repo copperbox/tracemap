@@ -1,0 +1,18 @@
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 352px;
+  background: var(--bg2);
+  border-left: 1px solid var(--line);
+  transform: translateX(105%);
+  transition: transform .28s cubic-bezier(.2, .8, .2, 1);
+  z-index: 20;
+  box-shadow: none;
+}
+
+.open {
+  transform: translateX(0);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, .3);
+}

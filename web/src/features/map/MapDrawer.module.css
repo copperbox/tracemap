@@ -62,35 +62,6 @@
   margin-bottom: 9px;
 }
 
-.sloInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.sloTarget {
-  font: 600 12.5px 'Space Grotesk';
-  margin-top: 3px;
-}
-
-.sloTrack {
-  height: 5px;
-  background: var(--line);
-  border-radius: 4px;
-  margin-top: 9px;
-  overflow: hidden;
-}
-
-.sloFill {
-  height: 100%;
-  border-radius: 4px;
-}
-
-.sloBudget {
-  font: 500 9.5px 'JetBrains Mono', monospace;
-  color: var(--dim);
-  margin-top: 5px;
-}
-
 .depList {
   display: flex;
   flex-direction: column;
