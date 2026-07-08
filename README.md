@@ -196,6 +196,7 @@ between views as expected.
 /communities          service map (force-directed, clustered by community)
 /services             services list
 /service/<id>         service detail
+/wallboard            wallboard (one card per service)
 
 ?trace=<id>           open a trace in the modal overlay (any view)
 ?range=q.<ms>         quick time range  (e.g. q.3600000 = last 1 hour)
