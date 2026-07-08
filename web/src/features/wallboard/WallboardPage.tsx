@@ -7,6 +7,8 @@ import { sparkPath } from '../../lib/spark';
 import { stBg, stColor, stLabel } from '../../lib/status';
 import { useStore } from '../../state/store';
 import { useServiceList } from '../../state/useServiceList';
+import { WallboardDrawer } from './WallboardDrawer';
+import { toggleCardSelection } from './wallboardSelection';
 import styles from './WallboardPage.module.css';
 
 /**
@@ -16,7 +18,8 @@ import styles from './WallboardPage.module.css';
  * instead of a table row dot.
  */
 export function WallboardPage() {
-  const navigate = useStore((s) => s.navigate);
+  const selection = useStore((s) => s.selection);
+  const select = useStore((s) => s.select);
   const search = useStore((s) => s.search);
   const topology = useStore((s) => s.topology);
   const teamFilter = useStore((s) => s.teamFilter);
@@ -29,33 +32,38 @@ export function WallboardPage() {
   const total = data?.services.length ?? 0;
   const cards = filterRankServices(data?.services ?? [], search, teamFilter);
   const countLabel = cards.length === total ? `${total} services` : `${cards.length} of ${total} services`;
+  const selectedId = selection?.kind === 'node' ? selection.id : null;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        <div className={styles.heading}>
-          <div className={styles.headingText}>
-            <div className={styles.title}>Wallboard</div>
-            <div className={styles.subtitle}>{`${countLabel} ${DOT} one card per service ${DOT} sorted by health`}</div>
+    <>
+      <div className={styles.page}>
+        <div className={styles.content}>
+          <div className={styles.heading}>
+            <div className={styles.headingText}>
+              <div className={styles.title}>Wallboard</div>
+              <div className={styles.subtitle}>{`${countLabel} ${DOT} one card per service ${DOT} sorted by health`}</div>
+            </div>
+            <TeamFilter teams={teams} value={teamFilter} onChange={setTeamFilter} />
           </div>
-          <TeamFilter teams={teams} value={teamFilter} onChange={setTeamFilter} />
+          <div className={styles.grid}>
+            {cards.map((s) => (
+              <ServiceCard
+                key={s.id}
+                service={s}
+                team={s.teamId != null ? (teamName.get(s.teamId) ?? '--') : '--'}
+                tick={tick}
+                selected={s.id === selectedId}
+                onOpen={() => select(toggleCardSelection(selection, s.id))}
+              />
+            ))}
+          </div>
+          {!cards.length && (
+            <div className={styles.empty}>{data ? 'no services match' : 'waiting for telemetry…'}</div>
+          )}
         </div>
-        <div className={styles.grid}>
-          {cards.map((s) => (
-            <ServiceCard
-              key={s.id}
-              service={s}
-              team={s.teamId != null ? (teamName.get(s.teamId) ?? '--') : '--'}
-              tick={tick}
-              onOpen={() => navigate('service', s.id)}
-            />
-          ))}
-        </div>
-        {!cards.length && (
-          <div className={styles.empty}>{data ? 'no services match' : 'waiting for telemetry…'}</div>
-        )}
       </div>
-    </div>
+      <WallboardDrawer />
+    </>
   );
 }
 
@@ -63,18 +71,20 @@ function ServiceCard({
   service: s,
   team,
   tick,
+  selected,
   onOpen,
 }: {
   service: ServiceListItem;
   team: string;
   tick: number;
+  selected: boolean;
   onOpen: () => void;
 }) {
   const c = stColor(s.status);
   const unhealthy = s.status !== 'ok';
   return (
     <div
-      className={`${styles.card} hov-row`}
+      className={`${styles.card} ${selected ? styles.selected : ''} hov-row`}
       // stColor/stBg resolve status -> theme vars, so the tint stays inline
       style={unhealthy ? { borderColor: c, background: stBg(s.status) } : undefined}
       onClick={onOpen}

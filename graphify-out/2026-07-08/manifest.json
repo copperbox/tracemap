@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "web/src/features/map/MapDrawer.tsx": {
-    "mtime": 1783542038.1790662,
-    "ast_hash": "0b1540d5c733bd189f03c5ea9488bb0f",
+    "mtime": 1783542632.9001002,
+    "ast_hash": "d62ef156eb2f4bd7f0857c61b9e82d3c",
     "semantic_hash": ""
   },
   "web/src/features/map/MapView.tsx": {
@@ -735,8 +735,8 @@
     "semantic_hash": "4039dacc3c74f275bf399cd2183afc45"
   },
   "web/src/features/services/ServicesPage.tsx": {
-    "mtime": 1783542184.3137732,
-    "ast_hash": "97ebe2849d7d69e597d265b03aada0ab",
+    "mtime": 1783542644.5522127,
+    "ast_hash": "6e6b2656226cb7e133322b909d111d4b",
     "semantic_hash": ""
   },
   "web/src/features/trace/SpanRow.tsx": {
@@ -1005,8 +1005,8 @@
     "semantic_hash": ""
   },
   "web/src/features/map/drawer/ServiceDetails.tsx": {
-    "mtime": 1783542038.1793787,
-    "ast_hash": "fc76d332cf2a43b19ae694685e964d78",
+    "mtime": 1783542658.2823453,
+    "ast_hash": "f34b1b83b4718b5c47162ec45ac928de",
     "semantic_hash": ""
   },
   "web/src/features/map/drawer/serviceRelations.test.ts": {
@@ -1020,8 +1020,8 @@
     "semantic_hash": ""
   },
   "web/src/features/wallboard/WallboardPage.tsx": {
-    "mtime": 1783542237.2552838,
-    "ast_hash": "826b3fc97187018bae1cf66c1acbc993",
+    "mtime": 1783542650.1162665,
+    "ast_hash": "b678618b2bcf2ccda20752427a5928f1",
     "semantic_hash": ""
   },
   "web/src/lib/serviceRank.test.ts": {
@@ -1032,6 +1032,11 @@
   "web/src/lib/serviceRank.ts": {
     "mtime": 1783542165.8295949,
     "ast_hash": "c4d2a0a8c08ede2cdf82342d876dd123",
+    "semantic_hash": ""
+  },
+  "web/src/state/useServiceList.ts": {
+    "mtime": 1783542631.4650865,
+    "ast_hash": "70c8c23b821caa6d3fa69e4fda5b9d03",
     "semantic_hash": ""
   }
 }
