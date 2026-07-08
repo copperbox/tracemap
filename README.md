@@ -91,7 +91,10 @@ working backwards from symptoms team by team.
   ranking as the list, rendered as a card grid readable from across the room:
   one card per service with its status, error rate, p95, req/s, and 24h latency
   sparkline, the whole card tinted when a service is degraded or critical.
-  Clicking a card opens the service page.
+  Clicking a card slides in the same service inspector as the map's node
+  drawer (SLO, KPIs, sparklines, callers/dependencies, top erroring
+  operations); its dependency rows jump between cards, and the footer links
+  out to the full service page or the map isolated to that service's tree.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines (hovering one moves the
   crosshair on all of them so the same instant is easy to compare),
