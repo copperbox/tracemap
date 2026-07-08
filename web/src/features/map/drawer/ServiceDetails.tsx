@@ -25,7 +25,7 @@ import styles from './ServiceDetails.module.css';
  * while supplying its own footer actions.
  */
 export function ServiceDetails({
-  service,
+  service: s,
   topology,
   onClose,
   onSelectEdge,
@@ -43,10 +43,9 @@ export function ServiceDetails({
   const navigate = useStore((s) => s.navigate);
   const tick = useStore((s) => s.tick);
 
-  const sparks = useSparklines('service', service.id);
-  const errors = useTopErrors('service', service.id);
+  const sparks = useSparklines('service', s.id);
+  const errors = useTopErrors('service', s.id);
 
-  const s = service;
   const m = s.metrics;
   const slo = sloView(s.sloTarget, s.sloAttain);
   const { callers, dependencies } = serviceRelations(topology, s.id);

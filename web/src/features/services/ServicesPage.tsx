@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react';
-import { api } from '../../api/client';
-import type { ServiceList } from '../../api/types';
 import { TeamFilter } from '../../components/TeamFilter';
 import { TYPE_LABELS } from '../../components/Icon';
 import { DOT, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
@@ -8,6 +5,7 @@ import { filterRankServices } from '../../lib/serviceRank';
 import { sparkPath } from '../../lib/spark';
 import { sloView, stColor } from '../../lib/status';
 import { useStore } from '../../state/store';
+import { useServiceList } from '../../state/useServiceList';
 import styles from './ServicesPage.module.css';
 
 const HEADERS: { label: string; align?: 'right' }[] = [
@@ -29,18 +27,7 @@ export function ServicesPage() {
   const teamFilter = useStore((s) => s.teamFilter);
   const setTeamFilter = useStore((s) => s.setTeamFilter);
   const tick = useStore((s) => s.tick);
-  const [data, setData] = useState<ServiceList | null>(null);
-
-  useEffect(() => {
-    let alive = true;
-    const poll = () => api.services().then((d) => alive && setData(d)).catch(() => undefined);
-    void poll();
-    const i = setInterval(poll, 15_000);
-    return () => {
-      alive = false;
-      clearInterval(i);
-    };
-  }, []);
+  const data = useServiceList();
 
   const teams = topology?.teams ?? [];
   const teamName = new Map(teams.map((t) => [t.id, t.name]));

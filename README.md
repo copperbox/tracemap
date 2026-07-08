@@ -87,6 +87,11 @@ working backwards from symptoms team by team.
   first. The shared searchable team filter scopes the table to one team -- or
   to "Unassigned" for services that belong to no team -- and the global search
   box narrows by name.
+- **Wallboard** (`/wallboard`) - the same services, filters, and worst-health-first
+  ranking as the list, rendered as a card grid readable from across the room:
+  one card per service with its status, error rate, p95, req/s, and 24h latency
+  sparkline, the whole card tinted when a service is degraded or critical.
+  Clicking a card opens the service page.
 - **Inspector drawer** - click any node, meganode, or edge to inspect SLO
   attainment + error budget, KPIs, 24h sparklines (hovering one moves the
   crosshair on all of them so the same instant is easy to compare),

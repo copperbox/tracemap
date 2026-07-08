@@ -29,11 +29,18 @@
   "27": "useForceSimulation.ts",
   "28": "spanPalette.ts",
   "29": "Sim Rate Control",
+  "30": "ChartGrid.tsx",
   "31": "Sim CLI Args",
+  "32": "edgeResolver.ts",
   "33": "Theme Contrast",
   "34": "Theme Fonts",
   "35": "Web HTML Entry",
   "36": "Vite Env Types",
   "37": "Vite Config",
-  "38": "ServicePage.tsx"
+  "38": "ServicePage.tsx",
+  "39": "status.ts",
+  "40": "TopologyService",
+  "41": "index.ts",
+  "42": "payload.ts",
+  "43": "serviceRank.ts"
 }

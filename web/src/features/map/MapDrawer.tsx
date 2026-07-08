@@ -70,7 +70,6 @@ export function MapDrawer({
   }, [selection, graph, topology, select]);
 
   const svcById = new Map<string, TopologyService>((topology?.services ?? []).map((s) => [s.id, s]));
-  const teamName = new Map<number, string>((topology?.teams ?? []).map((t) => [t.id, t.name]));
 
   const close = () => select(null);
 
