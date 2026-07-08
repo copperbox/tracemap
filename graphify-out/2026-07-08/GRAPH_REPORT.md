@@ -1,16 +1,16 @@
-# Graph Report - workspace  (2026-07-08)
+# Graph Report - workspace  (2026-07-06)
 
 ## Corpus Check
-- 201 files · ~71,421 words
+- 200 files · ~71,179 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 833 nodes · 2062 edges · 47 communities (44 shown, 3 thin omitted)
+- 831 nodes · 2059 edges · 39 communities (38 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 25 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `983c8751`
+- Built from commit: `be8cdfe2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -51,14 +51,6 @@
 - [[_COMMUNITY_Theme Fonts|Theme Fonts]]
 - [[_COMMUNITY_Web HTML Entry|Web HTML Entry]]
 - [[_COMMUNITY_ServicePage.tsx|ServicePage.tsx]]
-- [[_COMMUNITY_store.ts|store.ts]]
-- [[_COMMUNITY_useStore|useStore]]
-- [[_COMMUNITY_preferences.ts|preferences.ts]]
-- [[_COMMUNITY_PreferencesMenu.tsx|PreferencesMenu.tsx]]
-- [[_COMMUNITY_GraphModeToggle.tsx|GraphModeToggle.tsx]]
-- [[_COMMUNITY_ZoomControls.tsx|ZoomControls.tsx]]
-- [[_COMMUNITY_rangeEdges.ts|rangeEdges.ts]]
-- [[_COMMUNITY_dotAlphaScale|dotAlphaScale]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `useStore` - 30 edges
@@ -87,15 +79,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (47 total, 3 thin omitted)
+## Communities (39 total, 1 thin omitted)
 
 ### Community 0 - "Web API Client & Drawer UI"
-Cohesion: 0.16
-Nodes (11): ErrorBreakdown, ErrorCount, LiveMetrics, SeriesPoint, ServiceDetail, ServiceListItem, TopologyEdge, TraceDetail (+3 more)
+Cohesion: 0.15
+Nodes (13): ErrorBreakdown, ErrorCount, LiveMetrics, NeighborEdge, OperationErrors, SeriesPoint, ServiceDetail, ServiceList (+5 more)
 
 ### Community 1 - "Server Error Aggregation API"
-Cohesion: 0.06
-Nodes (52): errorRoutes(), Row, toRows(), aggregateErrors(), ErrorCount, ErrorSig, errorSignature(), ErrorSpanRow (+44 more)
+Cohesion: 0.08
+Nodes (48): errorRoutes(), Row, toRows(), aggregateErrors(), ErrorCount, ErrorSig, errorSignature(), ErrorSpanRow (+40 more)
 
 ### Community 2 - "App Shell & Global State"
 Cohesion: 0.08
@@ -103,11 +95,11 @@ Nodes (23): dependencies, fastify, @fastify/cors, pg, protobufjs, devDependencie
 
 ### Community 3 - "Force Graph & Dimming"
 Cohesion: 0.13
-Nodes (18): ForceGraph(), Palette, buildForceLinks(), buildForceNodes(), nodeRadius(), buildDimmer(), graph, group() (+10 more)
+Nodes (19): ForceGraph(), Palette, buildForceLinks(), buildForceNodes(), nodeRadius(), buildDimmer(), graph, group() (+11 more)
 
 ### Community 4 - "UI Icons & Components"
-Cohesion: 0.24
-Nodes (8): Status, TopologyService, LogoIcon(), HealthPopover(), STATUS_NOUN, servicesByStatus(), SERVICES, UnhealthyService
+Cohesion: 0.07
+Nodes (30): Status, TopologyService, BackIcon(), ChevronIcon(), CloseIcon(), CommunityGraphIcon(), FitIcon(), FlowGraphIcon() (+22 more)
 
 ### Community 5 - "Packet Animation Canvas"
 Cohesion: 0.08
@@ -118,32 +110,32 @@ Cohesion: 0.11
 Nodes (28): BACKEND_WORDS, buildTopology(), clamp(), GenTopology, INFRA_KINDS, LANGS, opsFor(), pickOne() (+20 more)
 
 ### Community 7 - "Map Animation Frames"
-Cohesion: 0.15
-Nodes (13): easeOut(), FrameView, team, Bounds, useGraphTransition(), GraphNode, centerOn(), computeGraphTransition() (+5 more)
+Cohesion: 0.24
+Nodes (9): easeOut(), useGraphTransition(), GraphNode, centerOn(), computeGraphTransition(), GhostNode, GraphSnapshot, GraphTransition (+1 more)
 
 ### Community 8 - "Service Panel Skeletons"
 Cohesion: 0.08
 Nodes (23): dependencies, d3-force, react, react-dom, zustand, devDependencies, @types/d3-force, @types/react (+15 more)
 
 ### Community 9 - "Server Dependencies"
-Cohesion: 0.21
-Nodes (14): DEFAULT_RANGE, QUICK_RANGES, decodeRange(), decodeTeam(), encodeRange(), encodeTeam(), quickLabel(), rangesEqual() (+6 more)
+Cohesion: 0.09
+Nodes (41): Topology, App(), TopBar(), MapView(), ServicePage(), TimeRangePicker(), toLocalInput(), DEFAULT_PREFS (+33 more)
 
 ### Community 10 - "Web Dependencies"
-Cohesion: 0.60
-Nodes (3): CommunityEdge, CommunityResult, detectCommunities()
+Cohesion: 0.38
+Nodes (5): buildEdgeViews(), CommunityEdge, CommunityResult, detectCommunities(), e()
 
 ### Community 11 - "Form Controls & Filters"
-Cohesion: 0.19
-Nodes (13): Team, Combobox(), TeamFilter(), TeamChips(), ComboOption, filterOptions(), OPTS, matchesTeamFilter() (+5 more)
+Cohesion: 0.15
+Nodes (16): Team, Combobox(), TeamFilter(), TeamChips(), EditServiceModal(), TYPES, Field(), ComboOption (+8 more)
 
 ### Community 12 - "OTLP Protobuf Codec"
 Cohesion: 0.06
 Nodes (52): anyValueToJs(), decodeMetrics(), decodeTraces(), encodeMetricsResponse(), encodeTraceResponse(), idToHex(), kvListToObject(), loadRoot() (+44 more)
 
 ### Community 13 - "Map Edge & Dot Layers"
-Cohesion: 0.19
-Nodes (10): BackIcon(), ChevronIcon(), CloseIcon(), SearchIcon(), TYPE_ICONS, TYPE_LABELS, TypeIcon(), DepRow() (+2 more)
+Cohesion: 0.33
+Nodes (12): TYPE_LABELS, HealthPopover(), NodeCard(), EdgeLabelLayer(), KpiCards(), NeighborsPanel(), HEADERS, ServicesPage() (+4 more)
 
 ### Community 14 - "Sim HTTP & Metrics Emitter"
 Cohesion: 0.23
@@ -154,16 +146,16 @@ Cohesion: 0.24
 Nodes (14): BigChart(), ChartSeries, HoverSync(), HoverSyncContext, HoverSyncValue, useHoverFrac(), Sparkline(), SparkRow() (+6 more)
 
 ### Community 16 - "Service Registry (OTLP)"
-Cohesion: 0.14
-Nodes (14): api, OperationErrors, TopErrors(), Card(), FooterButton(), GhostChip(), KpiGrid(), useEdgeOps() (+6 more)
+Cohesion: 0.15
+Nodes (13): api, SloRing(), Card(), FooterButton(), GhostChip(), KpiGrid(), useEdgeOps(), SparkData (+5 more)
 
 ### Community 17 - "OTLP Ingest & Normalization"
 Cohesion: 0.15
-Nodes (20): GroupExpandIcon(), LayeredMap(), TeamFrameBar(), TeamFrameBox(), buildEdgeViews(), buildFrameViews(), IsolateBanner(), Legend() (+12 more)
+Nodes (18): LayeredMap(), dotAlphaScale(), buildFrameViews(), FrameView, IsolateBanner(), Legend(), Bounds, nodeCardBounds() (+10 more)
 
 ### Community 18 - "TopBar.tsx"
-Cohesion: 0.19
-Nodes (9): clusterOf(), depsWithin(), dimsOf(), layoutClusteredGraph(), layoutFlatGraph(), Rect, layoutGraph(), LayoutInput (+1 more)
+Cohesion: 0.15
+Nodes (10): team, clusterOf(), depsWithin(), dimsOf(), layoutClusteredGraph(), layoutFlatGraph(), Rect, layoutGraph() (+2 more)
 
 ### Community 19 - "Simulated Error Catalog"
 Cohesion: 0.15
@@ -178,8 +170,8 @@ Cohesion: 0.12
 Nodes (16): compilerOptions, declaration, esModuleInterop, forceConsistentCasingInFileNames, lib, module, moduleResolution, outDir (+8 more)
 
 ### Community 22 - "Span Edge Resolver"
-Cohesion: 0.21
-Nodes (12): TraceListItem, TraceSpan, ServiceHeader(), HEADERS, TracesPanel(), buildRows(), Row, span() (+4 more)
+Cohesion: 0.29
+Nodes (7): TraceDetail, TraceSpan, buildRows(), Row, span(), SpanRow(), TraceModal()
 
 ### Community 23 - "usePanZoom.ts"
 Cohesion: 0.25
@@ -190,12 +182,12 @@ Cohesion: 0.14
 Nodes (13): compilerOptions, esModuleInterop, forceConsistentCasingInFileNames, jsx, lib, module, moduleResolution, noEmit (+5 more)
 
 ### Community 25 - "TopBar.tsx"
-Cohesion: 0.42
-Nodes (6): initialResource(), ResourceAction, resourcePhase, resourceReducer(), ResourceState, UseResourceOpts
+Cohesion: 0.12
+Nodes (11): ServiceType, ServiceRegistry, LoadRow, { queryMock }, initialResource(), ResourceAction, resourcePhase, resourceReducer() (+3 more)
 
 ### Community 26 - "status.ts"
-Cohesion: 0.22
-Nodes (11): ServiceList, SloRing(), StatusPill(), ForceLegend(), KpiCards(), HEADERS, ServicesPage(), jit() (+3 more)
+Cohesion: 0.39
+Nodes (4): StatusPill(), ForceLegend(), stColor(), stLabel()
 
 ### Community 27 - "useForceSimulation.ts"
 Cohesion: 0.26
@@ -210,8 +202,8 @@ Cohesion: 0.35
 Nodes (3): applyKey(), clamp(), RateControl
 
 ### Community 30 - "ChartGrid.tsx"
-Cohesion: 0.22
-Nodes (12): NeighborEdge, EdgeLabelLayer(), errLevel(), BAR_COLORS, ChartGrid(), LEGEND, NeighborsPanel(), HEADERS (+4 more)
+Cohesion: 0.25
+Nodes (9): errLevel(), rangeEdgeLabels(), BAR_COLORS, ChartGrid(), LEGEND, HEADERS, OperationsTable(), isLiveRange() (+1 more)
 
 ### Community 31 - "Sim CLI Args"
 Cohesion: 0.67
@@ -226,45 +218,21 @@ Cohesion: 0.67
 Nodes (3): TraceMap Web App HTML Entry, React Root Mount Element, main.tsx Frontend Entry Module
 
 ### Community 38 - "ServicePage.tsx"
-Cohesion: 0.17
-Nodes (15): ServiceErrorsPanel(), ChartSkeleton(), ErrorsSkeleton(), HeaderSkeleton(), KpiSkeleton(), NeighborsSkeleton(), OperationsSkeleton(), TracesSkeleton() (+7 more)
-
-### Community 39 - "store.ts"
-Cohesion: 0.32
-Nodes (11): Topology, LabelZoomLevel, Theme, TeamFilterValue, TimeRange, RouteState, AppState, GraphType (+3 more)
-
-### Community 40 - "useStore"
-Cohesion: 0.40
-Nodes (6): App(), TopBar(), MapView(), WallboardPage(), useStore, useLiveData()
-
-### Community 41 - "preferences.ts"
-Cohesion: 0.33
-Nodes (7): DEFAULT_PREFS, LABEL_ZOOM_FACTOR, LABEL_ZOOM_LEVELS, loadPrefs(), Prefs, savePrefs(), THEMES
-
-### Community 42 - "PreferencesMenu.tsx"
-Cohesion: 0.29
-Nodes (6): SettingsIcon(), ThemeIcon(), LABEL_ZOOM_OPTIONS, PreferencesMenu(), TEAM_GROUPING_OPTIONS, THEME_OPTIONS
-
-### Community 43 - "GraphModeToggle.tsx"
-Cohesion: 0.50
-Nodes (3): CommunityGraphIcon(), FlowGraphIcon(), GraphModeToggle()
-
-### Community 44 - "ZoomControls.tsx"
-Cohesion: 0.50
-Nodes (3): FitIcon(), ResetLayoutIcon(), ZoomControls()
+Cohesion: 0.18
+Nodes (14): TraceListItem, ServiceHeader(), ChartSkeleton(), ErrorsSkeleton(), HeaderSkeleton(), KpiSkeleton(), NeighborsSkeleton(), OperationsSkeleton() (+6 more)
 
 ## Knowledge Gaps
 - **171 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+166 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `span()` connect `Span Edge Resolver` to `OTLP Protobuf Codec`?**
-  _High betweenness centrality (0.191) - this node is a cross-community bridge._
+  _High betweenness centrality (0.192) - this node is a cross-community bridge._
 - **Why does `ingestTraces()` connect `OTLP Protobuf Codec` to `Server Error Aggregation API`, `Span Edge Resolver`?**
-  _High betweenness centrality (0.191) - this node is a cross-community bridge._
+  _High betweenness centrality (0.192) - this node is a cross-community bridge._
 - **Why does `walk()` connect `Sim HTTP & Metrics Emitter` to `Force Graph & Dimming`, `Simulated Error Catalog`, `Sim Trace Payloads`, `Span Edge Resolver`?**
   _High betweenness centrality (0.158) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `LayeredMap()` (e.g. with `loadPinnedPositions()` and `centerOn()`) actually correct?**
@@ -272,6 +240,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `name`, `version`, `private` to the rest of the system?**
   _171 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Server Error Aggregation API` be split into smaller, more focused modules?**
-  _Cohesion score 0.05898876404494382 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07663828211773417 - nodes in this community are weakly interconnected._
 - **Should `App Shell & Global State` be split into smaller, more focused modules?**
   _Cohesion score 0.08333333333333333 - nodes in this community are weakly interconnected._

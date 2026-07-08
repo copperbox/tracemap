@@ -5,7 +5,7 @@ import type { TeamFilterValue } from '../lib/teamFilter';
 import { DEFAULT_RANGE, type TimeRange } from '../lib/timerange';
 import type { RouteState } from './routing';
 
-export type View = 'map' | 'services' | 'service';
+export type View = 'map' | 'services' | 'service' | 'wallboard';
 /** How the service map is drawn: layered dependency flow, or a force-directed
  *  graph clustered by detected community. */
 export type GraphType = 'map' | 'communities';

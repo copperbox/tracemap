@@ -2,6 +2,7 @@ import { TopBar } from './components/TopBar';
 import { MapView } from './features/map/MapView';
 import { ServicesPage } from './features/services/ServicesPage';
 import { ServicePage } from './features/service/ServicePage';
+import { WallboardPage } from './features/wallboard/WallboardPage';
 import { TraceModal } from './features/trace/TraceModal';
 import { useLiveData } from './state/usePolling';
 import { useStore } from './state/store';
@@ -19,6 +20,7 @@ export function App() {
         {view === 'map' && <MapView />}
         {view === 'services' && <ServicesPage />}
         {view === 'service' && <ServicePage />}
+        {view === 'wallboard' && <WallboardPage />}
         {openTraceId && <TraceModal traceId={openTraceId} />}
       </div>
     </div>

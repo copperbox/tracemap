@@ -37,13 +37,5 @@
   "35": "Web HTML Entry",
   "36": "Vite Env Types",
   "37": "Vite Config",
-  "38": "ServicePage.tsx",
-  "39": "store.ts",
-  "40": "useStore",
-  "41": "preferences.ts",
-  "42": "PreferencesMenu.tsx",
-  "43": "GraphModeToggle.tsx",
-  "44": "ZoomControls.tsx",
-  "45": "rangeEdges.ts",
-  "46": "dotAlphaScale"
+  "38": "ServicePage.tsx"
 }

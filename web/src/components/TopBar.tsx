@@ -157,6 +157,7 @@ export function TopBar() {
       <div className={styles.nav}>
         {navPill('Service map', view === 'map', () => navigate('map'))}
         {navPill('Services', view === 'services', () => navigate('services'))}
+        {navPill('Wallboard', view === 'wallboard', () => navigate('wallboard'))}
       </div>
       <div className={styles.searchBox}>
         <SearchIcon />
