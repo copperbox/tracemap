@@ -10,15 +10,20 @@ export function DepRow({
   name: string;
   statusColor: string;
   right: string;
-  onClick: () => void;
+  /** Omit to render the row inert (no hover affordance, no click). */
+  onClick?: () => void;
 }) {
   return (
     <div
-      className={`${styles.row} hov-row`}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
+      className={onClick ? `${styles.row} hov-row` : styles.row}
+      onClick={
+        onClick
+          ? (e) => {
+              e.stopPropagation();
+              onClick();
+            }
+          : undefined
+      }
     >
       <span className={styles.dot} style={{ background: statusColor }} />
       <span className={styles.name}>{name}</span>

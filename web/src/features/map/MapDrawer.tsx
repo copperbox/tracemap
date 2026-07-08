@@ -1,11 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 import type { TopologyEdge, TopologyService } from '../../api/types';
 import { HoverSync } from '../../components/hoverSync';
-import { SloRing } from '../../components/SloRing';
 import { TopErrors } from '../../components/TopErrors';
 import { ARROW, DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
 import { groupKey, type Graph, type GraphEdge } from '../../lib/grouping';
-import { sloView, stColor } from '../../lib/status';
+import { stColor } from '../../lib/status';
 import { timeSince } from '../../lib/timeSince';
 import { useStore } from '../../state/store';
 import { Card } from './drawer/Card';
@@ -14,6 +13,7 @@ import { DrawerHeader } from './drawer/DrawerHeader';
 import { FooterButton } from './drawer/FooterButton';
 import { GhostChip } from './drawer/GhostChip';
 import { KpiGrid } from './drawer/KpiGrid';
+import { ServiceDetails } from './drawer/ServiceDetails';
 import { SparkRow } from './drawer/SparkRow';
 import { StatusPill } from './drawer/StatusPill';
 import { useEdgeOps } from './drawer/useEdgeOps';
@@ -78,7 +78,6 @@ export function MapDrawer({
 
   // ============================ NODE MODE ============================
   const nodeSvc = selection?.kind === 'node' ? svcById.get(selection.id) : undefined;
-  const nodeSparks = useSparklines('service', nodeSvc?.id ?? null);
 
   // ============================ EDGE MODE ============================
   const graphEdge: GraphEdge | undefined =
@@ -86,120 +85,34 @@ export function MapDrawer({
   const single: TopologyEdge | null = graphEdge?.underlying.length === 1 ? graphEdge.underlying[0] : null;
   const edgeSparks = useSparklines('edge', single ? single.source : null, single?.target);
   const edgeOps = useEdgeOps(single ? single.source : null, single?.target);
-  const nodeErrors = useTopErrors('service', nodeSvc?.id ?? null);
   const edgeErrors = useTopErrors('edge', single ? single.source : null, single?.target);
 
-  if (nodeSvc) {
+  if (nodeSvc && topology) {
     const s = nodeSvc;
-    const m = s.metrics;
-    const slo = sloView(s.sloTarget, s.sloAttain);
-    const callers = (topology?.edges ?? []).filter((e) => e.target === s.id);
-    const depsOut = (topology?.edges ?? []).filter((e) => e.source === s.id);
     const focusActive = focusId === s.id;
     const selectEdge = (e: TopologyEdge) => {
       const key = `${graph.nodeKeyOf(e.source)}=>${graph.nodeKeyOf(e.target)}`;
       select({ kind: 'edge', id: key });
     };
-    const meta = [s.runtime, s.region, m.stale ? 'no recent traffic' : 'live'].filter(Boolean).join(` ${DOT} `);
 
     content = (
-      <div className={styles.mode}>
-        <DrawerHeader
-          label={s.type.toUpperCase()}
-          title={s.name}
-          onClose={close}
-          meta={meta}
-          pills={
-            <>
-              <StatusPill status={s.status} />
-              <GhostChip text={s.teamId != null ? (teamName.get(s.teamId) ?? 'unassigned') : 'unassigned'} />
-            </>
-          }
-        />
-        <div className={styles.body}>
-          <Card variant="row">
-            <SloRing target={s.sloTarget} attain={s.sloAttain} />
-            <div className={styles.sloInfo}>
-              <div className={styles.label}>{`SLO ${DOT} 30 DAYS`}</div>
-              <div className={styles.sloTarget}>{slo.targetTxt} target</div>
-              <div className={styles.sloTrack}>
-                <div className={styles.sloFill} style={{ width: slo.budgetW, background: slo.color }} />
-              </div>
-              <div className={styles.sloBudget}>{slo.budgetTxt}</div>
-            </div>
-          </Card>
-
-          <KpiGrid
-            items={[
-              { label: 'REQ/S', value: fmtRps(m.rps * jit(s.id, tick)) },
-              { label: 'P95', value: fmtMs(m.p95 == null ? null : m.p95 * jit(s.id + 'l', tick, 0.06)) },
-              { label: 'ERRORS', value: fmtErr(m.errPct), color: s.status === 'ok' ? 'var(--text)' : stColor(s.status) },
-            ]}
-          />
-
-          <HoverSync>
-            <Card variant="column">
-              <SparkRow label="LATENCY 24H" data={nodeSparks?.p95} times={nodeSparks?.times} color="var(--accent)" fmt={fmtMs} />
-              <SparkRow label="THROUGHPUT" data={nodeSparks?.rps} times={nodeSparks?.times} color="var(--dim)" fmt={(v) => `${fmtRps(v)}/s`} />
-              <SparkRow
-                label="ERROR RATE"
-                data={nodeSparks?.err}
-                times={nodeSparks?.times}
-                color={s.status === 'ok' ? 'var(--faint)' : stColor(s.status)}
-                fmt={(v) => `${v.toFixed(2)}%`}
-              />
-            </Card>
-          </HoverSync>
-
-          <div>
-            <div className={styles.sectionLabel}>{`CALLED BY ${DOT} ${callers.length}`}</div>
-            <div className={styles.depList}>
-              {callers.map((e) => (
-                <DepRow
-                  key={e.source}
-                  name={svcById.get(e.source)?.name ?? e.source}
-                  statusColor={stColor(svcById.get(e.source)?.status ?? 'ok')}
-                  right={fmtMs(e.metrics.p95)}
-                  onClick={() => selectEdge(e)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className={styles.sectionLabel}>{`DEPENDS ON ${DOT} ${depsOut.length}`}</div>
-            <div className={styles.depList}>
-              {depsOut.map((e) => (
-                <DepRow
-                  key={e.target}
-                  name={svcById.get(e.target)?.name ?? e.target}
-                  statusColor={stColor(svcById.get(e.target)?.status ?? 'ok')}
-                  right={fmtMs(e.metrics.p95)}
-                  onClick={() => selectEdge(e)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <TopErrors
-            ops={nodeErrors}
-            onSelectOperation={(op) => navigate('service', s.id, op)}
-          />
-
-          <div className={styles.footnote}>
-            {`topology learned from ~${fmtCount(m.rps * 86400)} spans/day ${DOT} updated continuously`}
-          </div>
-        </div>
-        <div className={styles.footer}>
-          <FooterButton primary onClick={() => navigate('service', s.id)}>
-            View full service
-          </FooterButton>
-          <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : s.id)}>
-            {focusActive ? 'Unfocus' : 'Focus'}
-          </FooterButton>
-          {isolateButton(s.id)}
-        </div>
-      </div>
+      <ServiceDetails
+        service={s}
+        topology={topology}
+        onClose={close}
+        onSelectEdge={selectEdge}
+        footer={
+          <>
+            <FooterButton primary onClick={() => navigate('service', s.id)}>
+              View full service
+            </FooterButton>
+            <FooterButton active={focusActive} onClick={() => setFocus(focusActive ? null : s.id)}>
+              {focusActive ? 'Unfocus' : 'Focus'}
+            </FooterButton>
+            {isolateButton(s.id)}
+          </>
+        }
+      />
     );
   } else if (selection?.kind === 'group') {
     // ============================ GROUP MODE ============================
