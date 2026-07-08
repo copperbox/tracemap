@@ -1490,7 +1490,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "server_src_otlp_ingest_edgeresolver",
-      "community": 12,
+      "community": 1,
       "norm_label": "edgeresolver"
     },
     {
@@ -3210,7 +3210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_app",
-      "community": 40,
+      "community": 9,
       "norm_label": "app.tsx"
     },
     {
@@ -3220,7 +3220,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_app_app",
-      "community": 40,
+      "community": 9,
       "norm_label": "app()"
     },
     {
@@ -3230,7 +3230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_client",
-      "community": 0,
+      "community": 16,
       "norm_label": "client.ts"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_api_client_get",
-      "community": 0,
+      "community": 16,
       "norm_label": "get()"
     },
     {
@@ -3250,7 +3250,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_api_client_send",
-      "community": 0,
+      "community": 16,
       "norm_label": "send()"
     },
     {
@@ -3270,7 +3270,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_types",
-      "community": 0,
+      "community": 16,
       "norm_label": "types.ts"
     },
     {
@@ -3280,7 +3280,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_api_types_status",
-      "community": 4,
+      "community": 16,
       "norm_label": "status"
     },
     {
@@ -3290,7 +3290,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_api_types_livemetrics",
-      "community": 0,
+      "community": 16,
       "norm_label": "livemetrics"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_api_types_topologyservice",
-      "community": 4,
+      "community": 16,
       "norm_label": "topologyservice"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "web_src_api_types_topologyedge",
-      "community": 0,
+      "community": 16,
       "norm_label": "topologyedge"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "web_src_api_types_topology",
-      "community": 39,
+      "community": 16,
       "norm_label": "topology"
     },
     {
@@ -3340,7 +3340,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "web_src_api_types_servicelistitem",
-      "community": 0,
+      "community": 16,
       "norm_label": "servicelistitem"
     },
     {
@@ -3350,7 +3350,7 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "web_src_api_types_servicelist",
-      "community": 26,
+      "community": 16,
       "norm_label": "servicelist"
     },
     {
@@ -3360,7 +3360,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "web_src_api_types_seriespoint",
-      "community": 0,
+      "community": 9,
       "norm_label": "seriespoint"
     },
     {
@@ -3370,7 +3370,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "web_src_api_types_neighboredge",
-      "community": 30,
+      "community": 16,
       "norm_label": "neighboredge"
     },
     {
@@ -3380,7 +3380,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "web_src_api_types_servicedetail",
-      "community": 0,
+      "community": 16,
       "norm_label": "servicedetail"
     },
     {
@@ -3390,7 +3390,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "web_src_api_types_errorcount",
-      "community": 0,
+      "community": 16,
       "norm_label": "errorcount"
     },
     {
@@ -3410,7 +3410,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "web_src_api_types_errorbreakdown",
-      "community": 0,
+      "community": 16,
       "norm_label": "errorbreakdown"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_api_types_tracelistitem",
-      "community": 22,
+      "community": 16,
       "norm_label": "tracelistitem"
     },
     {
@@ -3430,7 +3430,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "web_src_api_types_tracespan",
-      "community": 22,
+      "community": 28,
       "norm_label": "tracespan"
     },
     {
@@ -3440,7 +3440,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "web_src_api_types_tracedetail",
-      "community": 0,
+      "community": 16,
       "norm_label": "tracedetail"
     },
     {
@@ -3500,7 +3500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_icon",
-      "community": 13,
+      "community": 4,
       "norm_label": "icon.tsx"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_components_icon_type_icons",
-      "community": 13,
+      "community": 4,
       "norm_label": "type_icons"
     },
     {
@@ -3520,7 +3520,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_components_icon_type_labels",
-      "community": 13,
+      "community": 16,
       "norm_label": "type_labels"
     },
     {
@@ -3530,7 +3530,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "web_src_components_icon_typeicon",
-      "community": 13,
+      "community": 4,
       "norm_label": "typeicon()"
     },
     {
@@ -3540,7 +3540,7 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "web_src_components_icon_closeicon",
-      "community": 13,
+      "community": 4,
       "norm_label": "closeicon()"
     },
     {
@@ -3550,7 +3550,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_components_icon_chevronicon",
-      "community": 13,
+      "community": 4,
       "norm_label": "chevronicon()"
     },
     {
@@ -3560,7 +3560,7 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "web_src_components_icon_backicon",
-      "community": 13,
+      "community": 4,
       "norm_label": "backicon()"
     },
     {
@@ -3570,7 +3570,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "web_src_components_icon_searchicon",
-      "community": 13,
+      "community": 16,
       "norm_label": "searchicon()"
     },
     {
@@ -3580,7 +3580,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "web_src_components_icon_resetlayouticon",
-      "community": 44,
+      "community": 4,
       "norm_label": "resetlayouticon()"
     },
     {
@@ -3590,7 +3590,7 @@
       "source_location": "L101",
       "_origin": "ast",
       "id": "web_src_components_icon_fiticon",
-      "community": 44,
+      "community": 4,
       "norm_label": "fiticon()"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_components_icon_themeicon",
-      "community": 42,
+      "community": 9,
       "norm_label": "themeicon()"
     },
     {
@@ -3610,7 +3610,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "web_src_components_icon_settingsicon",
-      "community": 42,
+      "community": 9,
       "norm_label": "settingsicon()"
     },
     {
@@ -3620,7 +3620,7 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "web_src_components_icon_flowgraphicon",
-      "community": 43,
+      "community": 4,
       "norm_label": "flowgraphicon()"
     },
     {
@@ -3630,7 +3630,7 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "web_src_components_icon_communitygraphicon",
-      "community": 43,
+      "community": 4,
       "norm_label": "communitygraphicon()"
     },
     {
@@ -3640,7 +3640,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "web_src_components_icon_logoicon",
-      "community": 4,
+      "community": 16,
       "norm_label": "logoicon()"
     },
     {
@@ -3650,7 +3650,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "web_src_components_icon_groupexpandicon",
-      "community": 17,
+      "community": 4,
       "norm_label": "groupexpandicon()"
     },
     {
@@ -3660,7 +3660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu",
-      "community": 42,
+      "community": 9,
       "norm_label": "preferencesmenu.tsx"
     },
     {
@@ -3670,7 +3670,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_theme_options",
-      "community": 42,
+      "community": 9,
       "norm_label": "theme_options"
     },
     {
@@ -3680,7 +3680,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_label_zoom_options",
-      "community": 42,
+      "community": 9,
       "norm_label": "label_zoom_options"
     },
     {
@@ -3690,7 +3690,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_team_grouping_options",
-      "community": 42,
+      "community": 9,
       "norm_label": "team_grouping_options"
     },
     {
@@ -3700,7 +3700,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_preferencesmenu",
-      "community": 42,
+      "community": 9,
       "norm_label": "preferencesmenu()"
     },
     {
@@ -3710,7 +3710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_sloring",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloring.tsx"
     },
     {
@@ -3720,7 +3720,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_components_sloring_sloring",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloring()"
     },
     {
@@ -3770,7 +3770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_topbar",
-      "community": 4,
+      "community": 16,
       "norm_label": "topbar.tsx"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_components_topbar_status_noun",
-      "community": 4,
+      "community": 16,
       "norm_label": "status_noun"
     },
     {
@@ -3790,7 +3790,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_topbar_healthchip",
-      "community": 4,
+      "community": 16,
       "norm_label": "healthchip()"
     },
     {
@@ -3800,7 +3800,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "web_src_components_topbar_healthpopover",
-      "community": 4,
+      "community": 16,
       "norm_label": "healthpopover()"
     },
     {
@@ -3810,7 +3810,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "web_src_components_topbar_topbar",
-      "community": 40,
+      "community": 9,
       "norm_label": "topbar()"
     },
     {
@@ -3840,7 +3840,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_hoversync",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversync.tsx"
     },
     {
@@ -3850,7 +3850,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_components_hoversync_hoversyncvalue",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversyncvalue"
     },
     {
@@ -3860,7 +3860,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_components_hoversync_hoversynccontext",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversynccontext"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_hoversync_hoversync",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversync()"
     },
     {
@@ -3930,7 +3930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_mapview",
-      "community": 40,
+      "community": 9,
       "norm_label": "mapview.tsx"
     },
     {
@@ -3940,7 +3940,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_map_mapview_mapview",
-      "community": 40,
+      "community": 9,
       "norm_label": "mapview()"
     },
     {
@@ -3950,7 +3950,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_nodecard",
-      "community": 13,
+      "community": 16,
       "norm_label": "nodecard.tsx"
     },
     {
@@ -3960,7 +3960,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_map_nodecard_nodecard",
-      "community": 13,
+      "community": 16,
       "norm_label": "nodecard()"
     },
     {
@@ -3970,7 +3970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe",
-      "community": 17,
+      "community": 4,
       "norm_label": "teamframe.tsx"
     },
     {
@@ -3980,7 +3980,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe_teamframebox",
-      "community": 17,
+      "community": 4,
       "norm_label": "teamframebox()"
     },
     {
@@ -3990,7 +3990,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "web_src_features_map_teamframe_teamframebar",
-      "community": 17,
+      "community": 4,
       "norm_label": "teamframebar()"
     },
     {
@@ -4020,17 +4020,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_deprow",
-      "community": 13,
+      "community": 16,
       "norm_label": "deprow.tsx"
     },
     {
       "label": "DepRow()",
       "file_type": "code",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_deprow_deprow",
-      "community": 13,
+      "community": 16,
       "norm_label": "deprow()"
     },
     {
@@ -4040,7 +4040,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_drawerheader",
-      "community": 13,
+      "community": 16,
       "norm_label": "drawerheader.tsx"
     },
     {
@@ -4050,7 +4050,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_drawerheader_drawerheader",
-      "community": 13,
+      "community": 16,
       "norm_label": "drawerheader()"
     },
     {
@@ -4114,13 +4114,33 @@
       "norm_label": "kpigrid()"
     },
     {
+      "label": "ServiceDetails.tsx",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicedetails",
+      "community": 16,
+      "norm_label": "servicedetails.tsx"
+    },
+    {
+      "label": "ServiceDetails()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L27",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "community": 16,
+      "norm_label": "servicedetails()"
+    },
+    {
       "label": "SparkRow.tsx",
       "file_type": "code",
       "source_file": "web/src/features/map/drawer/SparkRow.tsx",
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_sparkrow",
-      "community": 15,
+      "community": 16,
       "norm_label": "sparkrow.tsx"
     },
     {
@@ -4130,7 +4150,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_sparkrow_sparkrow",
-      "community": 15,
+      "community": 16,
       "norm_label": "sparkrow()"
     },
     {
@@ -4140,7 +4160,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_statuspill",
-      "community": 26,
+      "community": 16,
       "norm_label": "statuspill.tsx"
     },
     {
@@ -4150,8 +4170,78 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_statuspill_statuspill",
-      "community": 26,
+      "community": 16,
       "norm_label": "statuspill()"
+    },
+    {
+      "label": "serviceRelations.test.ts",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_test",
+      "community": 16,
+      "norm_label": "servicerelations.test.ts"
+    },
+    {
+      "label": "svc()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_test_svc",
+      "community": 16,
+      "norm_label": "svc()"
+    },
+    {
+      "label": "edge()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_test_edge",
+      "community": 16,
+      "norm_label": "edge()"
+    },
+    {
+      "label": "topo()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L35",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_test_topo",
+      "community": 16,
+      "norm_label": "topo()"
+    },
+    {
+      "label": "serviceRelations.ts",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations",
+      "community": 16,
+      "norm_label": "servicerelations.ts"
+    },
+    {
+      "label": "serviceRelations()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L8",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_servicerelations",
+      "community": 16,
+      "norm_label": "servicerelations()"
+    },
+    {
+      "label": "serviceMeta()",
+      "file_type": "code",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L19",
+      "_origin": "ast",
+      "id": "web_src_features_map_drawer_servicerelations_servicemeta",
+      "community": 16,
+      "norm_label": "servicemeta()"
     },
     {
       "label": "useEdgeOps.ts",
@@ -4230,7 +4320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph",
-      "community": 3,
+      "community": 10,
       "norm_label": "forcegraph.tsx"
     },
     {
@@ -4240,7 +4330,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_palette",
-      "community": 3,
+      "community": 10,
       "norm_label": "palette"
     },
     {
@@ -4250,7 +4340,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcegraph_forcegraph",
-      "community": 3,
+      "community": 10,
       "norm_label": "forcegraph()"
     },
     {
@@ -4260,7 +4350,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcelegend",
-      "community": 26,
+      "community": 16,
       "norm_label": "forcelegend.tsx"
     },
     {
@@ -4270,7 +4360,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcelegend_forcelegend",
-      "community": 26,
+      "community": 16,
       "norm_label": "forcelegend()"
     },
     {
@@ -4390,7 +4480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_test",
-      "community": 3,
+      "community": 10,
       "norm_label": "forcenodes.test.ts"
     },
     {
@@ -4400,7 +4490,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_test_node",
-      "community": 3,
+      "community": 10,
       "norm_label": "node()"
     },
     {
@@ -4410,7 +4500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes",
-      "community": 3,
+      "community": 10,
       "norm_label": "forcenodes.ts"
     },
     {
@@ -4440,7 +4530,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_noderadius",
-      "community": 3,
+      "community": 10,
       "norm_label": "noderadius()"
     },
     {
@@ -4450,7 +4540,7 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_buildforcenodes",
-      "community": 3,
+      "community": 10,
       "norm_label": "buildforcenodes()"
     },
     {
@@ -4460,7 +4550,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "web_src_features_map_force_forcenodes_buildforcelinks",
-      "community": 3,
+      "community": 10,
       "norm_label": "buildforcelinks()"
     },
     {
@@ -4520,7 +4610,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelabellayer",
-      "community": 30,
+      "community": 16,
       "norm_label": "edgelabellayer.tsx"
     },
     {
@@ -4530,7 +4620,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgelabellayer_edgelabellayer",
-      "community": 30,
+      "community": 16,
       "norm_label": "edgelabellayer()"
     },
     {
@@ -4560,7 +4650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_graphmodetoggle",
-      "community": 43,
+      "community": 4,
       "norm_label": "graphmodetoggle.tsx"
     },
     {
@@ -4570,7 +4660,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_map_view_graphmodetoggle_graphmodetoggle",
-      "community": 43,
+      "community": 4,
       "norm_label": "graphmodetoggle()"
     },
     {
@@ -4700,7 +4790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomcontrols",
-      "community": 44,
+      "community": 4,
       "norm_label": "zoomcontrols.tsx"
     },
     {
@@ -4710,7 +4800,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_view_zoomcontrols_zoomcontrols",
-      "community": 44,
+      "community": 4,
       "norm_label": "zoomcontrols()"
     },
     {
@@ -4880,7 +4970,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_features_map_view_dimming_builddimmer",
-      "community": 3,
+      "community": 10,
       "norm_label": "builddimmer()"
     },
     {
@@ -4890,7 +4980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_test",
-      "community": 46,
+      "community": 10,
       "norm_label": "dotgrid.test.ts"
     },
     {
@@ -4900,7 +4990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid",
-      "community": 46,
+      "community": 10,
       "norm_label": "dotgrid.ts"
     },
     {
@@ -4910,7 +5000,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_features_map_view_dotgrid_dotalphascale",
-      "community": 46,
+      "community": 10,
       "norm_label": "dotalphascale()"
     },
     {
@@ -4990,7 +5080,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_buildedgeviews",
-      "community": 17,
+      "community": 5,
       "norm_label": "buildedgeviews()"
     },
     {
@@ -5240,7 +5330,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_test",
-      "community": 18,
+      "community": 17,
       "norm_label": "nodebounds.test.ts"
     },
     {
@@ -5250,7 +5340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds",
-      "community": 7,
+      "community": 17,
       "norm_label": "nodebounds.ts"
     },
     {
@@ -5260,7 +5350,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_features_map_view_nodebounds_bounds",
-      "community": 7,
+      "community": 17,
       "norm_label": "bounds"
     },
     {
@@ -5650,7 +5740,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal",
-      "community": 0,
+      "community": 4,
       "norm_label": "editservicemodal.tsx"
     },
     {
@@ -5660,7 +5750,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_types",
-      "community": 0,
+      "community": 4,
       "norm_label": "types"
     },
     {
@@ -5670,7 +5760,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_features_service_editservicemodal_editservicemodal",
-      "community": 0,
+      "community": 4,
       "norm_label": "editservicemodal()"
     },
     {
@@ -5680,7 +5770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_field",
-      "community": 0,
+      "community": 4,
       "norm_label": "field.tsx"
     },
     {
@@ -5690,7 +5780,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_field_field",
-      "community": 0,
+      "community": 4,
       "norm_label": "field()"
     },
     {
@@ -5740,7 +5830,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_timerangepicker",
-      "community": 38,
+      "community": 9,
       "norm_label": "timerangepicker.tsx"
     },
     {
@@ -5750,7 +5840,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_timerangepicker_tolocalinput",
-      "community": 38,
+      "community": 9,
       "norm_label": "tolocalinput()"
     },
     {
@@ -5760,7 +5850,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_features_service_timerangepicker_timerangepicker",
-      "community": 38,
+      "community": 9,
       "norm_label": "timerangepicker()"
     },
     {
@@ -5770,7 +5860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel_test",
-      "community": 30,
+      "community": 9,
       "norm_label": "errlevel.test.ts"
     },
     {
@@ -5780,7 +5870,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel",
-      "community": 30,
+      "community": 9,
       "norm_label": "errlevel.ts"
     },
     {
@@ -5790,7 +5880,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_errlevel_errlevel",
-      "community": 30,
+      "community": 9,
       "norm_label": "errlevel()"
     },
     {
@@ -5800,7 +5890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_test",
-      "community": 45,
+      "community": 9,
       "norm_label": "rangeedges.test.ts"
     },
     {
@@ -5810,7 +5900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges",
-      "community": 45,
+      "community": 9,
       "norm_label": "rangeedges.ts"
     },
     {
@@ -5820,7 +5910,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_service_rangeedges_rangeedgelabels",
-      "community": 45,
+      "community": 9,
       "norm_label": "rangeedgelabels()"
     },
     {
@@ -5830,7 +5920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid",
-      "community": 30,
+      "community": 9,
       "norm_label": "chartgrid.tsx"
     },
     {
@@ -5840,7 +5930,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_legend",
-      "community": 30,
+      "community": 9,
       "norm_label": "legend"
     },
     {
@@ -5850,7 +5940,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_bar_colors",
-      "community": 30,
+      "community": 9,
       "norm_label": "bar_colors"
     },
     {
@@ -5860,7 +5950,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_features_service_sections_chartgrid_chartgrid",
-      "community": 30,
+      "community": 9,
       "norm_label": "chartgrid()"
     },
     {
@@ -5870,7 +5960,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_kpicards",
-      "community": 26,
+      "community": 16,
       "norm_label": "kpicards.tsx"
     },
     {
@@ -5880,7 +5970,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_service_sections_kpicards_kpicards",
-      "community": 26,
+      "community": 16,
       "norm_label": "kpicards()"
     },
     {
@@ -5890,7 +5980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_neighborspanel",
-      "community": 30,
+      "community": 16,
       "norm_label": "neighborspanel.tsx"
     },
     {
@@ -5900,7 +5990,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_service_sections_neighborspanel_neighborspanel",
-      "community": 30,
+      "community": 16,
       "norm_label": "neighborspanel()"
     },
     {
@@ -5910,7 +6000,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable",
-      "community": 30,
+      "community": 16,
       "norm_label": "operationstable.tsx"
     },
     {
@@ -5920,7 +6010,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_headers",
-      "community": 30,
+      "community": 16,
       "norm_label": "headers"
     },
     {
@@ -5930,7 +6020,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_operationstable_operationstable",
-      "community": 30,
+      "community": 16,
       "norm_label": "operationstable()"
     },
     {
@@ -5950,7 +6040,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceerrorspanel_serviceerrorspanel",
-      "community": 38,
+      "community": 16,
       "norm_label": "serviceerrorspanel()"
     },
     {
@@ -5960,7 +6050,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader",
-      "community": 26,
+      "community": 16,
       "norm_label": "serviceheader.tsx"
     },
     {
@@ -5970,7 +6060,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceheader_serviceheader",
-      "community": 22,
+      "community": 16,
       "norm_label": "serviceheader()"
     },
     {
@@ -6070,7 +6160,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel",
-      "community": 22,
+      "community": 16,
       "norm_label": "tracespanel.tsx"
     },
     {
@@ -6080,7 +6170,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_headers",
-      "community": 22,
+      "community": 16,
       "norm_label": "headers"
     },
     {
@@ -6090,7 +6180,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_features_service_sections_tracespanel_tracespanel",
-      "community": 22,
+      "community": 16,
       "norm_label": "tracespanel()"
     },
     {
@@ -6100,7 +6190,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage",
-      "community": 26,
+      "community": 16,
       "norm_label": "servicespage.tsx"
     },
     {
@@ -6110,7 +6200,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage_headers",
-      "community": 26,
+      "community": 16,
       "norm_label": "headers"
     },
     {
@@ -6120,7 +6210,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_features_services_servicespage_servicespage",
-      "community": 26,
+      "community": 16,
       "norm_label": "servicespage()"
     },
     {
@@ -6130,7 +6220,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow",
-      "community": 22,
+      "community": 28,
       "norm_label": "spanrow.tsx"
     },
     {
@@ -6140,7 +6230,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow_spanrow",
-      "community": 22,
+      "community": 28,
       "norm_label": "spanrow()"
     },
     {
@@ -6150,7 +6240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal",
-      "community": 22,
+      "community": 28,
       "norm_label": "tracemodal.tsx"
     },
     {
@@ -6160,7 +6250,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal_tracemodal",
-      "community": 22,
+      "community": 28,
       "norm_label": "tracemodal()"
     },
     {
@@ -6170,7 +6260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test",
-      "community": 22,
+      "community": 28,
       "norm_label": "buildrows.test.ts"
     },
     {
@@ -6180,7 +6270,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_span",
-      "community": 22,
+      "community": 28,
       "norm_label": "span()"
     },
     {
@@ -6190,7 +6280,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_at",
-      "community": 22,
+      "community": 28,
       "norm_label": "at()"
     },
     {
@@ -6200,7 +6290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows",
-      "community": 22,
+      "community": 28,
       "norm_label": "buildrows.ts"
     },
     {
@@ -6210,7 +6300,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_row",
-      "community": 22,
+      "community": 28,
       "norm_label": "row"
     },
     {
@@ -6220,7 +6310,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_buildrows",
-      "community": 22,
+      "community": 28,
       "norm_label": "buildrows()"
     },
     {
@@ -6230,7 +6320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_wallboard_wallboardpage",
-      "community": 40,
+      "community": 9,
       "norm_label": "wallboardpage.tsx"
     },
     {
@@ -6240,7 +6330,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_features_wallboard_wallboardpage_wallboardpage",
-      "community": 40,
+      "community": 9,
       "norm_label": "wallboardpage()"
     },
     {
@@ -6440,7 +6530,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_community_test_e",
-      "community": 17,
+      "community": 10,
       "norm_label": "e()"
     },
     {
@@ -6700,7 +6790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_format_test",
-      "community": 30,
+      "community": 16,
       "norm_label": "format.test.ts"
     },
     {
@@ -6710,7 +6800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_format",
-      "community": 30,
+      "community": 16,
       "norm_label": "format.ts"
     },
     {
@@ -6720,7 +6810,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtrps",
-      "community": 30,
+      "community": 16,
       "norm_label": "fmtrps()"
     },
     {
@@ -6730,7 +6820,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtms",
-      "community": 22,
+      "community": 16,
       "norm_label": "fmtms()"
     },
     {
@@ -6750,7 +6840,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_lib_format_fmterr",
-      "community": 30,
+      "community": 16,
       "norm_label": "fmterr()"
     },
     {
@@ -6770,7 +6860,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_format_fmtago",
-      "community": 22,
+      "community": 16,
       "norm_label": "fmtago()"
     },
     {
@@ -6780,7 +6870,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "web_src_lib_format_jit",
-      "community": 26,
+      "community": 16,
       "norm_label": "jit()"
     },
     {
@@ -6790,7 +6880,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_grouping_test",
-      "community": 32,
+      "community": 16,
       "norm_label": "grouping.test.ts"
     },
     {
@@ -6800,7 +6890,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_grouping_test_svc",
-      "community": 32,
+      "community": 16,
       "norm_label": "svc()"
     },
     {
@@ -6810,7 +6900,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_lib_grouping_test_edge",
-      "community": 32,
+      "community": 16,
       "norm_label": "edge()"
     },
     {
@@ -6820,7 +6910,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_lib_grouping_test_topo",
-      "community": 32,
+      "community": 16,
       "norm_label": "topo()"
     },
     {
@@ -6850,7 +6940,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_lib_grouping_graphedge",
-      "community": 3,
+      "community": 5,
       "norm_label": "graphedge"
     },
     {
@@ -6880,7 +6970,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "web_src_lib_grouping_buildgraph",
-      "community": 17,
+      "community": 10,
       "norm_label": "buildgraph()"
     },
     {
@@ -6890,7 +6980,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test",
-      "community": 4,
+      "community": 16,
       "norm_label": "healthsummary.test.ts"
     },
     {
@@ -6900,7 +6990,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test_svc",
-      "community": 4,
+      "community": 16,
       "norm_label": "svc()"
     },
     {
@@ -6910,7 +7000,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_test_services",
-      "community": 4,
+      "community": 16,
       "norm_label": "services"
     },
     {
@@ -6920,7 +7010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary",
-      "community": 4,
+      "community": 16,
       "norm_label": "healthsummary.ts"
     },
     {
@@ -6930,7 +7020,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_unhealthyservice",
-      "community": 4,
+      "community": 16,
       "norm_label": "unhealthyservice"
     },
     {
@@ -6940,7 +7030,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "web_src_lib_healthsummary_servicesbystatus",
-      "community": 4,
+      "community": 16,
       "norm_label": "servicesbystatus()"
     },
     {
@@ -7000,7 +7090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_preferences_test",
-      "community": 41,
+      "community": 9,
       "norm_label": "preferences.test.ts"
     },
     {
@@ -7010,7 +7100,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_preferences_test_stubstorage",
-      "community": 41,
+      "community": 9,
       "norm_label": "stubstorage()"
     },
     {
@@ -7020,7 +7110,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_preferences",
-      "community": 41,
+      "community": 9,
       "norm_label": "preferences.ts"
     },
     {
@@ -7030,7 +7120,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_lib_preferences_theme",
-      "community": 39,
+      "community": 9,
       "norm_label": "theme"
     },
     {
@@ -7040,7 +7130,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_preferences_labelzoomlevel",
-      "community": 39,
+      "community": 9,
       "norm_label": "labelzoomlevel"
     },
     {
@@ -7050,7 +7140,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "web_src_lib_preferences_label_zoom_factor",
-      "community": 41,
+      "community": 9,
       "norm_label": "label_zoom_factor"
     },
     {
@@ -7060,7 +7150,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_lib_preferences_prefs",
-      "community": 41,
+      "community": 9,
       "norm_label": "prefs"
     },
     {
@@ -7070,7 +7160,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "web_src_lib_preferences_default_prefs",
-      "community": 41,
+      "community": 9,
       "norm_label": "default_prefs"
     },
     {
@@ -7080,7 +7170,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "web_src_lib_preferences_themes",
-      "community": 41,
+      "community": 9,
       "norm_label": "themes"
     },
     {
@@ -7090,7 +7180,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "web_src_lib_preferences_label_zoom_levels",
-      "community": 41,
+      "community": 9,
       "norm_label": "label_zoom_levels"
     },
     {
@@ -7100,7 +7190,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "web_src_lib_preferences_loadprefs",
-      "community": 41,
+      "community": 9,
       "norm_label": "loadprefs()"
     },
     {
@@ -7110,7 +7200,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "web_src_lib_preferences_saveprefs",
-      "community": 41,
+      "community": 9,
       "norm_label": "saveprefs()"
     },
     {
@@ -7250,7 +7340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_lib_status",
-      "community": 26,
+      "community": 16,
       "norm_label": "status.ts"
     },
     {
@@ -7260,7 +7350,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_lib_status_stcolor",
-      "community": 26,
+      "community": 16,
       "norm_label": "stcolor()"
     },
     {
@@ -7270,7 +7360,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_lib_status_stbg",
-      "community": 26,
+      "community": 16,
       "norm_label": "stbg()"
     },
     {
@@ -7280,7 +7370,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_lib_status_stlabel",
-      "community": 26,
+      "community": 16,
       "norm_label": "stlabel()"
     },
     {
@@ -7290,7 +7380,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "web_src_lib_status_worst",
-      "community": 3,
+      "community": 10,
       "norm_label": "worst()"
     },
     {
@@ -7300,7 +7390,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "web_src_lib_status_sloview",
-      "community": 26,
+      "community": 16,
       "norm_label": "sloview"
     },
     {
@@ -7340,7 +7430,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_lib_teamfilter_teamfiltervalue",
-      "community": 39,
+      "community": 9,
       "norm_label": "teamfiltervalue"
     },
     {
@@ -7440,7 +7530,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_lib_timerange_timerange",
-      "community": 39,
+      "community": 9,
       "norm_label": "timerange"
     },
     {
@@ -7480,7 +7570,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "web_src_lib_timerange_rangelabel",
-      "community": 30,
+      "community": 9,
       "norm_label": "rangelabel()"
     },
     {
@@ -7490,7 +7580,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "web_src_lib_timerange_isliverange",
-      "community": 45,
+      "community": 9,
       "norm_label": "isliverange()"
     },
     {
@@ -7610,7 +7700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_main",
-      "community": 40,
+      "community": 9,
       "norm_label": "main.tsx"
     },
     {
@@ -7620,7 +7710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource_test",
-      "community": 25,
+      "community": 38,
       "norm_label": "resource.test.ts"
     },
     {
@@ -7630,7 +7720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_resource",
-      "community": 25,
+      "community": 38,
       "norm_label": "resource.ts"
     },
     {
@@ -7640,7 +7730,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcestate",
-      "community": 25,
+      "community": 38,
       "norm_label": "resourcestate"
     },
     {
@@ -7650,7 +7740,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "web_src_state_resource_resourceaction",
-      "community": 25,
+      "community": 38,
       "norm_label": "resourceaction"
     },
     {
@@ -7660,7 +7750,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_state_resource_initialresource",
-      "community": 25,
+      "community": 38,
       "norm_label": "initialresource()"
     },
     {
@@ -7670,7 +7760,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcereducer",
-      "community": 25,
+      "community": 38,
       "norm_label": "resourcereducer()"
     },
     {
@@ -7680,7 +7770,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "web_src_state_resource_resourcephase",
-      "community": 25,
+      "community": 38,
       "norm_label": "resourcephase"
     },
     {
@@ -7730,7 +7820,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_state_routing_routestate",
-      "community": 39,
+      "community": 9,
       "norm_label": "routestate"
     },
     {
@@ -7830,7 +7920,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_store",
-      "community": 39,
+      "community": 9,
       "norm_label": "store.ts"
     },
     {
@@ -7840,7 +7930,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_state_store_view",
-      "community": 39,
+      "community": 9,
       "norm_label": "view"
     },
     {
@@ -7850,7 +7940,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_state_store_graphtype",
-      "community": 39,
+      "community": 9,
       "norm_label": "graphtype"
     },
     {
@@ -7860,7 +7950,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_state_store_selection",
-      "community": 39,
+      "community": 9,
       "norm_label": "selection"
     },
     {
@@ -7870,7 +7960,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "web_src_state_store_appstate",
-      "community": 39,
+      "community": 9,
       "norm_label": "appstate"
     },
     {
@@ -7880,7 +7970,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "web_src_state_store_prefs",
-      "community": 39,
+      "community": 9,
       "norm_label": "prefs"
     },
     {
@@ -7890,7 +7980,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "web_src_state_store_usestore",
-      "community": 40,
+      "community": 9,
       "norm_label": "usestore"
     },
     {
@@ -7940,7 +8030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_usepolling",
-      "community": 40,
+      "community": 9,
       "norm_label": "usepolling.ts"
     },
     {
@@ -7950,7 +8040,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_state_usepolling_uselivedata",
-      "community": 40,
+      "community": 9,
       "norm_label": "uselivedata()"
     },
     {
@@ -7960,7 +8050,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_useresource",
-      "community": 25,
+      "community": 38,
       "norm_label": "useresource.ts"
     },
     {
@@ -7970,7 +8060,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "web_src_state_useresource_useresourceopts",
-      "community": 25,
+      "community": 38,
       "norm_label": "useresourceopts"
     },
     {
@@ -16474,6 +16564,39 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_api_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_api_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_api_types",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/useTopErrors.ts",
       "source_location": "L3",
       "weight": 1.0,
@@ -16837,6 +16960,39 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_api_types_topologyservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_api_types_topologyservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_api_types_topologyservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
       "source_location": "L2",
       "weight": 1.0,
@@ -16903,6 +17059,39 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_api_types_topologyedge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_api_types_topologyedge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_api_types_topologyedge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
       "source_location": "L2",
       "weight": 1.0,
@@ -16963,6 +17152,39 @@
       "weight": 1.0,
       "source": "web_src_features_map_view_teamchips",
       "target": "web_src_api_types_team",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_api_types_topology",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_api_types_topology",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_api_types_topology",
       "confidence_score": 1.0
     },
     {
@@ -17667,7 +17889,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L1",
+      "source_location": "L2",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
       "target": "web_src_components_icon",
@@ -17865,7 +18087,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L1",
+      "source_location": "L2",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
       "target": "web_src_components_icon_chevronicon",
@@ -18156,10 +18378,10 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "web_src_features_map_mapdrawer",
+      "source": "web_src_features_map_drawer_servicedetails",
       "target": "web_src_components_sloring",
       "confidence_score": 1.0
     },
@@ -18189,10 +18411,10 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
       "source_location": "L4",
       "weight": 1.0,
-      "source": "web_src_features_map_mapdrawer",
+      "source": "web_src_features_map_drawer_servicedetails",
       "target": "web_src_components_sloring_sloring",
       "confidence_score": 1.0
     },
@@ -18710,8 +18932,19 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
       "source_location": "L5",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_components_toperrors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_location": "L4",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_components_toperrors",
@@ -18743,8 +18976,19 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
       "source_location": "L5",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_components_toperrors_toperrors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_location": "L4",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_components_toperrors_toperrors",
@@ -18805,6 +19049,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_components_hoversync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
       "source_location": "L3",
       "weight": 1.0,
@@ -18821,6 +19076,17 @@
       "weight": 1.0,
       "source": "web_src_features_service_sections_chartgrid",
       "target": "web_src_components_hoversync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_components_hoversync_hoversync",
       "confidence_score": 1.0
     },
     {
@@ -19916,7 +20182,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L11",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_card",
@@ -19927,7 +20193,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L11",
+      "source_location": "L10",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_card_card",
@@ -19938,7 +20204,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L12",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_deprow",
@@ -19949,7 +20215,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L12",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_deprow_deprow",
@@ -19960,7 +20226,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L13",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_drawerheader",
@@ -19971,7 +20237,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L13",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_drawerheader_drawerheader",
@@ -19982,7 +20248,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L14",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_footerbutton",
@@ -19993,7 +20259,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L14",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_footerbutton_footerbutton",
@@ -20004,7 +20270,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L15",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_ghostchip",
@@ -20015,7 +20281,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L15",
+      "source_location": "L14",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_ghostchip_ghostchip",
@@ -20026,7 +20292,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_kpigrid",
@@ -20037,10 +20303,32 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L16",
+      "source_location": "L15",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_features_map_drawer_kpigrid_kpigrid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "web_src_features_map_mapdrawer",
+      "target": "web_src_features_map_drawer_servicedetails",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/MapDrawer.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "web_src_features_map_mapdrawer",
+      "target": "web_src_features_map_drawer_servicedetails_servicedetails",
       "confidence_score": 1.0
     },
     {
@@ -20168,7 +20456,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format",
@@ -20179,7 +20467,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format_fmtcount",
@@ -20190,7 +20478,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format_fmterr",
@@ -20201,7 +20489,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format_fmtms",
@@ -20212,7 +20500,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format_fmtrps",
@@ -20223,7 +20511,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L6",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_format_jit",
@@ -20234,7 +20522,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_grouping",
@@ -20245,7 +20533,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_grouping_graph",
@@ -20256,7 +20544,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_grouping_graphedge",
@@ -20267,7 +20555,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_grouping_groupkey",
@@ -20278,7 +20566,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_status",
@@ -20289,18 +20577,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L8",
-      "weight": 1.0,
-      "source": "web_src_features_map_mapdrawer",
-      "target": "web_src_lib_status_sloview",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L8",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_status_stcolor",
@@ -20311,7 +20588,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L9",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_timesince",
@@ -20322,7 +20599,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L9",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_lib_timesince_timesince",
@@ -20333,7 +20610,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L10",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_state_store",
@@ -20344,7 +20621,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L10",
+      "source_location": "L9",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer",
       "target": "web_src_state_store_usestore",
@@ -20367,7 +20644,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L88",
+      "source_location": "L87",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_features_map_drawer_useedgeops_useedgeops"
@@ -20378,7 +20655,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L81",
+      "source_location": "L86",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_features_map_drawer_usesparklines_usesparklines"
@@ -20389,21 +20666,10 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L89",
+      "source_location": "L88",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_features_map_drawer_usetoperrors_usetoperrors"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L163",
-      "weight": 1.0,
-      "source": "web_src_features_map_mapdrawer_mapdrawer",
-      "target": "web_src_lib_community_test_e"
     },
     {
       "relation": "calls",
@@ -20411,7 +20677,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L190",
+      "source_location": "L240",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_format_fmtcount"
@@ -20422,7 +20688,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L136",
+      "source_location": "L145",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_format_fmterr"
@@ -20433,7 +20699,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L135",
+      "source_location": "L144",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_format_fmtms"
@@ -20444,7 +20710,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L134",
+      "source_location": "L143",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_format_fmtrps"
@@ -20455,7 +20721,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L134",
+      "source_location": "L143",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_format_jit"
@@ -20477,18 +20743,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L95",
-      "weight": 1.0,
-      "source": "web_src_features_map_mapdrawer_mapdrawer",
-      "target": "web_src_lib_status_sloview"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L136",
+      "source_location": "L145",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_status_stcolor"
@@ -20499,7 +20754,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/features/map/MapDrawer.tsx",
-      "source_location": "L326",
+      "source_location": "L239",
       "weight": 1.0,
       "source": "web_src_features_map_mapdrawer_mapdrawer",
       "target": "web_src_lib_timesince_timesince"
@@ -20753,12 +21008,56 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_card",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_card_card",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
+      "target": "web_src_features_map_drawer_deprow_deprow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_deprow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
       "target": "web_src_features_map_drawer_deprow_deprow",
       "confidence_score": 1.0
     },
@@ -20769,6 +21068,28 @@
       "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_drawerheader",
+      "target": "web_src_features_map_drawer_drawerheader_drawerheader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_drawerheader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
       "target": "web_src_features_map_drawer_drawerheader_drawerheader",
       "confidence_score": 1.0
     },
@@ -20793,6 +21114,28 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_ghostchip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_ghostchip_ghostchip",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/KpiGrid.tsx",
@@ -20801,6 +21144,423 @@
       "source": "web_src_features_map_drawer_kpigrid",
       "target": "web_src_features_map_drawer_kpigrid_kpigrid",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_kpigrid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_kpigrid_kpigrid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_servicerelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_servicerelations_servicemeta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_servicerelations_servicerelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_sparkrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_sparkrow_sparkrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_statuspill",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_statuspill_statuspill",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_usesparklines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_usesparklines_usesparklines",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_usetoperrors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_features_map_drawer_usetoperrors_usetoperrors",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format_fmtcount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format_fmterr",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format_fmtms",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format_fmtrps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_format_jit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_status",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_status_sloview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_lib_status_stcolor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_state_store",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails",
+      "target": "web_src_state_store_usestore",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L72",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_features_map_drawer_servicerelations_servicemeta"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_features_map_drawer_servicerelations_servicerelations"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_features_map_drawer_usesparklines_usesparklines"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_features_map_drawer_usetoperrors_usetoperrors"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L62",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_community_test_e"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_format_fmtcount"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L97",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_format_fmterr"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_format_fmtms"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_format_fmtrps"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_format_jit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_status_sloview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L60",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_lib_status_stcolor"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "web/src/features/map/drawer/ServiceDetails.tsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicedetails_servicedetails",
+      "target": "web_src_state_store_usestore"
     },
     {
       "relation": "contains",
@@ -20854,6 +21614,100 @@
       "weight": 1.0,
       "source": "web_src_features_map_drawer_statuspill_statuspill",
       "target": "web_src_lib_status_stlabel"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations_servicemeta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations_servicerelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations_test_edge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations_test_svc",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.test.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations_test",
+      "target": "web_src_features_map_drawer_servicerelations_test_topo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_features_map_drawer_servicerelations_servicemeta",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_features_map_drawer_servicerelations_servicerelations",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/map/drawer/serviceRelations.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "web_src_features_map_drawer_servicerelations",
+      "target": "web_src_lib_format",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -30402,5 +31256,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "983c87513f413fa9a7f3e949f825e0123555acc4"
+  "built_at_commit": "0c3292ddc98e94009daabaf7aa68ca1adab7fea8"
 }
