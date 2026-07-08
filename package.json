@@ -22,11 +22,11 @@
     "sandcastle:loop": "bash scripts/sandcastle-loop.sh"
   },
   "devDependencies": {
-    "@copperbox/sandcastle-workflow": "github:copperbox/sandcastle-workflow#semver:^0.2.0",
+    "@copperbox/sandcastle-workflow": "^0.3.0",
     "npm-run-all": "^4.1.5"
   },
   "allowScripts": {
-    "@copperbox/sandcastle-workflow@0.2.0": true,
+    "@copperbox/sandcastle-workflow@0.3.0": true,
     "esbuild@0.28.1": true,
     "protobufjs@7.6.3": true
   }
