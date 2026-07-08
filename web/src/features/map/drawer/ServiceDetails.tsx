@@ -21,8 +21,8 @@ import styles from './ServiceDetails.module.css';
 /**
  * Full service detail stack -- header, SLO ring, KPIs, 24h sparklines,
  * CALLED BY / DEPENDS ON lists and top erroring operations -- driven by the
- * raw topology, independent of any map view. The map drawer and the wallboard
- * drawer both render this, each supplying its own footer actions.
+ * raw topology, independent of any map view, so any drawer can render it
+ * while supplying its own footer actions.
  */
 export function ServiceDetails({
   service,
