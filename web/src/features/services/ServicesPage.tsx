@@ -4,9 +4,9 @@ import type { ServiceList } from '../../api/types';
 import { TeamFilter } from '../../components/TeamFilter';
 import { TYPE_LABELS } from '../../components/Icon';
 import { DOT, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
+import { filterRankServices } from '../../lib/serviceRank';
 import { sparkPath } from '../../lib/spark';
 import { sloView, stColor } from '../../lib/status';
-import { matchesTeamFilter } from '../../lib/teamFilter';
 import { useStore } from '../../state/store';
 import styles from './ServicesPage.module.css';
 
@@ -44,13 +44,8 @@ export function ServicesPage() {
 
   const teams = topology?.teams ?? [];
   const teamName = new Map(teams.map((t) => [t.id, t.name]));
-  const q = search.trim().toLowerCase();
-  const rank = { crit: 0, warn: 1, ok: 2 } as const;
   const total = data?.services.length ?? 0;
-  const rows = (data?.services ?? [])
-    .filter((s) => !q || s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
-    .filter((s) => matchesTeamFilter(s.teamId, teamFilter))
-    .sort((a, b) => rank[a.status] - rank[b.status] || b.rps - a.rps);
+  const rows = filterRankServices(data?.services ?? [], search, teamFilter);
   const countLabel = rows.length === total ? `${total} services` : `${rows.length} of ${total} services`;
 
   return (

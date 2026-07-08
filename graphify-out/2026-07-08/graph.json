@@ -3210,17 +3210,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_app",
-      "community": 4,
+      "community": 9,
       "norm_label": "app.tsx"
     },
     {
       "label": "App()",
       "file_type": "code",
       "source_file": "web/src/App.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "_origin": "ast",
       "id": "web_src_app_app",
-      "community": 4,
+      "community": 9,
       "norm_label": "app()"
     },
     {
@@ -3430,7 +3430,7 @@
       "source_location": "L165",
       "_origin": "ast",
       "id": "web_src_api_types_tracespan",
-      "community": 4,
+      "community": 28,
       "norm_label": "tracespan"
     },
     {
@@ -3570,7 +3570,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "web_src_components_icon_searchicon",
-      "community": 4,
+      "community": 16,
       "norm_label": "searchicon()"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_location": "L114",
       "_origin": "ast",
       "id": "web_src_components_icon_themeicon",
-      "community": 4,
+      "community": 9,
       "norm_label": "themeicon()"
     },
     {
@@ -3610,7 +3610,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "web_src_components_icon_settingsicon",
-      "community": 4,
+      "community": 9,
       "norm_label": "settingsicon()"
     },
     {
@@ -3640,7 +3640,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "web_src_components_icon_logoicon",
-      "community": 4,
+      "community": 16,
       "norm_label": "logoicon()"
     },
     {
@@ -3660,7 +3660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu",
-      "community": 4,
+      "community": 9,
       "norm_label": "preferencesmenu.tsx"
     },
     {
@@ -3670,7 +3670,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_theme_options",
-      "community": 4,
+      "community": 9,
       "norm_label": "theme_options"
     },
     {
@@ -3680,7 +3680,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_label_zoom_options",
-      "community": 4,
+      "community": 9,
       "norm_label": "label_zoom_options"
     },
     {
@@ -3690,7 +3690,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_team_grouping_options",
-      "community": 4,
+      "community": 9,
       "norm_label": "team_grouping_options"
     },
     {
@@ -3700,7 +3700,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "web_src_components_preferencesmenu_preferencesmenu",
-      "community": 4,
+      "community": 9,
       "norm_label": "preferencesmenu()"
     },
     {
@@ -3770,7 +3770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_topbar",
-      "community": 4,
+      "community": 16,
       "norm_label": "topbar.tsx"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_components_topbar_status_noun",
-      "community": 4,
+      "community": 16,
       "norm_label": "status_noun"
     },
     {
@@ -3790,7 +3790,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "web_src_components_topbar_healthchip",
-      "community": 4,
+      "community": 16,
       "norm_label": "healthchip()"
     },
     {
@@ -3810,7 +3810,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "web_src_components_topbar_topbar",
-      "community": 4,
+      "community": 9,
       "norm_label": "topbar()"
     },
     {
@@ -3840,7 +3840,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_components_hoversync",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversync.tsx"
     },
     {
@@ -3850,7 +3850,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_components_hoversync_hoversyncvalue",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversyncvalue"
     },
     {
@@ -3860,7 +3860,7 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "web_src_components_hoversync_hoversynccontext",
-      "community": 15,
+      "community": 16,
       "norm_label": "hoversynccontext"
     },
     {
@@ -3930,7 +3930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_mapview",
-      "community": 4,
+      "community": 9,
       "norm_label": "mapview.tsx"
     },
     {
@@ -3940,7 +3940,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_map_mapview_mapview",
-      "community": 4,
+      "community": 9,
       "norm_label": "mapview()"
     },
     {
@@ -4027,7 +4027,7 @@
       "label": "DepRow()",
       "file_type": "code",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "_origin": "ast",
       "id": "web_src_features_map_drawer_deprow_deprow",
       "community": 16,
@@ -4970,7 +4970,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_features_map_view_dimming_builddimmer",
-      "community": 3,
+      "community": 10,
       "norm_label": "builddimmer()"
     },
     {
@@ -5080,7 +5080,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "web_src_features_map_view_edgeviews_buildedgeviews",
-      "community": 17,
+      "community": 5,
       "norm_label": "buildedgeviews()"
     },
     {
@@ -5230,7 +5230,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews",
-      "community": 17,
+      "community": 7,
       "norm_label": "frameviews.ts"
     },
     {
@@ -5240,7 +5240,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_map_view_frameviews_frameview",
-      "community": 17,
+      "community": 7,
       "norm_label": "frameview"
     },
     {
@@ -6040,7 +6040,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_service_sections_serviceerrorspanel_serviceerrorspanel",
-      "community": 38,
+      "community": 16,
       "norm_label": "serviceerrorspanel()"
     },
     {
@@ -6220,7 +6220,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow",
-      "community": 4,
+      "community": 28,
       "norm_label": "spanrow.tsx"
     },
     {
@@ -6230,7 +6230,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_features_trace_spanrow_spanrow",
-      "community": 4,
+      "community": 28,
       "norm_label": "spanrow()"
     },
     {
@@ -6240,7 +6240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal",
-      "community": 4,
+      "community": 28,
       "norm_label": "tracemodal.tsx"
     },
     {
@@ -6250,7 +6250,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "web_src_features_trace_tracemodal_tracemodal",
-      "community": 4,
+      "community": 28,
       "norm_label": "tracemodal()"
     },
     {
@@ -6260,7 +6260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test",
-      "community": 4,
+      "community": 28,
       "norm_label": "buildrows.test.ts"
     },
     {
@@ -6270,7 +6270,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_span",
-      "community": 4,
+      "community": 28,
       "norm_label": "span()"
     },
     {
@@ -6280,7 +6280,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_test_at",
-      "community": 4,
+      "community": 28,
       "norm_label": "at()"
     },
     {
@@ -6290,7 +6290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows",
-      "community": 4,
+      "community": 28,
       "norm_label": "buildrows.ts"
     },
     {
@@ -6300,7 +6300,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_row",
-      "community": 4,
+      "community": 28,
       "norm_label": "row"
     },
     {
@@ -6310,8 +6310,28 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "web_src_features_trace_buildrows_buildrows",
-      "community": 4,
+      "community": 28,
       "norm_label": "buildrows()"
+    },
+    {
+      "label": "WallboardPage.tsx",
+      "file_type": "code",
+      "source_file": "web/src/features/wallboard/WallboardPage.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "web_src_features_wallboard_wallboardpage",
+      "community": 9,
+      "norm_label": "wallboardpage.tsx"
+    },
+    {
+      "label": "WallboardPage()",
+      "file_type": "code",
+      "source_file": "web/src/features/wallboard/WallboardPage.tsx",
+      "source_location": "L9",
+      "_origin": "ast",
+      "id": "web_src_features_wallboard_wallboardpage_wallboardpage",
+      "community": 9,
+      "norm_label": "wallboardpage()"
     },
     {
       "label": "clusterLayout.test.ts",
@@ -6920,7 +6940,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "web_src_lib_grouping_graphedge",
-      "community": 10,
+      "community": 5,
       "norm_label": "graphedge"
     },
     {
@@ -7680,7 +7700,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_main",
-      "community": 4,
+      "community": 9,
       "norm_label": "main.tsx"
     },
     {
@@ -7797,7 +7817,7 @@
       "label": "RouteState",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "web_src_state_routing_routestate",
       "community": 9,
@@ -7807,7 +7827,7 @@
       "label": "rangesEqual()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L38",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "web_src_state_routing_rangesequal",
       "community": 9,
@@ -7817,7 +7837,7 @@
       "label": "quickLabel()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L46",
+      "source_location": "L47",
       "_origin": "ast",
       "id": "web_src_state_routing_quicklabel",
       "community": 9,
@@ -7827,7 +7847,7 @@
       "label": "encodeRange()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L53",
+      "source_location": "L54",
       "_origin": "ast",
       "id": "web_src_state_routing_encoderange",
       "community": 9,
@@ -7837,7 +7857,7 @@
       "label": "decodeRange()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L60",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "web_src_state_routing_decoderange",
       "community": 9,
@@ -7847,7 +7867,7 @@
       "label": "encodeTeam()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L82",
+      "source_location": "L83",
       "_origin": "ast",
       "id": "web_src_state_routing_encodeteam",
       "community": 9,
@@ -7857,7 +7877,7 @@
       "label": "decodeTeam()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L88",
+      "source_location": "L89",
       "_origin": "ast",
       "id": "web_src_state_routing_decodeteam",
       "community": 9,
@@ -7867,7 +7887,7 @@
       "label": "routeToUrl()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L100",
+      "source_location": "L101",
       "_origin": "ast",
       "id": "web_src_state_routing_routetourl",
       "community": 9,
@@ -7877,7 +7897,7 @@
       "label": "urlToRoute()",
       "file_type": "code",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L128",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "web_src_state_routing_urltoroute",
       "community": 9,
@@ -7960,7 +7980,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "web_src_state_store_usestore",
-      "community": 4,
+      "community": 9,
       "norm_label": "usestore"
     },
     {
@@ -8010,7 +8030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "web_src_state_usepolling",
-      "community": 4,
+      "community": 9,
       "norm_label": "usepolling.ts"
     },
     {
@@ -8020,7 +8040,7 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "web_src_state_usepolling_uselivedata",
-      "community": 4,
+      "community": 9,
       "norm_label": "uselivedata()"
     },
     {
@@ -15839,7 +15859,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_app_app",
@@ -15938,7 +15958,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_features_trace_tracemodal",
@@ -15949,7 +15969,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_features_trace_tracemodal_tracemodal",
@@ -15960,7 +15980,29 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L7",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "web_src_app",
+      "target": "web_src_features_wallboard_wallboardpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/App.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "web_src_app",
+      "target": "web_src_features_wallboard_wallboardpage_wallboardpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/App.tsx",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_state_store",
@@ -15971,7 +16013,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_state_store_usestore",
@@ -15982,7 +16024,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_state_usepolling",
@@ -15993,7 +16035,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/App.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "source": "web_src_app",
       "target": "web_src_state_usepolling_uselivedata",
@@ -16016,7 +16058,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/App.tsx",
-      "source_location": "L12",
+      "source_location": "L13",
       "weight": 1.0,
       "source": "web_src_app_app",
       "target": "web_src_state_store_usestore"
@@ -16027,7 +16069,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/App.tsx",
-      "source_location": "L11",
+      "source_location": "L12",
       "weight": 1.0,
       "source": "web_src_app_app",
       "target": "web_src_state_usepolling_uselivedata"
@@ -17847,7 +17889,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L1",
+      "source_location": "L2",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
       "target": "web_src_components_icon",
@@ -18045,7 +18087,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L1",
+      "source_location": "L2",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
       "target": "web_src_components_icon_chevronicon",
@@ -20991,7 +21033,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/features/map/drawer/DepRow.tsx",
-      "source_location": "L4",
+      "source_location": "L5",
       "weight": 1.0,
       "source": "web_src_features_map_drawer_deprow",
       "target": "web_src_features_map_drawer_deprow_deprow",
@@ -27749,6 +27791,16 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "web/src/features/wallboard/WallboardPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "web_src_features_wallboard_wallboardpage",
+      "target": "web_src_features_wallboard_wallboardpage_wallboardpage",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -29733,7 +29785,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L29",
+      "source_location": "L30",
       "weight": 1.0,
       "source": "web_src_state_routing_routestate",
       "target": "web_src_lib_teamfilter_teamfiltervalue",
@@ -29902,7 +29954,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L28",
+      "source_location": "L29",
       "weight": 1.0,
       "source": "web_src_state_routing_routestate",
       "target": "web_src_lib_timerange_timerange",
@@ -29947,7 +29999,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L66",
+      "source_location": "L67",
       "weight": 1.0,
       "source": "web_src_state_routing_decoderange",
       "target": "web_src_lib_timerange_quick_ranges"
@@ -30402,7 +30454,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L60",
+      "source_location": "L61",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_decoderange",
@@ -30412,7 +30464,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L88",
+      "source_location": "L89",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_decodeteam",
@@ -30422,7 +30474,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L53",
+      "source_location": "L54",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_encoderange",
@@ -30432,7 +30484,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L82",
+      "source_location": "L83",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_encodeteam",
@@ -30442,7 +30494,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L46",
+      "source_location": "L47",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_quicklabel",
@@ -30452,7 +30504,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L38",
+      "source_location": "L39",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_rangesequal",
@@ -30462,7 +30514,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L23",
+      "source_location": "L24",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_routestate",
@@ -30472,7 +30524,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L100",
+      "source_location": "L101",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_routetourl",
@@ -30482,7 +30534,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L128",
+      "source_location": "L131",
       "weight": 1.0,
       "source": "web_src_state_routing",
       "target": "web_src_state_routing_urltoroute",
@@ -30548,7 +30600,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L26",
+      "source_location": "L27",
       "weight": 1.0,
       "source": "web_src_state_routing_routestate",
       "target": "web_src_state_store_graphtype",
@@ -30559,7 +30611,7 @@
       "context": "field",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L24",
+      "source_location": "L25",
       "weight": 1.0,
       "source": "web_src_state_routing_routestate",
       "target": "web_src_state_store_view",
@@ -30603,7 +30655,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L55",
+      "source_location": "L56",
       "weight": 1.0,
       "source": "web_src_state_routing_encoderange",
       "target": "web_src_state_routing_rangesequal",
@@ -30614,7 +30666,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L67",
+      "source_location": "L68",
       "weight": 1.0,
       "source": "web_src_state_routing_decoderange",
       "target": "web_src_state_routing_quicklabel",
@@ -30625,7 +30677,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L114",
+      "source_location": "L117",
       "weight": 1.0,
       "source": "web_src_state_routing_routetourl",
       "target": "web_src_state_routing_encoderange",
@@ -30636,7 +30688,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L156",
+      "source_location": "L161",
       "weight": 1.0,
       "source": "web_src_state_routing_urltoroute",
       "target": "web_src_state_routing_decoderange",
@@ -30647,7 +30699,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L116",
+      "source_location": "L119",
       "weight": 1.0,
       "source": "web_src_state_routing_routetourl",
       "target": "web_src_state_routing_encodeteam",
@@ -30658,7 +30710,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "web/src/state/routing.ts",
-      "source_location": "L157",
+      "source_location": "L162",
       "weight": 1.0,
       "source": "web_src_state_routing_urltoroute",
       "target": "web_src_state_routing_decodeteam",
@@ -31204,5 +31256,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "983c87513f413fa9a7f3e949f825e0123555acc4"
+  "built_at_commit": "0c3292ddc98e94009daabaf7aa68ca1adab7fea8"
 }

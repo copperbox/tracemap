@@ -1,16 +1,16 @@
 # Graph Report - workspace  (2026-07-08)
 
 ## Corpus Check
-- 203 files · ~71,843 words
+- 204 files · ~72,090 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 840 nodes · 2129 edges · 32 communities (31 shown, 1 thin omitted)
+- 842 nodes · 2132 edges · 32 communities (31 shown, 1 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 25 edges (avg confidence: 0.78)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `983c8751`
+- Built from commit: `0c3292dd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -84,36 +84,36 @@ Cohesion: 0.08
 Nodes (23): dependencies, fastify, @fastify/cors, pg, protobufjs, devDependencies, tsx, @types/node (+15 more)
 
 ### Community 3 - "Force Graph & Dimming"
-Cohesion: 0.16
-Nodes (11): buildDimmer(), graph, group(), svc(), Adj, computeFocusSet(), FocusSet, graph (+3 more)
+Cohesion: 0.17
+Nodes (10): graph, group(), svc(), Adj, computeFocusSet(), FocusSet, graph, isolateGraph() (+2 more)
 
 ### Community 4 - "UI Icons & Components"
-Cohesion: 0.07
-Nodes (37): TraceSpan, App(), BackIcon(), ChevronIcon(), CloseIcon(), CommunityGraphIcon(), FitIcon(), FlowGraphIcon() (+29 more)
+Cohesion: 0.11
+Nodes (17): BackIcon(), ChevronIcon(), CloseIcon(), CommunityGraphIcon(), FitIcon(), FlowGraphIcon(), GroupExpandIcon(), ResetLayoutIcon() (+9 more)
 
 ### Community 5 - "Packet Animation Canvas"
 Cohesion: 0.08
-Nodes (35): EdgeLayer(), EdgeView, base, geom, geoms, fadeEnvelope(), mod1(), PacketSample (+27 more)
+Nodes (37): EdgeLayer(), buildEdgeViews(), EdgeView, base, geom, geoms, fadeEnvelope(), mod1() (+29 more)
 
 ### Community 6 - "Topology Generator (Sim)"
 Cohesion: 0.11
 Nodes (28): BACKEND_WORDS, buildTopology(), clamp(), GenTopology, INFRA_KINDS, LANGS, opsFor(), pickOne() (+20 more)
 
 ### Community 7 - "Map Animation Frames"
-Cohesion: 0.17
-Nodes (11): easeOut(), team, useGraphTransition(), GraphNode, centerOn(), computeGraphTransition(), GhostNode, GraphSnapshot (+3 more)
+Cohesion: 0.16
+Nodes (12): easeOut(), FrameView, team, useGraphTransition(), GraphNode, centerOn(), computeGraphTransition(), GhostNode (+4 more)
 
 ### Community 8 - "Service Panel Skeletons"
 Cohesion: 0.08
 Nodes (23): dependencies, d3-force, react, react-dom, zustand, devDependencies, @types/d3-force, @types/react (+15 more)
 
 ### Community 9 - "Server Dependencies"
-Cohesion: 0.08
-Nodes (41): SeriesPoint, errLevel(), rangeEdgeLabels(), BAR_COLORS, ChartGrid(), LEGEND, TimeRangePicker(), toLocalInput() (+33 more)
+Cohesion: 0.06
+Nodes (53): SeriesPoint, App(), SettingsIcon(), ThemeIcon(), LABEL_ZOOM_OPTIONS, PreferencesMenu(), TEAM_GROUPING_OPTIONS, THEME_OPTIONS (+45 more)
 
 ### Community 10 - "Web Dependencies"
 Cohesion: 0.19
-Nodes (13): ForceGraph(), Palette, buildForceLinks(), buildForceNodes(), nodeRadius(), dotAlphaScale(), CommunityEdge, CommunityResult (+5 more)
+Nodes (13): ForceGraph(), Palette, buildForceLinks(), buildForceNodes(), nodeRadius(), buildDimmer(), dotAlphaScale(), CommunityEdge (+5 more)
 
 ### Community 11 - "Form Controls & Filters"
 Cohesion: 0.19
@@ -128,16 +128,16 @@ Cohesion: 0.23
 Nodes (17): postJson(), sendMetricsSample(), hex(), pick(), rand(), ARGS, attachKeyboard(), main() (+9 more)
 
 ### Community 15 - "Charts & Hover Sync"
-Cohesion: 0.30
-Nodes (12): BigChart(), ChartSeries, HoverSyncContext, HoverSyncValue, useHoverFrac(), Sparkline(), fmtClock(), chartPath() (+4 more)
+Cohesion: 0.40
+Nodes (10): BigChart(), ChartSeries, useHoverFrac(), Sparkline(), fmtClock(), chartPath(), chartY(), hoverIndex() (+2 more)
 
 ### Community 16 - "Service Registry (OTLP)"
-Cohesion: 0.06
-Nodes (61): api, ErrorBreakdown, ErrorCount, LiveMetrics, NeighborEdge, OperationErrors, ServiceDetail, ServiceList (+53 more)
+Cohesion: 0.05
+Nodes (67): api, ErrorBreakdown, ErrorCount, LiveMetrics, NeighborEdge, OperationErrors, ServiceDetail, ServiceList (+59 more)
 
 ### Community 17 - "OTLP Ingest & Normalization"
-Cohesion: 0.16
-Nodes (17): LayeredMap(), buildEdgeViews(), buildFrameViews(), FrameView, IsolateBanner(), Legend(), Bounds, nodeCardBounds() (+9 more)
+Cohesion: 0.18
+Nodes (15): LayeredMap(), buildFrameViews(), IsolateBanner(), Legend(), Bounds, nodeCardBounds(), clearPinnedPositions(), loadPinnedPositions() (+7 more)
 
 ### Community 18 - "TopBar.tsx"
 Cohesion: 0.20
@@ -168,8 +168,8 @@ Cohesion: 0.26
 Nodes (9): ClusterDatum, clusterForce, communityCentroids(), ForceLinkInput, ForceNodeInput, hash01(), SimLink, SimNode (+1 more)
 
 ### Community 28 - "spanPalette.ts"
-Cohesion: 0.33
-Nodes (8): communityColor(), communityHue, FORBIDDEN, inAnyBand(), buildSpanColors(), paletteColor(), paletteHue(), ThemeName
+Cohesion: 0.17
+Nodes (14): TraceSpan, communityColor(), communityHue, FORBIDDEN, inAnyBand(), buildRows(), Row, span() (+6 more)
 
 ### Community 29 - "Sim Rate Control"
 Cohesion: 0.35
@@ -188,8 +188,8 @@ Cohesion: 0.67
 Nodes (3): TraceMap Web App HTML Entry, React Root Mount Element, main.tsx Frontend Entry Module
 
 ### Community 38 - "ServicePage.tsx"
-Cohesion: 0.15
-Nodes (19): ServiceErrorsPanel(), ChartSkeleton(), ErrorsSkeleton(), HeaderSkeleton(), KpiSkeleton(), NeighborsSkeleton(), OperationsSkeleton(), TracesSkeleton() (+11 more)
+Cohesion: 0.16
+Nodes (18): ChartSkeleton(), ErrorsSkeleton(), HeaderSkeleton(), KpiSkeleton(), NeighborsSkeleton(), OperationsSkeleton(), TracesSkeleton(), ChartGrid (+10 more)
 
 ## Knowledge Gaps
 - **171 isolated node(s):** `name`, `version`, `private`, `type`, `dev` (+166 more)
@@ -199,12 +199,12 @@ Nodes (19): ServiceErrorsPanel(), ChartSkeleton(), ErrorsSkeleton(), HeaderSkele
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `span()` connect `UI Icons & Components` to `OTLP Protobuf Codec`?**
+- **Why does `span()` connect `spanPalette.ts` to `OTLP Protobuf Codec`?**
   _High betweenness centrality (0.189) - this node is a cross-community bridge._
-- **Why does `ingestTraces()` connect `OTLP Protobuf Codec` to `Server Error Aggregation API`, `UI Icons & Components`?**
+- **Why does `ingestTraces()` connect `OTLP Protobuf Codec` to `Server Error Aggregation API`, `spanPalette.ts`?**
   _High betweenness centrality (0.189) - this node is a cross-community bridge._
-- **Why does `walk()` connect `Sim HTTP & Metrics Emitter` to `Force Graph & Dimming`, `Simulated Error Catalog`, `Sim Trace Payloads`, `UI Icons & Components`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
+- **Why does `walk()` connect `Sim HTTP & Metrics Emitter` to `Force Graph & Dimming`, `Simulated Error Catalog`, `Sim Trace Payloads`, `spanPalette.ts`?**
+  _High betweenness centrality (0.155) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `LayeredMap()` (e.g. with `loadPinnedPositions()` and `centerOn()`) actually correct?**
   _`LayeredMap()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `name`, `version`, `private` to the rest of the system?**

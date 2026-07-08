@@ -10,6 +10,18 @@
   margin: 0 auto;
 }
 
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.headingText {
+  min-width: 0;
+}
+
 .title {
   font: 700 20px 'Space Grotesk';
 }
@@ -20,8 +32,95 @@
   margin-top: 4px;
 }
 
-.placeholder {
-  margin-top: 16px;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding: 14px 16px 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  cursor: pointer;
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.name {
+  font: 600 15px 'Space Grotesk';
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill {
+  flex-shrink: 0;
+  font: 700 9px 'JetBrains Mono', monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.meta {
+  font: 500 10px 'JetBrains Mono', monospace;
+  letter-spacing: .06em;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.metricCell {
+  min-width: 0;
+}
+
+.metricLabel {
+  display: block;
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  letter-spacing: .14em;
+  color: var(--faint);
+}
+
+.err {
+  display: block;
+  font: 700 20px 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+.metricValue {
+  display: block;
+  font: 600 14px 'JetBrains Mono', monospace;
+  margin-top: 6px;
+}
+
+.spark {
+  width: 100%;
+  height: 26px;
+  display: block;
+  margin-top: 2px;
+}
+
+.empty {
   padding: 48px 24px;
   text-align: center;
   background: var(--panel);
