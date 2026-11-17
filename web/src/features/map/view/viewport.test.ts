@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Transform } from './usePanZoom';
-import { containsRect, needsRecull, rectsOverlap, visibleWorldRect, type WorldRect } from './viewport';
+import { containsRect, needsRecull, rectsOverlap, shouldMount, visibleWorldRect, type WorldRect } from './viewport';
 
 const tf = (over: Partial<Transform> = {}): Transform => ({ tx: 0, ty: 0, k: 1, ...over });
 
@@ -90,5 +90,18 @@ describe('containsRect', () => {
     const outer: WorldRect = { x0: 0, y0: 0, x1: 10, y1: 10 };
     expect(containsRect(outer, { x0: 0, y0: 0, x1: 10, y1: 10 })).toBe(true);
     expect(containsRect(outer, { x0: 0, y0: 0, x1: 11, y1: 10 })).toBe(false);
+  });
+});
+
+describe('shouldMount', () => {
+  const win: WorldRect = { x0: 0, y0: 0, x1: 100, y1: 100 };
+  const far: WorldRect = { x0: 500, y0: 500, x1: 600, y1: 560 };
+  it('culls a card outside the window', () => {
+    expect(shouldMount(win, far, 'a', new Set())).toBe(false);
+    expect(shouldMount(win, { x0: 50, y0: 50, x1: 150, y1: 110 }, 'a', new Set())).toBe(true);
+  });
+  it('keeps a selected, focused or dragged card mounted off-screen', () => {
+    expect(shouldMount(win, far, 'a', new Set(['a']))).toBe(true);
+    expect(shouldMount(win, far, 'b', new Set(['a']))).toBe(false);
   });
 });

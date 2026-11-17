@@ -15,6 +15,7 @@ import { communityColor } from './colors';
 import { ForceLegend } from './ForceLegend';
 import { buildForceLinks, buildForceNodes } from './forceNodes';
 import { useForceSimulation } from './useForceSimulation';
+import { usePixelRatio } from '../view/pixelRatio';
 import styles from './ForceGraph.module.css';
 
 const TAU = Math.PI * 2;
@@ -255,13 +256,13 @@ export function ForceGraph() {
   };
   drawRef.current = draw;
 
-  // Canvas context + DPR-aware sizing.
+  // Canvas context + DPR-aware sizing; a ratio change (another display) re-runs it.
+  const dpr = usePixelRatio();
   useEffect(() => {
     const cv = surfaceRef.current;
     if (!cv) return;
     ctxRef.current = cv.getContext('2d');
     const resize = (): void => {
-      const dpr = window.devicePixelRatio || 1;
       const w = cv.clientWidth;
       const h = cv.clientHeight;
       cv.width = Math.max(1, Math.round(w * dpr));
@@ -274,7 +275,7 @@ export function ForceGraph() {
     const ro = new ResizeObserver(resize);
     ro.observe(cv);
     return () => ro.disconnect();
-  }, [scheduleDraw]);
+  }, [scheduleDraw, dpr]);
 
   // Theme colors for the canvas (CSS variables resolve to concrete values).
   useEffect(() => {

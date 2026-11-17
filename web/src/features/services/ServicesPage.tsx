@@ -6,6 +6,7 @@ import { useListKeyboard, useWindowedFocus, useWindowedRows } from '../../compon
 import { DOT, fmtErr, fmtMs, fmtRps } from '../../lib/format';
 import { sloView, stColor, stLabel } from '../../lib/status';
 import { rankServiceRows, type ServiceExtra, type ServiceRow } from '../../state/serviceRows';
+import { useListHold, useStableRank } from '../../state/stableRank';
 import { useStore } from '../../state/store';
 import { useServiceExtras } from '../../state/useServiceList';
 import styles from './ServicesPage.module.css';
@@ -36,12 +37,15 @@ export function ServicesPage() {
   const teams = topology?.teams;
   const services = topology?.services;
   const teamName = useMemo(() => new Map((teams ?? []).map((t) => [t.id, t.name])), [teams]);
-  const rows = useMemo(() => rankServiceRows(services ?? [], search, teamFilter), [services, search, teamFilter]);
+  const ranked = useMemo(() => rankServiceRows(services ?? [], search, teamFilter), [services, search, teamFilter]);
+  const listRef = useRef<HTMLDivElement>(null);
+  // numbers update every frame; the order only on a status change, every 15 s,
+  // and never under the pointer or keyboard focus
+  const rows = useStableRank(ranked, useListHold(listRef));
   const total = services?.length ?? 0;
   const countLabel = rows.length === total ? `${total} services` : `${rows.length} of ${total} services`;
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
   const win = useWindowedRows(scrollRef, listRef, ROW_H, rows.length);
   const { focusRow, afterRender } = useWindowedFocus(scrollRef, listRef, ROW_H);
   useLayoutEffect(afterRender);

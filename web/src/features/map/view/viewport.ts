@@ -60,3 +60,12 @@ export function needsRecull(win: CullWindow | null, visible: WorldRect, k: numbe
   const ratio = k / win.k;
   return ratio > RECULL_ZOOM_RATIO || ratio < 1 / RECULL_ZOOM_RATIO;
 }
+
+/**
+ * True when a card should be mounted: it overlaps the culling window, or it is
+ * pinned in place by the user (selected, keyboard-focused, being dragged).
+ * Unmounting a pinned card would drop focus or make a dragged card vanish.
+ */
+export function shouldMount(window: WorldRect, card: WorldRect, key: string, keep: ReadonlySet<string>): boolean {
+  return keep.has(key) || rectsOverlap(window, card);
+}

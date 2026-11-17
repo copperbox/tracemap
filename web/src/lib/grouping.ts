@@ -60,6 +60,32 @@ const groupMembers = new WeakMap<GraphNode, TopologyService[]>();
 const sameList = <T>(a: readonly T[], b: readonly T[]): boolean =>
   a.length === b.length && a.every((x, i) => x === b[i]);
 
+// The returned graph's nodeKeyOf outlives the build, so it is made outside
+// buildGraph: a closure created inside would share buildGraph's scope, which
+// holds `opts.prev`, and every graph would keep the one before it alive.
+function collapsedTest(
+  teamName: ReadonlyMap<number, string>,
+  mergedTeams: readonly number[],
+  teamGrouping: boolean,
+): (svc: TopologyService) => boolean {
+  // With grouping off, no team ever collapses into a meganode -- services stay
+  // individual and merge state is ignored until grouping is turned back on.
+  const merged = new Set(mergedTeams);
+  return (svc) => teamGrouping && svc.teamId != null && teamName.has(svc.teamId) && merged.has(svc.teamId);
+}
+
+function nodeKeyLookup(
+  services: readonly TopologyService[],
+  collapsed: (svc: TopologyService) => boolean,
+): (serviceId: string) => string {
+  const byId = new Map(services.map((s) => [s.id, s]));
+  return (serviceId) => {
+    const svc = byId.get(serviceId);
+    if (!svc) return serviceId;
+    return collapsed(svc) ? groupKey(svc.teamId as number) : serviceId;
+  };
+}
+
 /**
  * Build the rendered graph. With `prev` (the previous build), every node and
  * edge whose inputs are the same objects as last time is reused as is, and
@@ -73,24 +99,11 @@ export function buildGraph(
 ): Graph {
   const prevNodes = new Map((opts.prev?.nodes ?? []).map((n) => [n.key, n]));
   const prevEdges = new Map((opts.prev?.edges ?? []).map((e) => [e.key, e]));
-  const teamGrouping = opts.teamGrouping ?? true;
   const teamName = new Map(topo.teams.map((t) => [t.id, t.name]));
   const nameOfTeam = (teamId: number | null): string | null =>
     teamId == null ? null : teamName.get(teamId) ?? null;
-  // With grouping off, no team ever collapses into a meganode -- services stay
-  // individual and merge state is ignored until grouping is turned back on.
-  const collapsed = (svc: TopologyService): boolean =>
-    teamGrouping &&
-    svc.teamId != null &&
-    teamName.has(svc.teamId) &&
-    opts.mergedTeams.includes(svc.teamId);
-
-  const byId = new Map(topo.services.map((s) => [s.id, s]));
-  const nodeKeyOf = (serviceId: string): string => {
-    const svc = byId.get(serviceId);
-    if (!svc) return serviceId;
-    return collapsed(svc) ? groupKey(svc.teamId as number) : serviceId;
-  };
+  const collapsed = collapsedTest(teamName, opts.mergedTeams, opts.teamGrouping ?? true);
+  const nodeKeyOf = nodeKeyLookup(topo.services, collapsed);
 
   const nodes: GraphNode[] = [];
   const groups = new Map<number, TopologyService[]>();

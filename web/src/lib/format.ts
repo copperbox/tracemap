@@ -37,9 +37,3 @@ export function fmtAgo(iso: string): string {
   return `${Math.round(h / 24)}d`;
 }
 
-/** Deterministic display jitter so live values gently tick (design behavior). */
-export function jit(key: string, tick: number, amp = 0.05): number {
-  let ph = 0;
-  for (let i = 0; i < key.length; i++) ph += key.charCodeAt(i);
-  return 1 + amp * Math.sin(tick * 0.8 + ph);
-}

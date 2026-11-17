@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { FocusEvent as ReactFocusEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '../../state/store';
 import { ARROW } from '../../lib/format';
 import { LABEL_ZOOM_FACTOR } from '../../lib/preferences';
@@ -37,11 +37,14 @@ import { useGraphTransition } from './view/useGraphTransition';
 import { useMergeHandoff } from './view/useMergeHandoff';
 import { useNodeDrag } from './view/useNodeDrag';
 import { applyBackdrop, usePanZoom, type Transform } from './view/usePanZoom';
-import { needsRecull, rectsOverlap, visibleWorldRect, type WorldRect } from './view/viewport';
+import { containsRect, needsRecull, rectsOverlap, shouldMount, visibleWorldRect, type WorldRect } from './view/viewport';
 import { canvasLabelsOn, cardsCompact, chooseLod, type MapLod } from './view/lod';
 import { FRAME_LABEL_PX, drawMap, readPalette, type CanvasScene, type MapPalette } from './view/mapCanvas';
 import { hitEdge, hitRect, type RectItem } from './view/hitTest';
 import { useEffectiveMergedTeams } from './view/autoCollapse';
+import { mapSummary } from './view/mapSummary';
+import { usePixelRatio } from './view/pixelRatio';
+import { layoutSignature, type LayoutSigState } from './view/layoutSignature';
 import styles from './MapView.module.css';
 
 // Screen-pixel buffer kept around the viewport when choosing which cards to
@@ -59,9 +62,6 @@ const EMPTY_GRAPH: Graph = { nodes: [], edges: [], nodeKeyOf: (id: string) => id
 
 const widthOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_W : NODE_W);
 const heightOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_H : NODE_H);
-
-const sameKeys = (a: { key: string }[], b: { key: string }[]): boolean =>
-  a === b || (a.length === b.length && a.every((x, i) => x.key === b[i].key));
 
 /** What the mounted DOM layer was last built for. */
 interface ViewState {
@@ -124,7 +124,7 @@ export function LayeredMap() {
   // "fit" resets). Edges always follow the effective position. A drag moves
   // one node, or every member of a team when grabbed by its frame.
   const [pinned, setPinned] = useState<NodePositions>(loadPinnedPositions);
-  const { beginDrag, wasNodeDrag } = useNodeDrag(tfRef, setPinned);
+  const { beginDrag, wasNodeDrag, draggedKeys } = useNodeDrag(tfRef, setPinned);
 
   // Large fleets start with teams collapsed; a selected or isolated service
   // inside a collapsed team expands it.
@@ -167,24 +167,13 @@ export function LayeredMap() {
     return nameOf(isolateId);
   }, [isolated, isolateId, fullGraph]);
 
-  // The layout must only depend on the graph's STRUCTURE. Metrics refresh
-  // every frame, so the memo is keyed on a sorted structural signature. The
-  // sort is skipped when the key lists match the last graph's in order (the
-  // common case: a metrics-only frame).
-  const sigRef = useRef<{ nodes: GraphNode[]; edges: GraphEdge[]; grouping: boolean; sig: string } | null>(null);
+  // The layout must only depend on the graph's STRUCTURE (ids, team
+  // membership, node sizes). Metrics refresh every frame, so the memo is keyed
+  // on a structural signature.
+  const sigRef = useRef<LayoutSigState | null>(null);
   const layoutSig = useMemo(() => {
-    const prev = sigRef.current;
-    if (prev && prev.grouping === teamGrouping && sameKeys(prev.nodes, graph.nodes) && sameKeys(prev.edges, graph.edges)) {
-      sigRef.current = { ...prev, nodes: graph.nodes, edges: graph.edges };
-      return prev.sig;
-    }
-    const sig =
-      (teamGrouping ? 'grouped#' : 'flat#') +
-      [...graph.nodes.map((n) => n.key)].sort().join('|') +
-      '#' +
-      [...graph.edges.map((e) => e.key)].sort().join('|');
-    sigRef.current = { nodes: graph.nodes, edges: graph.edges, grouping: teamGrouping, sig };
-    return sig;
+    sigRef.current = layoutSignature(sigRef.current, graph.nodes, graph.edges, teamGrouping);
+    return sigRef.current.sig;
   }, [graph, teamGrouping]);
 
   // Layout results cached by signature, so returning to a structure already
@@ -481,16 +470,17 @@ export function LayeredMap() {
     }
   });
 
-  // Canvas backing store follows the element size and device pixel ratio.
+  // Canvas backing store follows the element size and the device pixel ratio
+  // (which changes when the window moves to another display).
+  const dpr = usePixelRatio();
   useLayoutEffect(() => {
     const cv = surfaceRef.current;
     if (!cv) return;
-    const dpr = window.devicePixelRatio || 1;
     cv.width = Math.max(1, Math.round(viewport.w * dpr));
     cv.height = Math.max(1, Math.round(viewport.h * dpr));
     sizeRef.current = { w: viewport.w, h: viewport.h, dpr };
     drawNow();
-  }, [viewport, drawNow]);
+  }, [viewport, dpr, drawNow]);
 
   // Theme colors (CSS variables) resolve into the canvas palette.
   useLayoutEffect(() => {
@@ -634,6 +624,7 @@ export function LayeredMap() {
         ev.stopPropagation();
         startNodeDrag(ev, n);
       },
+      activate: selectNode,
     },
     frame: {
       merge: (teamId) => toggleMerge(teamId),
@@ -651,6 +642,7 @@ export function LayeredMap() {
       open: (n) => handlersRef.current?.card.open(n),
       toggleGroup: (n) => handlersRef.current?.card.toggleGroup(n),
       dragStart: (e, n) => handlersRef.current?.card.dragStart(e, n),
+      activate: (n) => handlersRef.current?.card.activate(n),
     }),
     [],
   );
@@ -743,16 +735,49 @@ export function LayeredMap() {
   };
 
   // ---- mounted DOM layer ----
+  // The card holding keyboard focus, so culling leaves it mounted.
+  const [focusedCard, setFocusedCard] = useState<string | null>(null);
+  const cardKeyOf = (t: EventTarget | null): string | null =>
+    t instanceof Element ? (t.closest('[data-node-key]')?.getAttribute('data-node-key') ?? null) : null;
+  const onWorldFocus = (e: ReactFocusEvent): void => {
+    const key = cardKeyOf(e.target);
+    setFocusedCard(key);
+    // Focusing a card in the off-screen pad makes the browser scroll the
+    // clipped canvas; undo that and pan the camera to the card instead.
+    const el = canvasRef.current;
+    if (el && (el.scrollLeft || el.scrollTop)) el.scrollLeft = el.scrollTop = 0;
+    const n = key ? nodeById.get(key) : undefined;
+    const p = key ? displayPos(key) : undefined;
+    if (!n || !p) return;
+    const box = { x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) };
+    const seen = visibleWorldRect(tfRef.current, viewport.w, viewport.h, -24);
+    if (!containsRect(seen, box)) centerOn(box, selection ? { rightInset: DRAWER_W } : undefined);
+  };
+  const onWorldBlur = (e: ReactFocusEvent): void => {
+    if (!worldRef.current?.contains(e.relatedTarget as Node | null)) setFocusedCard(null);
+  };
   const rect = view?.rect ?? null;
   const showCards = lod === 'cards' && rect != null;
   const compact = view?.compact ?? false;
 
+  // The selected, keyboard-focused and dragged cards stay mounted when they
+  // leave the window: unmounting would drop focus or lose the card mid-drag.
+  // A team dragged by its bar keeps the bar too (keyed by its first member).
+  const dragged = draggedKeys();
+  const keepMounted = new Set<string>(dragged ?? []);
+  if (selNodeKey) keepMounted.add(selNodeKey);
+  if (focusedCard) keepMounted.add(focusedCard);
+  const draggedFrame = dragged?.[0] ?? null;
   const visibleFrames = useMemo(
     () =>
       showCards && rect
-        ? frameViews.filter((f) => rectsOverlap(rect, { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + FRAME_TITLE_H }))
+        ? frameViews.filter(
+            (f) =>
+              rectsOverlap(rect, { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + FRAME_TITLE_H }) ||
+              f.memberKeys[0] === draggedFrame,
+          )
         : [],
-    [showCards, rect, frameViews],
+    [showCards, rect, frameViews, draggedFrame],
   );
   // Metric labels: unhealthy, selected or hovered edges in the window at card
   // zoom; only the selected and hovered ones at overview zoom.
@@ -771,7 +796,7 @@ export function LayeredMap() {
     for (const n of graph.nodes) {
       const p = displayPos(n.key);
       if (!p) continue;
-      if (!rectsOverlap(rect, { x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) })) continue;
+      if (!shouldMount(rect, { x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) }, n.key, keepMounted)) continue;
       cards.push(
         <NodeCard
           key={n.key}
@@ -789,13 +814,51 @@ export function LayeredMap() {
     }
   }
 
+  // The canvas overview draws services as pixels, so it carries a text
+  // summary, and the map region takes keys to pan and zoom down to where
+  // cards (which are focusable) mount. The Services table is the full list.
+  const services = topology?.services;
+  const summary = useMemo(() => mapSummary(services ?? [], lod === 'canvas'), [services, lod]);
+  const onMapKey = (e: ReactKeyboardEvent): void => {
+    if (e.target !== canvasRef.current && !worldRef.current?.contains(e.target as Node)) return;
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const step = 80;
+    const act: Record<string, () => void> = {
+      ArrowLeft: () => panBy(step, 0),
+      ArrowRight: () => panBy(-step, 0),
+      ArrowUp: () => panBy(0, step),
+      ArrowDown: () => panBy(0, -step),
+      '+': () => zoomBy(1.3),
+      '=': () => zoomBy(1.3),
+      '-': () => zoomBy(1 / 1.3),
+      _: () => zoomBy(1 / 1.3),
+      '0': () => fitView(),
+    };
+    const fn = act[e.key];
+    if (!fn) return;
+    e.preventDefault();
+    fn();
+  };
+
   const hintShown =
     graph.nodes.length > 0 && (lod === 'canvas' ? !(view?.canvasLabels ?? false) : compact);
 
   return (
     <div className={styles.root}>
+      <button type="button" className={styles.skipLink} onClick={() => navigate('services')}>
+        Open the Services table (accessible list of every service)
+      </button>
+      <p id="map-keys-help" className={styles.srOnly}>
+        Arrow keys pan, plus and minus zoom, 0 fits the whole map. Services become focusable once zoomed in; Enter
+        selects one.
+      </p>
       <div
         ref={canvasRef}
+        role="region"
+        aria-label="Service map"
+        aria-describedby="map-keys-help"
+        tabIndex={0}
+        onKeyDown={onMapKey}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseLeave={clearHover}
@@ -807,9 +870,9 @@ export function LayeredMap() {
             it and packets read as "absorbed" arriving at a service */}
         <PacketCanvas edges={edgeViews} tfRef={tfRef} />
 
-        <canvas ref={surfaceRef} className={styles.surface} />
+        <canvas ref={surfaceRef} className={styles.surface} role="img" aria-label={summary} />
 
-        <div ref={worldRef} className={styles.world}>
+        <div ref={worldRef} className={styles.world} onFocus={onWorldFocus} onBlur={onWorldBlur}>
           {/* frame title bars stay DOM at card zoom: they carry drag and merge */}
           {visibleFrames.map((f) => (
             <TeamFrameBar

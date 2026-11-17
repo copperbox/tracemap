@@ -1,6 +1,7 @@
 import type { GraphNode } from '../../../lib/grouping';
 import { GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../../lib/layout';
 import type { Pos } from '../../../lib/transition';
+import { edgeStroke, healthyEdgeFade, type EdgeStroke } from './edgeDensity';
 import type { EdgeView } from './edgeViews';
 import type { FrameView } from './frameViews';
 import type { Transform } from './usePanZoom';
@@ -98,6 +99,8 @@ const BLOCK_NODE_PX = 18;
 export const FRAME_LABEL_PX = 11;
 /** Arrowheads are pointless below this zoom (they would be under 2 px). */
 const ARROW_MIN_K = 0.22;
+/** Smallest on-screen width of a degraded or critical node block. */
+const BAD_BLOCK_MIN_PX = 7;
 
 /** World rect visible on a `w` x `h` canvas, grown by `margin` screen px. */
 function screenWorld(tf: Transform, w: number, h: number, margin: number): WorldRect {
@@ -166,7 +169,11 @@ export function drawMap(
   ctx.globalAlpha = 1;
 
   // ---- edges, batched per style ----
-  const buckets = new Map<string, EdgeView[]>();
+  // Healthy and unhealthy edges are drawn in separate passes so degraded and
+  // critical ones always land on top, and healthy ones fade as the visible
+  // edge count grows (see edgeDensity).
+  const healthy: EdgeView[] = [];
+  const unhealthy: EdgeView[] = [];
   let selected: EdgeView | null = null;
   for (const v of scene.edges) {
     const c = v.curve;
@@ -176,47 +183,57 @@ export function drawMap(
     const y1 = Math.max(c.a.y, c.b.y, c.c1.y, c.c2.y);
     if (outside(view, x0, y0, x1, y1)) continue;
     if (v.glow) selected = v;
-    const key = `${v.stroke}|${v.op.toFixed(2)}|${v.w}|${v.arrowOp.toFixed(2)}`;
-    const arr = buckets.get(key);
-    if (arr) arr.push(v);
-    else buckets.set(key, [v]);
+    (v.e.status === 'ok' ? healthy : unhealthy).push(v);
   }
+  const fade = healthyEdgeFade(healthy.length + unhealthy.length);
   ctx.lineCap = 'round';
-  for (const list of buckets.values()) {
-    const v0 = list[0];
-    const color = resolveVar(pal, v0.stroke);
-    ctx.globalAlpha = v0.op;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(v0.w, 0.6 * px);
-    const glow = v0.glow && list.length === 1;
-    if (glow) {
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 6 * dpr;
+  const strokeEdges = (edges: EdgeView[]): void => {
+    const buckets = new Map<string, { st: EdgeStroke; list: EdgeView[] }>();
+    for (const v of edges) {
+      const st = edgeStroke(v, fade);
+      const key = `${v.stroke}|${st.op.toFixed(2)}|${v.w}|${st.arrowOp.toFixed(2)}|${st.minPx}`;
+      const b = buckets.get(key);
+      if (b) b.list.push(v);
+      else buckets.set(key, { st, list: [v] });
     }
-    ctx.beginPath();
-    for (const v of list) {
-      const c = v.curve;
-      ctx.moveTo(c.a.x, c.a.y);
-      ctx.bezierCurveTo(c.c1.x, c.c1.y, c.c2.x, c.c2.y, c.b.x, c.b.y);
-    }
-    ctx.stroke();
-    if (glow) ctx.shadowBlur = 0;
-    if (k >= ARROW_MIN_K) {
-      ctx.globalAlpha = v0.arrowOp;
-      ctx.fillStyle = resolveVar(pal, v0.arrowFill);
+    for (const { st, list } of buckets.values()) {
+      const v0 = list[0];
+      const color = resolveVar(pal, v0.stroke);
+      ctx.globalAlpha = st.op;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(v0.w, st.minPx * px);
+      const glow = v0.glow && list.length === 1;
+      if (glow) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 6 * dpr;
+      }
       ctx.beginPath();
       for (const v of list) {
-        const [a, b, c] = v.arrowPts;
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.lineTo(c.x, c.y);
-        ctx.closePath();
+        const c = v.curve;
+        ctx.moveTo(c.a.x, c.a.y);
+        ctx.bezierCurveTo(c.c1.x, c.c1.y, c.c2.x, c.c2.y, c.b.x, c.b.y);
       }
-      ctx.fill();
+      ctx.stroke();
+      if (glow) ctx.shadowBlur = 0;
+      if (k >= ARROW_MIN_K) {
+        ctx.globalAlpha = st.arrowOp;
+        ctx.fillStyle = resolveVar(pal, v0.arrowFill);
+        ctx.beginPath();
+        for (const v of list) {
+          const [a, b, c] = v.arrowPts;
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.lineTo(c.x, c.y);
+          ctx.closePath();
+        }
+        ctx.fill();
+      }
     }
-  }
+    ctx.globalAlpha = 1;
+  };
   // the selected edge again on top, with its glow, so a crowd cannot hide it
-  if (selected) {
+  const strokeSelected = (): void => {
+    if (!selected) return;
     const c = selected.curve;
     const color = resolveVar(pal, selected.stroke);
     ctx.globalAlpha = selected.op;
@@ -229,46 +246,85 @@ export function drawMap(
     ctx.bezierCurveTo(c.c1.x, c.c1.y, c.c2.x, c.c2.y, c.b.x, c.b.y);
     ctx.stroke();
     ctx.shadowBlur = 0;
-  }
-  ctx.globalAlpha = 1;
+    ctx.globalAlpha = 1;
+  };
 
-  if (!scene.drawNodes) return;
+  if (!scene.drawNodes) {
+    strokeEdges(healthy);
+    strokeEdges(unhealthy);
+    strokeSelected();
+    return;
+  }
 
   // ---- nodes ----
-  const blocks = new Map<string, { x: number; y: number; w: number; h: number }[]>();
-  const cards: { n: GraphNode; x: number; y: number; w: number; h: number; dim: boolean }[] = [];
-  const top: { n: GraphNode; x: number; y: number; w: number; h: number; dim: boolean }[] = [];
+  type Item = { n: GraphNode; x: number; y: number; w: number; h: number; dim: boolean };
+  const okNodes: Item[] = [];
+  const badNodes: Item[] = [];
+  const top: Item[] = [];
   for (const n of scene.nodes) {
     const p = scene.posOf(n.key);
     if (!p) continue;
     const { w, h } = sizeOf(n);
     if (outside(view, p.x, p.y, p.x + w, p.y + h)) continue;
-    const dim = scene.dimmed(n.key);
-    const item = { n, x: p.x, y: p.y, w, h, dim };
-    if (n.key === scene.selKey || n.key === scene.hoverKey) {
-      top.push(item);
-    } else if (w * k < BLOCK_NODE_PX) {
-      const color =
-        n.status === 'ok' ? (n.kind === 'group' ? pal.dim : pal.faint) : statusColor(pal, n.status);
-      const key = `${color}|${dim ? 1 : 0}`;
-      const arr = blocks.get(key);
-      if (arr) arr.push(item);
-      else blocks.set(key, [item]);
-    } else {
-      cards.push(item);
-    }
+    const item = { n, x: p.x, y: p.y, w, h, dim: scene.dimmed(n.key) };
+    if (n.key === scene.selKey || n.key === scene.hoverKey) top.push(item);
+    else (n.status === 'ok' ? okNodes : badNodes).push(item);
   }
-  for (const [key, list] of blocks) {
-    const [color, dim] = key.split('|');
-    ctx.globalAlpha = dim === '1' ? 0.13 : 1;
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    for (const r of list) ctx.rect(r.x, r.y, r.w, r.h);
-    ctx.fill();
+
+  // A crowded overview draws healthy edges, healthy nodes, then the unhealthy
+  // edges and nodes over them. Otherwise nodes sit over every edge, as cards do.
+  if (fade < 1) {
+    strokeEdges(healthy);
+    drawNodeSet(okNodes);
+    strokeEdges(unhealthy);
+    drawNodeSet(badNodes);
+  } else {
+    strokeEdges(healthy);
+    strokeEdges(unhealthy);
+    drawNodeSet(okNodes);
+    drawNodeSet(badNodes);
   }
+  strokeSelected();
+  for (const it of top) drawCard(it, it.n.key === scene.selKey, it.n.key === scene.hoverKey);
   ctx.globalAlpha = 1;
 
-  const drawCard = (it: (typeof cards)[number], sel: boolean, hover: boolean): void => {
+  function drawNodeSet(items: Item[]): void {
+    const blocks = new Map<string, Item[]>();
+    const cards: Item[] = [];
+    for (const it of items) {
+      if (it.w * k < BLOCK_NODE_PX) {
+        const n = it.n;
+        const color = n.status === 'ok' ? (n.kind === 'group' ? pal.dim : pal.faint) : statusColor(pal, n.status);
+        const key = `${color}|${it.dim ? 1 : 0}`;
+        const arr = blocks.get(key);
+        if (arr) arr.push(it);
+        else blocks.set(key, [it]);
+      } else {
+        cards.push(it);
+      }
+    }
+    for (const [key, list] of blocks) {
+      const [color, dim] = key.split('|');
+      ctx.globalAlpha = dim === '1' ? 0.13 : 1;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      for (const r of list) {
+        // an unhealthy service never shrinks below a few screen pixels
+        if (r.n.status !== 'ok' && (r.w * k < BAD_BLOCK_MIN_PX || r.h * k < BAD_BLOCK_MIN_PX * 0.6)) {
+          const bw = Math.max(r.w, BAD_BLOCK_MIN_PX * px);
+          const bh = Math.max(r.h, BAD_BLOCK_MIN_PX * 0.6 * px);
+          ctx.rect(r.x + (r.w - bw) / 2, r.y + (r.h - bh) / 2, bw, bh);
+        } else {
+          ctx.rect(r.x, r.y, r.w, r.h);
+        }
+      }
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    drawCards(cards);
+  }
+
+  function drawCard(it: Item, sel: boolean, hover: boolean): void {
     const { n, x, y, w, h } = it;
     const alpha = it.dim ? 0.13 : 1;
     const sc = statusColor(pal, n.status);
@@ -308,61 +364,63 @@ export function drawMap(
       ctx.strokeStyle = sel ? (n.status === 'ok' ? pal.accent : sc) : pal.accent;
       ctx.stroke();
     }
-  };
-  // Mid-zoom cards, batched: one fill for every panel, then one stroke, dot
-  // and label pass per style. Each card alone would be four draw calls.
-  type Card = (typeof cards)[number];
-  const group = <K extends string>(list: Card[], keyOf: (c: Card) => K): Map<K, Card[]> => {
-    const m = new Map<K, Card[]>();
-    for (const c of list) {
-      const key = keyOf(c);
-      const arr = m.get(key);
-      if (arr) arr.push(c);
-      else m.set(key, [c]);
-    }
-    return m;
-  };
-  for (const [dim, list] of group(cards, (c) => (c.dim ? '1' : '0'))) {
-    ctx.globalAlpha = dim === '1' ? 0.13 : 1;
-    ctx.fillStyle = pal.panel;
-    ctx.beginPath();
-    for (const c of list) ctx.roundRect(c.x, c.y, c.w, c.h, 11);
-    ctx.fill();
   }
-  for (const [key, list] of group(cards, (c) => `${c.n.status}|${c.dim ? 1 : 0}|${isDashed(c.n) ? 1 : 0}`)) {
-    const [status, dim, dashed] = key.split('|');
-    ctx.globalAlpha = dim === '1' ? 0.13 : 1;
-    ctx.strokeStyle = status === 'ok' ? pal.line : statusColor(pal, status);
-    ctx.lineWidth = Math.max(1.2, px);
-    if (dashed === '1') ctx.setLineDash([5, 4]);
-    ctx.beginPath();
-    for (const c of list) ctx.roundRect(c.x, c.y, c.w, c.h, 11);
-    ctx.stroke();
-    if (dashed === '1') ctx.setLineDash([]);
-  }
-  for (const [key, list] of group(cards, (c) => `${c.n.status}|${c.dim ? 1 : 0}`)) {
-    const [status, dim] = key.split('|');
-    ctx.globalAlpha = dim === '1' ? 0.13 : 1;
-    ctx.fillStyle = statusColor(pal, status);
-    ctx.beginPath();
-    for (const c of list) {
-      ctx.moveTo(c.x + c.w - 11, c.y + 15);
-      ctx.arc(c.x + c.w - 15, c.y + 15, 4, 0, Math.PI * 2);
-    }
-    ctx.fill();
-  }
-  if (scene.labels) {
-    ctx.fillStyle = pal.text;
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
+
+  function drawCards(cards: Item[]): void {
+    // Mid-zoom cards, batched: one fill for every panel, then one stroke, dot
+    // and label pass per style. Each card alone would be four draw calls.
+    type Card = Item;
+    const group = <K extends string>(list: Card[], keyOf: (c: Card) => K): Map<K, Card[]> => {
+      const m = new Map<K, Card[]>();
+      for (const c of list) {
+        const key = keyOf(c);
+        const arr = m.get(key);
+        if (arr) arr.push(c);
+        else m.set(key, [c]);
+      }
+      return m;
+    };
     for (const [dim, list] of group(cards, (c) => (c.dim ? '1' : '0'))) {
       ctx.globalAlpha = dim === '1' ? 0.13 : 1;
+      ctx.fillStyle = pal.panel;
+      ctx.beginPath();
+      for (const c of list) ctx.roundRect(c.x, c.y, c.w, c.h, 11);
+      ctx.fill();
+    }
+    for (const [key, list] of group(cards, (c) => `${c.n.status}|${c.dim ? 1 : 0}|${isDashed(c.n) ? 1 : 0}`)) {
+      const [status, dim, dashed] = key.split('|');
+      ctx.globalAlpha = dim === '1' ? 0.13 : 1;
+      ctx.strokeStyle = status === 'ok' ? pal.line : statusColor(pal, status);
+      ctx.lineWidth = Math.max(1.2, px);
+      if (dashed === '1') ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      for (const c of list) ctx.roundRect(c.x, c.y, c.w, c.h, 11);
+      ctx.stroke();
+      if (dashed === '1') ctx.setLineDash([]);
+    }
+    for (const [key, list] of group(cards, (c) => `${c.n.status}|${c.dim ? 1 : 0}`)) {
+      const [status, dim] = key.split('|');
+      ctx.globalAlpha = dim === '1' ? 0.13 : 1;
+      ctx.fillStyle = statusColor(pal, status);
+      ctx.beginPath();
       for (const c of list) {
-        ctx.font = `600 ${c.n.kind === 'group' ? 15 : 13.5}px "Space Grotesk", system-ui, sans-serif`;
-        ctx.fillText(c.n.label, c.x + 12, c.y + c.h / 2, c.w - 24);
+        ctx.moveTo(c.x + c.w - 11, c.y + 15);
+        ctx.arc(c.x + c.w - 15, c.y + 15, 4, 0, Math.PI * 2);
+      }
+      ctx.fill();
+    }
+    if (scene.labels) {
+      ctx.fillStyle = pal.text;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left';
+      for (const [dim, list] of group(cards, (c) => (c.dim ? '1' : '0'))) {
+        ctx.globalAlpha = dim === '1' ? 0.13 : 1;
+        for (const c of list) {
+          ctx.font = `600 ${c.n.kind === 'group' ? 15 : 13.5}px "Space Grotesk", system-ui, sans-serif`;
+          ctx.fillText(c.n.label, c.x + 12, c.y + c.h / 2, c.w - 24);
+        }
       }
     }
+    ctx.globalAlpha = 1;
   }
-  for (const it of top) drawCard(it, it.n.key === scene.selKey, it.n.key === scene.hoverKey);
-  ctx.globalAlpha = 1;
 }

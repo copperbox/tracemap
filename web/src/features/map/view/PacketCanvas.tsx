@@ -9,6 +9,7 @@ import { capPacketCounts, packetBudget } from './packetBudget';
 import { packetSamples } from './packetAnim';
 import { buildArcLut, pointAtFraction, type ArcLut } from './packetPath';
 import type { Transform } from './usePanZoom';
+import { usePixelRatio } from './pixelRatio';
 import styles from './PacketCanvas.module.css';
 
 /**
@@ -124,13 +125,14 @@ export const PacketCanvas = memo(function PacketCanvas({
     [edges],
   );
 
-  // Canvas context + size tracking (device-pixel-ratio aware so packets are crisp).
+  // Canvas context + size tracking (device-pixel-ratio aware so packets are
+  // crisp); a ratio change (another display) re-runs it.
+  const dpr = usePixelRatio();
   useEffect(() => {
     const cv = canvasRef.current;
     if (!cv) return;
     ctxRef.current = cv.getContext('2d');
     const resize = (): void => {
-      const dpr = window.devicePixelRatio || 1;
       const cssW = cv.clientWidth;
       const cssH = cv.clientHeight;
       cv.width = Math.max(1, Math.round(cssW * dpr));
@@ -142,7 +144,7 @@ export const PacketCanvas = memo(function PacketCanvas({
     const ro = new ResizeObserver(resize);
     ro.observe(cv);
     return () => ro.disconnect();
-  }, []);
+  }, [dpr]);
 
   // Rebuild glow sprites for the active theme (colors come from CSS variables).
   useEffect(() => {

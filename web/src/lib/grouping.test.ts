@@ -1,3 +1,5 @@
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 import type { Topology, TopologyEdge, TopologyService } from '../api/types';
 import { buildGraph, groupKey } from './grouping';
@@ -205,5 +207,21 @@ describe('buildGraph', () => {
       const ext = `${groupKey(1)}=>api.stripe.com`;
       expect(g2.edges.find((e) => e.key === ext)).toBe(g1.edges.find((e) => e.key === ext));
     });
+  });
+
+  it('does not keep the previous graph reachable from the new one', async () => {
+    // the live feed rebuilds every frame with `prev`, so a chain here grows
+    // the heap by a whole graph per frame
+    setFlagsFromString('--expose-gc');
+    const gc = runInNewContext('gc') as () => void;
+    const frame = (rps: number): Topology => topo(services.map((s) => ({ ...s, metrics: { ...s.metrics, rps } })), edges);
+    let g = buildGraph(frame(1), { mergedTeams: [1] });
+    const first = new WeakRef(g);
+    for (let i = 2; i < 5; i++) g = buildGraph(frame(i), { mergedTeams: [1], prev: g });
+    // WeakRefs are only cleared once the current job ends
+    await new Promise((r) => setTimeout(r, 0));
+    gc();
+    expect(first.deref()).toBeUndefined();
+    expect(g.nodeKeyOf('orders-svc')).toBe(groupKey(1));
   });
 });

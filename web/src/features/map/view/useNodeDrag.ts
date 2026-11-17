@@ -68,5 +68,8 @@ export function useNodeDrag(
   /** True while (or just after) a node drag actually moved, so click handlers can ignore it. */
   const wasNodeDrag = () => nodeDragRef.current?.moved ?? false;
 
-  return { beginDrag, wasNodeDrag };
+  /** Keys being dragged right now, or null. Read during render: every move re-renders via setPinned. */
+  const draggedKeys = (): string[] | null => nodeDragRef.current?.items.map((it) => it.key) ?? null;
+
+  return { beginDrag, wasNodeDrag, draggedKeys };
 }

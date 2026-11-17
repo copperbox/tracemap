@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import type { CSSProperties, MouseEvent } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { GraphNode } from '../../lib/grouping';
 import { GROUP_W, NODE_W } from '../../lib/layout';
 import { fmtErr, fmtMs, fmtRps, DOT } from '../../lib/format';
@@ -16,6 +16,8 @@ export interface CardHandlers {
   open: (node: GraphNode) => void;
   toggleGroup: (node: GraphNode) => void;
   dragStart: (e: MouseEvent, node: GraphNode) => void;
+  /** Enter or Space on a focused card. */
+  activate: (node: GraphNode) => void;
 }
 
 export const NOOP_CARD_HANDLERS: CardHandlers = {
@@ -23,7 +25,10 @@ export const NOOP_CARD_HANDLERS: CardHandlers = {
   open: () => {},
   toggleGroup: () => {},
   dragStart: () => {},
+  activate: () => {},
 };
+
+const STATUS_WORD = { ok: 'healthy', warn: 'degraded', crit: 'critical' } as const;
 
 export const NodeCard = memo(function NodeCard({
   node,
@@ -87,6 +92,21 @@ export const NodeCard = memo(function NodeCard({
   // element here is multiplied (metrics are one text run, not five spans).
   return (
     <div
+      data-node-key={ghost ? undefined : node.key}
+      role={ghost ? undefined : 'button'}
+      tabIndex={ghost ? -1 : 0}
+      aria-hidden={ghost || undefined}
+      aria-pressed={ghost ? undefined : selected}
+      aria-label={
+        ghost
+          ? undefined
+          : `${isGroup ? `Team ${node.label}, ${node.memberIds.length} services` : node.label}, ${STATUS_WORD[node.status]}`
+      }
+      onKeyDown={(e: KeyboardEvent) => {
+        if (ghost || e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        handlers.activate(node);
+      }}
       onClick={(e) => handlers.click(e, node)}
       onDoubleClick={() => handlers.open(node)}
       onMouseDown={(e) => handlers.dragStart(e, node)}

@@ -18,6 +18,10 @@ export interface RankableService {
 
 const RANK: Record<Status, number> = { crit: 0, warn: 1, ok: 2 };
 
+/** Ranking order: critical, degraded, healthy; busiest first within a band. */
+export const compareRank = (a: { status: Status; rps: number }, b: { status: Status; rps: number }): number =>
+  RANK[a.status] - RANK[b.status] || b.rps - a.rps;
+
 export function filterRankServices<T extends RankableService>(
   services: T[],
   search: string,
@@ -27,5 +31,5 @@ export function filterRankServices<T extends RankableService>(
   return services
     .filter((s) => !q || s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q))
     .filter((s) => matchesTeamFilter(s.teamId, teamFilter))
-    .sort((a, b) => RANK[a.status] - RANK[b.status] || b.rps - a.rps);
+    .sort(compareRank);
 }
