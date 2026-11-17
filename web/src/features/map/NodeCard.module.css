@@ -74,11 +74,8 @@
   color: var(--faint);
 }
 
-.spacer {
-  flex: 1;
-}
-
 .toggleBtn {
+  margin-left: auto;
   width: 18px;
   height: 18px;
   border-radius: 5px;
@@ -90,6 +87,7 @@
 }
 
 .statusDot {
+  margin-left: auto;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -137,15 +135,10 @@
 }
 
 .metrics {
-  display: flex;
-  gap: 7px;
   font: 500 9.5px 'JetBrains Mono', monospace;
   color: var(--dim);
-  white-space: nowrap;
-}
-
-.sep {
-  color: var(--faint);
+  white-space: pre;
+  overflow: hidden;
 }
 
 .errWarn {
@@ -180,4 +173,9 @@
   font: 500 8.5px 'JetBrains Mono', monospace;
   color: var(--faint);
   padding: 1px 2px;
+}
+
+/* the toggle already pushed itself right; the dot sits next to it */
+.toggleBtn + .statusDot {
+  margin-left: 0;
 }

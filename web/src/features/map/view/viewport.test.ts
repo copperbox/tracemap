@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Transform } from './usePanZoom';
-import { rectsOverlap, visibleWorldRect, type WorldRect } from './viewport';
+import { containsRect, needsRecull, rectsOverlap, visibleWorldRect, type WorldRect } from './viewport';
 
 const tf = (over: Partial<Transform> = {}): Transform => ({ tx: 0, ty: 0, k: 1, ...over });
 
@@ -61,5 +61,34 @@ describe('rectsOverlap', () => {
 
   it('rejects a rect off above', () => {
     expect(rectsOverlap(view, { x0: 0, y0: -200, x1: 100, y1: -1 })).toBe(false);
+  });
+});
+
+describe('needsRecull', () => {
+  const win = { rect: { x0: 0, y0: 0, x1: 1000, y1: 800 }, k: 0.8 };
+
+  it('rebuilds when nothing is mounted yet', () => {
+    expect(needsRecull(null, { x0: 0, y0: 0, x1: 10, y1: 10 }, 1)).toBe(true);
+  });
+
+  it('keeps the window while the view stays inside it', () => {
+    expect(needsRecull(win, { x0: 100, y0: 100, x1: 900, y1: 700 }, 0.8)).toBe(false);
+  });
+
+  it('rebuilds when the view leaves the window', () => {
+    expect(needsRecull(win, { x0: 300, y0: 100, x1: 1100, y1: 700 }, 0.8)).toBe(true);
+  });
+
+  it('rebuilds when the zoom drifts too far', () => {
+    expect(needsRecull(win, { x0: 300, y0: 300, x1: 400, y1: 400 }, 1.2)).toBe(true);
+    expect(needsRecull(win, { x0: 300, y0: 300, x1: 400, y1: 400 }, 0.9)).toBe(false);
+  });
+});
+
+describe('containsRect', () => {
+  it('accepts a rect on the boundary and rejects one sticking out', () => {
+    const outer: WorldRect = { x0: 0, y0: 0, x1: 10, y1: 10 };
+    expect(containsRect(outer, { x0: 0, y0: 0, x1: 10, y1: 10 })).toBe(true);
+    expect(containsRect(outer, { x0: 0, y0: 0, x1: 11, y1: 10 })).toBe(false);
   });
 });

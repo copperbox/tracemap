@@ -218,4 +218,25 @@ describe('layoutClusteredGraph', () => {
     expect(pos.size).toBe(0);
     expect(bbox).toEqual({ x0: 0, y0: 0, x1: 0, y1: 0 });
   });
+
+  it('packs a large fleet of teams into a rectangle, not a strip', () => {
+    const many: GraphNode[] = [];
+    const manyEdges: GraphEdge[] = [];
+    for (let t = 1; t <= 120; t++) {
+      for (let i = 0; i < 6; i++) many.push(svcNode(`t${t}-s${i}`, t));
+      for (let i = 1; i < 6; i++) manyEdges.push(edge(`t${t}-s0`, `t${t}-s${i}`));
+      if (t > 1) manyEdges.push(edge(`t${t}-s0`, `t${t - 1}-s1`));
+    }
+    const { bbox, pos } = layoutClusteredGraph(many, manyEdges);
+    const aspect = (bbox.x1 - bbox.x0) / (bbox.y1 - bbox.y0);
+    expect(aspect).toBeGreaterThan(0.8);
+    expect(aspect).toBeLessThan(3);
+    // frames still never overlap
+    const frames = Array.from({ length: 120 }, (_, i) =>
+      frameRect(pos, Array.from({ length: 6 }, (_, j) => `t${i + 1}-s${j}`)),
+    );
+    for (let i = 0; i < frames.length; i++) {
+      for (let j = i + 1; j < frames.length; j++) expect(overlaps(frames[i], frames[j])).toBe(false);
+    }
+  });
 });

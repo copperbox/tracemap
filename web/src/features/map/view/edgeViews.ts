@@ -11,6 +11,8 @@ export interface EdgeView {
   isSel: boolean;
   isHov: boolean;
   arrow: string;
+  /** arrowhead points (tip first), for the canvas */
+  arrowPts: [Pt, Pt, Pt];
   arrowFill: string;
   arrowOp: number;
   mid: Pt;
@@ -68,6 +70,7 @@ export function buildEdgeViews(
         isSel,
         isHov,
         arrow: g.arrow,
+        arrowPts: g.arrowPts,
         arrowFill: color,
         arrowOp: (dim ? 0.04 : isSel || isHov ? 0.95 : e.status !== 'ok' ? 0.9 : 0.6) * fadeIn,
         mid: g.mid,

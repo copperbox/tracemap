@@ -22,6 +22,11 @@ const geom: EdgeGeometry = {
   d: 'M0 0 L10 10',
   curve: { a: { x: 0, y: 0 }, c1: { x: 3, y: 3 }, c2: { x: 7, y: 7 }, b: { x: 10, y: 10 } },
   arrow: '0,0 1,1 2,2',
+  arrowPts: [
+    { x: 0, y: 0 },
+    { x: 1, y: 1 },
+    { x: 2, y: 2 },
+  ],
   mid: { x: 5, y: 5 },
 };
 const geoms = new Map([['a=>b', geom]]);

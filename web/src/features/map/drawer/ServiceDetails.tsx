@@ -3,7 +3,7 @@ import type { Topology, TopologyEdge, TopologyService } from '../../../api/types
 import { HoverSync } from '../../../components/hoverSync';
 import { SloRing } from '../../../components/SloRing';
 import { TopErrors } from '../../../components/TopErrors';
-import { DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../../lib/format';
+import { DOT, fmtCount, fmtErr, fmtMs, fmtRps } from '../../../lib/format';
 import { sloView, stColor } from '../../../lib/status';
 import { useStore } from '../../../state/store';
 import { Card } from './Card';
@@ -41,7 +41,6 @@ export function ServiceDetails({
   footer?: ReactNode;
 }) {
   const navigate = useStore((s) => s.navigate);
-  const tick = useStore((s) => s.tick);
 
   const sparks = useSparklines('service', s.id);
   const errors = useTopErrors('service', s.id);
@@ -91,8 +90,8 @@ export function ServiceDetails({
 
         <KpiGrid
           items={[
-            { label: 'REQ/S', value: fmtRps(m.rps * jit(s.id, tick)) },
-            { label: 'P95', value: fmtMs(m.p95 == null ? null : m.p95 * jit(s.id + 'l', tick, 0.06)) },
+            { label: 'REQ/S', value: fmtRps(m.rps) },
+            { label: 'P95', value: fmtMs(m.p95) },
             { label: 'ERRORS', value: fmtErr(m.errPct), color: s.status === 'ok' ? 'var(--text)' : stColor(s.status) },
           ]}
         />

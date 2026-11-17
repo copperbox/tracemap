@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import type { TopologyEdge, TopologyService } from '../../api/types';
 import { HoverSync } from '../../components/hoverSync';
 import { TopErrors } from '../../components/TopErrors';
-import { ARROW, DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../lib/format';
+import { ARROW, DOT, fmtCount, fmtErr, fmtMs, fmtRps } from '../../lib/format';
 import { groupKey, type Graph, type GraphEdge } from '../../lib/grouping';
 import { stColor } from '../../lib/status';
 import { timeSince } from '../../lib/timeSince';
@@ -41,7 +41,6 @@ export function MapDrawer({
   const isolateId = useStore((s) => s.isolateId);
   const setIsolate = useStore((s) => s.setIsolate);
   const navigate = useStore((s) => s.navigate);
-  const tick = useStore((s) => s.tick);
 
   // Isolating supersedes focus dimming, so entering isolation clears any focus.
   const toggleIsolate = (key: string) => {
@@ -139,7 +138,7 @@ export function MapDrawer({
           <div className={styles.body}>
             <KpiGrid
               items={[
-                { label: 'REQ/S', value: fmtRps(gNode.rps * jit(gNode.key, tick)) },
+                { label: 'REQ/S', value: fmtRps(gNode.rps) },
                 { label: 'WORST P95', value: fmtMs(gNode.p95) },
                 { label: 'ERRORS', value: fmtErr(gNode.errPct), color: gNode.status === 'ok' ? 'var(--text)' : stColor(gNode.status) },
               ]}
@@ -212,8 +211,8 @@ export function MapDrawer({
         <div className={styles.body}>
           <KpiGrid
             items={[
-              { label: 'CALLS/S', value: fmtRps(graphEdge.rps * jit(graphEdge.key, tick)) },
-              { label: 'P95', value: fmtMs(graphEdge.p95 == null ? null : graphEdge.p95 * jit(graphEdge.key + 'l', tick, 0.06)) },
+              { label: 'CALLS/S', value: fmtRps(graphEdge.rps) },
+              { label: 'P95', value: fmtMs(graphEdge.p95) },
               {
                 label: 'ERRORS',
                 value: fmtErr(graphEdge.errPct),

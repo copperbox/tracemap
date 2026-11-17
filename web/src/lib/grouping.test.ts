@@ -162,4 +162,48 @@ describe('buildGraph', () => {
     // checkout -> stripe became intra-group and disappeared
     expect(g.edges.some((e) => e.targetKey === 'api.stripe.com')).toBe(false);
   });
+
+  describe('structural sharing with prev', () => {
+    const t1 = topo(services, edges);
+
+    it('returns the previous graph when nothing changed', () => {
+      const g1 = buildGraph(t1, { mergedTeams: [] });
+      const g2 = buildGraph({ ...t1, services: [...t1.services], edges: [...t1.edges] }, { mergedTeams: [], prev: g1 });
+      expect(g2).toBe(g1);
+    });
+
+    it('reuses unchanged nodes and edges and rebuilds changed ones', () => {
+      const g1 = buildGraph(t1, { mergedTeams: [] });
+      const bumped = { ...services[2], metrics: { ...services[2].metrics, rps: 999 } };
+      const t2 = topo([services[0], services[1], bumped, services[3]], edges);
+      const g2 = buildGraph(t2, { mergedTeams: [], prev: g1 });
+      expect(g2).not.toBe(g1);
+      expect(g2.nodes[0]).toBe(g1.nodes[0]);
+      expect(g2.nodes[2]).not.toBe(g1.nodes[2]);
+      expect(g2.nodes[2].rps).toBe(999);
+      expect(g2.edges).toBe(g1.edges);
+    });
+
+    it('reuses a group whose members are unchanged and rebuilds one whose member moved', () => {
+      const g1 = buildGraph(t1, { mergedTeams: [1, 2] });
+      const same = buildGraph(topo([...services], [...edges]), { mergedTeams: [1, 2], prev: g1 });
+      expect(same).toBe(g1);
+      const hot = { ...services[0], metrics: { ...services[0].metrics, rps: 5000 } };
+      const g2 = buildGraph(topo([hot, services[1], services[2], services[3]], edges), { mergedTeams: [1, 2], prev: g1 });
+      const key1 = groupKey(1);
+      const key2 = groupKey(2);
+      expect(g2.nodes.find((n) => n.key === key1)).not.toBe(g1.nodes.find((n) => n.key === key1));
+      expect(g2.nodes.find((n) => n.key === key2)).toBe(g1.nodes.find((n) => n.key === key2));
+    });
+
+    it('rebuilds an aggregated edge when one underlying edge changes', () => {
+      const g1 = buildGraph(t1, { mergedTeams: [1] });
+      const e2 = { ...edges[1], metrics: { ...edges[1].metrics, rps: 77 } };
+      const g2 = buildGraph(topo(services, [edges[0], e2, edges[2], edges[3]]), { mergedTeams: [1], prev: g1 });
+      const k = `${groupKey(1)}=>catalog-svc`;
+      expect(g2.edges.find((e) => e.key === k)).not.toBe(g1.edges.find((e) => e.key === k));
+      const ext = `${groupKey(1)}=>api.stripe.com`;
+      expect(g2.edges.find((e) => e.key === ext)).toBe(g1.edges.find((e) => e.key === ext));
+    });
+  });
 });

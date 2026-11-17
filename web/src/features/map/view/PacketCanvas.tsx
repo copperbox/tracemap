@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { RefObject } from 'react';
 import { packetCount, packetSeed, packetTravelMs } from '../../../lib/flow';
 import { useStore } from '../../../state/store';
+import type { GraphEdge } from '../../../lib/grouping';
 import type { EdgeView } from './edgeViews';
+import { curveBox } from './hitTest';
+import { capPacketCounts, packetBudget } from './packetBudget';
 import { packetSamples } from './packetAnim';
 import { buildArcLut, pointAtFraction, type ArcLut } from './packetPath';
 import type { Transform } from './usePanZoom';
@@ -36,6 +39,18 @@ const VAR_OF: Record<string, string> = {
   'var(--warn)': '--warn',
   'var(--crit)': '--crit',
 };
+
+// Packets per edge from its rps, cached on the edge object (unchanged edges
+// keep their identity between frames).
+const counts = new WeakMap<GraphEdge, number>();
+function countOf(e: GraphEdge): number {
+  let n = counts.get(e);
+  if (n == null) {
+    n = packetCount(e.rps);
+    counts.set(e, n);
+  }
+  return n;
+}
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   let h = hex.trim();
@@ -84,7 +99,13 @@ function buildSprites(): Record<string, HTMLCanvasElement> {
   return out;
 }
 
-export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefObject<Transform> }) {
+export const PacketCanvas = memo(function PacketCanvas({
+  edges,
+  tfRef,
+}: {
+  edges: EdgeView[];
+  tfRef: RefObject<Transform>;
+}) {
   const theme = useStore((s) => s.theme);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -147,14 +168,34 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
       const size = dia * GLOW_SCALE;
       const half = size / 2;
 
+      // Cull to the screen first, then share the frame's packet budget among
+      // the edges that are actually visible.
+      const vis: EdgeView[] = [];
+      const want: number[] = [];
+      const pad = half / k;
+      const vx0 = (-tf.tx) / k - pad;
+      const vy0 = (-tf.ty) / k - pad;
+      const vx1 = (cssW - tf.tx) / k + pad;
+      const vy1 = (cssH - tf.ty) / k + pad;
       for (const v of edgeList) {
         if (v.flowOp <= 0) continue;
         const e = v.e;
         if (!(e.rps > 0) || e.stale) continue;
-        const count = packetCount(e.rps);
+        const b = curveBox(v.curve);
+        if (b.x1 < vx0 || b.x0 > vx1 || b.y1 < vy0 || b.y0 > vy1) continue;
+        const count = countOf(e);
+        if (!count || !sprites[v.flowStroke]) continue;
+        vis.push(v);
+        want.push(count);
+      }
+      const budget = capPacketCounts(want, packetBudget(k));
+
+      for (let i = 0; i < vis.length; i++) {
+        const count = budget[i];
         if (!count) continue;
+        const v = vis[i];
+        const e = v.e;
         const sprite = sprites[v.flowStroke];
-        if (!sprite) continue;
 
         let hit = cache.get(e.key);
         if (!hit || hit.d !== v.d) {
@@ -201,4 +242,4 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
   }, [hasLive, drawFrame]);
 
   return <canvas ref={canvasRef} className={styles.layer} />;
-}
+});

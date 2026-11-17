@@ -53,10 +53,26 @@ export function groupKey(teamId: number): string {
   return `group:${teamId}`;
 }
 
+// Member services a group node was built from, so a later build can tell
+// whether the group is unchanged without widening GraphNode.
+const groupMembers = new WeakMap<GraphNode, TopologyService[]>();
+
+const sameList = <T>(a: readonly T[], b: readonly T[]): boolean =>
+  a.length === b.length && a.every((x, i) => x === b[i]);
+
+/**
+ * Build the rendered graph. With `prev` (the previous build), every node and
+ * edge whose inputs are the same objects as last time is reused as is, and
+ * when nothing changed the previous graph itself is returned. The live feed
+ * keeps unchanged services and edges identical between frames, so memoized
+ * cards and layers downstream only redo the entities that actually moved.
+ */
 export function buildGraph(
   topo: Topology,
-  opts: { mergedTeams: number[]; teamGrouping?: boolean },
+  opts: { mergedTeams: number[]; teamGrouping?: boolean; prev?: Graph | null },
 ): Graph {
+  const prevNodes = new Map((opts.prev?.nodes ?? []).map((n) => [n.key, n]));
+  const prevEdges = new Map((opts.prev?.edges ?? []).map((e) => [e.key, e]));
   const teamGrouping = opts.teamGrouping ?? true;
   const teamName = new Map(topo.teams.map((t) => [t.id, t.name]));
   const nameOfTeam = (teamId: number | null): string | null =>
@@ -85,6 +101,11 @@ export function buildGraph(
       arr.push(svc);
       groups.set(svc.teamId as number, arr);
     } else {
+      const was = prevNodes.get(svc.id);
+      if (was && was.service === svc && was.teamName === nameOfTeam(svc.teamId)) {
+        nodes.push(was);
+        continue;
+      }
       nodes.push({
         key: svc.id,
         kind: 'service',
@@ -106,10 +127,16 @@ export function buildGraph(
   }
 
   for (const [teamId, members] of groups) {
+    const was = prevNodes.get(groupKey(teamId));
+    const wasMembers = was ? groupMembers.get(was) : undefined;
+    if (was && wasMembers && sameList(wasMembers, members) && was.label === (teamName.get(teamId) ?? `team ${teamId}`)) {
+      nodes.push(was);
+      continue;
+    }
     const rps = members.reduce((a, m) => a + m.metrics.rps, 0);
     const errW = members.reduce((a, m) => a + (m.metrics.errPct / 100) * m.metrics.rps, 0);
     const p95s = members.map((m) => m.metrics.p95).filter((v): v is number => v != null);
-    nodes.push({
+    const group: GraphNode = {
       key: groupKey(teamId),
       kind: 'group',
       teamId,
@@ -123,44 +150,69 @@ export function buildGraph(
       stale: members.every((m) => m.metrics.stale),
       isExternal: false,
       memberIds: members.map((m) => m.id),
-    });
+    };
+    groupMembers.set(group, members);
+    nodes.push(group);
   }
 
-  const edgeAgg = new Map<string, GraphEdge>();
+  // bucket the raw edges per rendered edge first, so an unchanged bucket can
+  // reuse last build's aggregate
+  const buckets = new Map<string, { sourceKey: string; targetKey: string; list: TopologyEdge[] }>();
   for (const e of topo.edges) {
     const sourceKey = nodeKeyOf(e.source);
     const targetKey = nodeKeyOf(e.target);
     if (sourceKey === targetKey) continue; // internal to a group
     const key = `${sourceKey}=>${targetKey}`;
-    const cur = edgeAgg.get(key);
-    if (!cur) {
-      edgeAgg.set(key, {
-        key,
-        sourceKey,
-        targetKey,
-        status: e.status,
-        rps: e.metrics.rps,
-        p95: e.metrics.p95,
-        errPct: e.metrics.errPct,
-        stale: e.metrics.stale,
-        confidence: e.confidence,
-        samples: e.samples,
-        underlying: [e],
-      });
-    } else {
-      const rps = cur.rps + e.metrics.rps;
-      const errW = (cur.errPct / 100) * cur.rps + (e.metrics.errPct / 100) * e.metrics.rps;
-      cur.rps = rps;
-      cur.errPct = rps > 0 ? (errW / rps) * 100 : 0;
-      cur.p95 =
-        cur.p95 == null ? e.metrics.p95 : e.metrics.p95 == null ? cur.p95 : Math.max(cur.p95, e.metrics.p95);
-      cur.status = worst([cur.status, e.status]);
-      cur.stale = cur.stale && e.metrics.stale;
-      cur.confidence = Math.min(cur.confidence, e.confidence);
-      cur.samples += e.samples;
-      cur.underlying.push(e);
-    }
+    const b = buckets.get(key);
+    if (b) b.list.push(e);
+    else buckets.set(key, { sourceKey, targetKey, list: [e] });
   }
 
-  return { nodes, edges: [...edgeAgg.values()], nodeKeyOf };
+  const edges: GraphEdge[] = [];
+  for (const [key, { sourceKey, targetKey, list }] of buckets) {
+    const was = prevEdges.get(key);
+    if (was && sameList(was.underlying, list)) {
+      edges.push(was);
+      continue;
+    }
+    let cur: GraphEdge | null = null;
+    for (const e of list) {
+      if (!cur) {
+        cur = {
+          key,
+          sourceKey,
+          targetKey,
+          status: e.status,
+          rps: e.metrics.rps,
+          p95: e.metrics.p95,
+          errPct: e.metrics.errPct,
+          stale: e.metrics.stale,
+          confidence: e.confidence,
+          samples: e.samples,
+          underlying: [e],
+        };
+      } else {
+        const rps = cur.rps + e.metrics.rps;
+        const errW = (cur.errPct / 100) * cur.rps + (e.metrics.errPct / 100) * e.metrics.rps;
+        cur.rps = rps;
+        cur.errPct = rps > 0 ? (errW / rps) * 100 : 0;
+        cur.p95 =
+          cur.p95 == null ? e.metrics.p95 : e.metrics.p95 == null ? cur.p95 : Math.max(cur.p95, e.metrics.p95);
+        cur.status = worst([cur.status, e.status]);
+        cur.stale = cur.stale && e.metrics.stale;
+        cur.confidence = Math.min(cur.confidence, e.confidence);
+        cur.samples += e.samples;
+        cur.underlying.push(e);
+      }
+    }
+    edges.push(cur as GraphEdge);
+  }
+
+  const prev = opts.prev;
+  if (prev && sameList(prev.nodes, nodes) && sameList(prev.edges, edges)) return prev;
+  return {
+    nodes: prev && sameList(prev.nodes, nodes) ? prev.nodes : nodes,
+    edges: prev && sameList(prev.edges, edges) ? prev.edges : edges,
+    nodeKeyOf,
+  };
 }

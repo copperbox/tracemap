@@ -24,9 +24,17 @@ export function buildFrameViews(
   posOf: (key: string) => Pos | undefined,
   dimmed: (key: string) => boolean,
 ): FrameView[] {
+  // bucket once: a per-team filter over every node is quadratic at fleet scale
+  const byTeam = new Map<number, GraphNode[]>();
+  for (const n of nodes) {
+    if (n.kind !== 'service' || n.teamId == null) continue;
+    const arr = byTeam.get(n.teamId);
+    if (arr) arr.push(n);
+    else byTeam.set(n.teamId, [n]);
+  }
   return teams.flatMap((t) => {
-    const members = nodes.filter((n) => n.kind === 'service' && n.teamId === t.id);
-    if (!members.length) return [];
+    const members = byTeam.get(t.id);
+    if (!members) return [];
     const b = nodeCardBounds(members.map((m) => posOf(m.key)));
     if (!b) return [];
     return [

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutGraph } from './layout';
+import { layoutGraph, NODE_H, NODE_W } from './layout';
 
 describe('layoutGraph', () => {
   it('places leaf dependencies at the top (layer 0) and callers below', () => {
@@ -138,5 +138,52 @@ describe('layoutGraph', () => {
     for (const k of keys) {
       expect(b.pos.get(k)).toEqual(a.pos.get(k));
     }
+  });
+
+  describe('wrapAspect', () => {
+    // one wide layer: 200 independent leaves
+    const keys = Array.from({ length: 200 }, (_, i) => `n${String(i).padStart(3, '0')}`);
+    const deps = new Map<string, string[]>();
+
+    it('leaves a layout that fits the minimum row width unwrapped', () => {
+      const few = keys.slice(0, 10);
+      const plain = layoutGraph({ keys: few, deps });
+      const wrapped = layoutGraph({ keys: few, deps, wrapAspect: 1.6 });
+      expect(wrapped.bbox).toEqual(plain.bbox);
+    });
+
+    it('packs a wide layer into rows close to the target aspect', () => {
+      const { bbox } = layoutGraph({ keys, deps, wrapAspect: 1.6 });
+      const aspect = (bbox.x1 - bbox.x0) / (bbox.y1 - bbox.y0);
+      expect(aspect).toBeGreaterThan(1.2);
+      expect(aspect).toBeLessThan(2.4);
+    });
+
+    it('never overlaps two nodes', () => {
+      const { pos } = layoutGraph({ keys, deps, wrapAspect: 1.6 });
+      const all = [...pos.values()];
+      for (let i = 0; i < all.length; i++) {
+        for (let j = i + 1; j < all.length; j++) {
+          const a = all[i];
+          const b = all[j];
+          const overlap = a.x < b.x + NODE_W && b.x < a.x + NODE_W && a.y < b.y + NODE_H && b.y < a.y + NODE_H;
+          expect(overlap).toBe(false);
+        }
+      }
+    });
+
+    it('keeps dependencies before their callers in reading order when wrapping', () => {
+      // 150 leaves called by 150 callers: two layers, both wider than a row
+      const leaves = keys.slice(0, 150);
+      const callers = leaves.map((k) => `c-${k}`);
+      const d = new Map(callers.map((c, i) => [c, [leaves[i]]]));
+      const { pos } = layoutGraph({ keys: [...leaves, ...callers], deps: d, wrapAspect: 1.6 });
+      const at = (k: string) => pos.get(k) as { x: number; y: number };
+      for (let i = 0; i < callers.length; i++) {
+        const leaf = at(leaves[i]);
+        const caller = at(callers[i]);
+        expect(caller.y > leaf.y || (caller.y === leaf.y && caller.x > leaf.x)).toBe(true);
+      }
+    });
   });
 });

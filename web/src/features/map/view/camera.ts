@@ -11,15 +11,19 @@ export const LABEL_MIN_K = 0.5;
 // the node's labels are legible. Centering never zooms OUT past this, only in.
 export const CENTER_MIN_K = 0.9;
 
-// Hard ceiling shared with usePanZoom's wheel/button zoom clamp.
-const MAX_K = 2.4;
+// Hard zoom limits shared with usePanZoom's wheel/button zoom clamp. The floor
+// sits below the fit of a fully expanded 5,000-service fleet (about 0.045 on a
+// desktop viewport) so "Fit" can always show everything.
+export const ZOOM_MIN_K = 0.03;
+export const ZOOM_MAX_K = 2.4;
+const MAX_K = ZOOM_MAX_K;
 
 // Padding (screen px) and zoom clamp used when fitting bounds to the canvas.
 // Shared by usePanZoom.fitBounds and the focus-cone legibility check so both
 // agree on the zoom a given bounding box would land at.
 export const FIT_PAD_X = 120;
 export const FIT_PAD_Y = 150;
-export const FIT_MIN_K = 0.12;
+export const FIT_MIN_K = ZOOM_MIN_K;
 export const FIT_MAX_K = 1.1;
 
 /**
@@ -57,4 +61,9 @@ export function centerTransform(
   const cy = (b.y0 + b.y1) / 2;
   // screen = world * k + t  =>  put (cx, cy) at the center of the visible area.
   return { k, tx: availW / 2 - cx * k, ty: viewH / 2 - cy * k };
+}
+
+/** Clamp a zoom factor to the reachable range. */
+export function clampZoom(k: number): number {
+  return Math.max(ZOOM_MIN_K, Math.min(ZOOM_MAX_K, k));
 }

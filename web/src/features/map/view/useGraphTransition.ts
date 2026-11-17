@@ -7,6 +7,9 @@ import { ANIM_MS, easeOut } from './animation';
 // the glide and snap. Team toggles (a team's worth of services, <= ~13) stay
 // animated; isolate enter/exit and merge-all (most of the graph) snap.
 const WHOLESALE_CHURN = 24;
+// Above this many nodes every transition snaps: each animation frame re-renders
+// the map and recomputes edge geometry, which a large fleet cannot do at 60 fps.
+const ANIMATE_MAX_NODES = 1500;
 
 /**
  * ---- structural transition animation ----
@@ -86,7 +89,7 @@ export function useGraphTransition(
       // (≈100 cards mounting while every card re-renders each of ~25 frames), so
       // snap straight to the target instead. Small team toggles still animate.
       const churn = tr.appear.size + tr.ghosts.length;
-      if (churn > WHOLESALE_CHURN) {
+      if (churn > WHOLESALE_CHURN || graph.nodes.length > ANIMATE_MAX_NODES) {
         finishAnim();
       } else if (tr.from.size || tr.appear.size || tr.ghosts.length) {
         startAnim(tr);

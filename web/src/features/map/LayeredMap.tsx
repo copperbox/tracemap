@@ -1,24 +1,29 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '../../state/store';
 import { ARROW } from '../../lib/format';
 import { LABEL_ZOOM_FACTOR } from '../../lib/preferences';
-import { buildGraph, groupKey, type GraphEdge, type GraphNode } from '../../lib/grouping';
+import { buildGraph, groupKey, type Graph, type GraphEdge, type GraphNode } from '../../lib/grouping';
 import { GROUP_H, GROUP_W, NODE_H, NODE_W } from '../../lib/layout';
-import { layoutClusteredGraph } from '../../lib/clusterLayout';
-import { computeEdgeGeometries } from '../../lib/edgeGeometry';
-import { NodeCard } from './NodeCard';
-import { TeamFrameBar, TeamFrameBox } from './TeamFrame';
+import { FRAME_TITLE_H, layoutClusteredGraph } from '../../lib/clusterLayout';
+import {
+  computeEdgeGeometryState,
+  updateEdgeGeometryState,
+  type EdgeGeometry,
+  type EdgeInput,
+  type GeometryState,
+} from '../../lib/edgeGeometry';
+import { NodeCard, NOOP_CARD_HANDLERS, type CardHandlers } from './NodeCard';
+import { TeamFrameBar, type FrameHandlers } from './TeamFrame';
 import { MapDrawer } from './MapDrawer';
 import { EdgeLabelLayer } from './view/EdgeLabelLayer';
-import { EdgeLayer } from './view/EdgeLayer';
 import { GraphModeToggle } from './view/GraphModeToggle';
 import { Legend } from './view/Legend';
 import { PacketCanvas } from './view/PacketCanvas';
 import { TeamChips } from './view/TeamChips';
 import { ZoomControls } from './view/ZoomControls';
 import { buildEdgeViews } from './view/edgeViews';
-import { dotAlphaScale } from './view/dotGrid';
+import { DOT_PITCH, dotAlphaScale, dotTilePx } from './view/dotGrid';
 import { buildDimmer } from './view/dimming';
 import { computeFocusSet } from './view/focusSet';
 import { isolateGraph } from './view/isolateGraph';
@@ -26,22 +31,48 @@ import { IsolateBanner } from './view/IsolateBanner';
 import { ZoomHint } from './view/ZoomHint';
 import { LABEL_MIN_K, fitZoom } from './view/camera';
 import { nodeCardBounds } from './view/nodeBounds';
-import { buildFrameViews } from './view/frameViews';
+import { buildFrameViews, type FrameView } from './view/frameViews';
 import { clearPinnedPositions, loadPinnedPositions, type NodePositions } from './view/pinnedPositions';
 import { useGraphTransition } from './view/useGraphTransition';
 import { useMergeHandoff } from './view/useMergeHandoff';
 import { useNodeDrag } from './view/useNodeDrag';
-import { usePanZoom } from './view/usePanZoom';
-import { rectsOverlap, visibleWorldRect } from './view/viewport';
+import { applyBackdrop, usePanZoom, type Transform } from './view/usePanZoom';
+import { needsRecull, rectsOverlap, visibleWorldRect, type WorldRect } from './view/viewport';
+import { canvasLabelsOn, cardsCompact, chooseLod, type MapLod } from './view/lod';
+import { FRAME_LABEL_PX, drawMap, readPalette, type CanvasScene, type MapPalette } from './view/mapCanvas';
+import { hitEdge, hitRect, type RectItem } from './view/hitTest';
+import { useEffectiveMergedTeams } from './view/autoCollapse';
 import styles from './MapView.module.css';
 
-// Screen-pixel buffer kept around the viewport when culling: just-offscreen
-// nodes/edges stay mounted so a small pan doesn't pop them in and out.
-const CULL_MARGIN = 320;
+// Screen-pixel buffer kept around the viewport when choosing which cards to
+// mount: a pan within it costs no React render, and leaving it re-mounts.
+const CULL_PAD_PX = 140;
+
+// Pointer tolerance for edges, in screen px (converted to world units per zoom).
+const EDGE_HIT_PX = 6;
 
 // Drawer width (keep in step with MapDrawer.module.css .drawer width). The
 // selection auto-center reserves it so the chosen node lands clear of the drawer.
 const DRAWER_W = 352;
+
+const EMPTY_GRAPH: Graph = { nodes: [], edges: [], nodeKeyOf: (id: string) => id };
+
+const widthOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_W : NODE_W);
+const heightOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_H : NODE_H);
+
+const sameKeys = (a: { key: string }[], b: { key: string }[]): boolean =>
+  a === b || (a.length === b.length && a.every((x, i) => x.key === b[i].key));
+
+/** What the mounted DOM layer was last built for. */
+interface ViewState {
+  rect: WorldRect;
+  k: number;
+  lod: MapLod;
+  compact: boolean;
+  canvasLabels: boolean;
+}
+
+type Hit = { kind: 'node'; node: GraphNode } | { kind: 'frame'; frame: FrameView } | { kind: 'edge'; key: string };
 
 /** Layered dependency-flow view of the service map (the default graph type). */
 export function LayeredMap() {
@@ -57,26 +88,27 @@ export function LayeredMap() {
   const search = useStore((s) => s.search);
   const teamFilter = useStore((s) => s.teamFilter);
   const setTeamFilter = useStore((s) => s.setTeamFilter);
-  const mergedTeams = useStore((s) => s.mergedTeams);
+  const storeMergedTeams = useStore((s) => s.mergedTeams);
   const toggleTeamMerged = useStore((s) => s.toggleTeamMerged);
   const setMergedTeams = useStore((s) => s.setMergedTeams);
   const navigate = useStore((s) => s.navigate);
-  const tick = useStore((s) => s.tick);
   const graphType = useStore((s) => s.graphType);
   const setGraphType = useStore((s) => s.setGraphType);
   const labelZoom = useStore((s) => s.labelZoom);
   const teamGrouping = useStore((s) => s.teamGrouping);
+  const theme = useStore((s) => s.theme);
 
   // Effective label threshold: the tuned default scaled by the user preference
   // ('always' zeroes it out, so labels never hide).
   const labelMinK = LABEL_MIN_K * LABEL_ZOOM_FACTOR[labelZoom];
 
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn } = usePanZoom(canvasRef);
+  const worldRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLCanvasElement>(null);
+  const { tfRef, subscribe, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn, panBy } = usePanZoom(canvasRef);
 
-  // Canvas size in CSS px, used to cull the world to the visible viewport.
-  // Defaults to the window so the first paint (before the observer fires)
-  // errs toward rendering everything rather than culling too aggressively.
+  // Canvas size in CSS px. Defaults to the window so the first paint (before
+  // the observer fires) errs toward mounting more rather than less.
   const [viewport, setViewport] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
   useEffect(() => {
     const el = canvasRef.current;
@@ -94,13 +126,27 @@ export function LayeredMap() {
   const [pinned, setPinned] = useState<NodePositions>(loadPinnedPositions);
   const { beginDrag, wasNodeDrag } = useNodeDrag(tfRef, setPinned);
 
-  const fullGraph = useMemo(
-    () =>
-      topology
-        ? buildGraph(topology, { mergedTeams, teamGrouping })
-        : { nodes: [] as GraphNode[], edges: [] as GraphEdge[], nodeKeyOf: (id: string) => id },
-    [topology, mergedTeams, teamGrouping],
-  );
+  // Large fleets start with teams collapsed; a selected or isolated service
+  // inside a collapsed team expands it.
+  const mergedTeams = useEffectiveMergedTeams({
+    topology,
+    mergedTeams: storeMergedTeams,
+    setMergedTeams,
+    selection,
+    isolateId,
+    teamFilter,
+  });
+
+  // Unchanged services and edges keep their graph objects between frames, so
+  // memoized cards skip everything that did not change.
+  const prevGraphRef = useRef<Graph | null>(null);
+  const fullGraph = useMemo(() => {
+    const g = topology
+      ? buildGraph(topology, { mergedTeams, teamGrouping, prev: prevGraphRef.current })
+      : EMPTY_GRAPH;
+    prevGraphRef.current = g;
+    return g;
+  }, [topology, mergedTeams, teamGrouping]);
 
   // Isolation prunes the graph to one dependency tree BEFORE layout, so the
   // whole pipeline (layout, culling, edges, drawer) only ever sees the subtree.
@@ -122,23 +168,28 @@ export function LayeredMap() {
   }, [isolated, isolateId, fullGraph]);
 
   // The layout must only depend on the graph's STRUCTURE. Metrics refresh
-  // every poll (and the edge rows arrive in arbitrary order), so keying the
-  // memo on a sorted structural signature stops nodes drifting on their own.
-  const layoutSig = useMemo(
-    () =>
+  // every frame, so the memo is keyed on a sorted structural signature. The
+  // sort is skipped when the key lists match the last graph's in order (the
+  // common case: a metrics-only frame).
+  const sigRef = useRef<{ nodes: GraphNode[]; edges: GraphEdge[]; grouping: boolean; sig: string } | null>(null);
+  const layoutSig = useMemo(() => {
+    const prev = sigRef.current;
+    if (prev && prev.grouping === teamGrouping && sameKeys(prev.nodes, graph.nodes) && sameKeys(prev.edges, graph.edges)) {
+      sigRef.current = { ...prev, nodes: graph.nodes, edges: graph.edges };
+      return prev.sig;
+    }
+    const sig =
       (teamGrouping ? 'grouped#' : 'flat#') +
       [...graph.nodes.map((n) => n.key)].sort().join('|') +
       '#' +
-      [...graph.edges.map((e) => e.key)].sort().join('|'),
-    [graph, teamGrouping],
-  );
+      [...graph.edges.map((e) => e.key)].sort().join('|');
+    sigRef.current = { nodes: graph.nodes, edges: graph.edges, grouping: teamGrouping, sig };
+    return sig;
+  }, [graph, teamGrouping]);
 
-  // The layout is a pure function of structure (layoutSig), but a plain useMemo
-  // only retains the LAST signature -- so every isolate enter/exit recomputed the
-  // full 118-node layout from scratch (layoutClusteredGraph runs the layered DAG
-  // solver ~once per team), a ~350ms main-thread stall on exit. Cache results by
-  // signature so returning to a structure already seen (the full graph, on exit)
-  // is instant. Bounded so a long session of merges/isolations stays small.
+  // Layout results cached by signature, so returning to a structure already
+  // seen (the full graph, on isolate exit) is instant. Bounded so a long
+  // session of merges/isolations stays small.
   const layoutCache = useRef(new Map<string, ReturnType<typeof layoutClusteredGraph>>());
   const layout = useMemo(() => {
     const cache = layoutCache.current;
@@ -169,7 +220,7 @@ export function LayeredMap() {
     [pinned, layout],
   );
 
-  const toggleMerge = useMergeHandoff({
+  const toggleMergeInPlace = useMergeHandoff({
     graph,
     layout,
     pinned,
@@ -178,6 +229,28 @@ export function LayeredMap() {
     setPinned,
     toggleTeamMerged,
   });
+
+  // A large layout is packed in rows, so expanding or collapsing one team
+  // reflows the clusters after it. Keep the toggled team where it was on
+  // screen: remember its top-left, and pan by however far the layout moved it.
+  const anchorRef = useRef<{ teamId: number; x: number; y: number } | null>(null);
+  const teamBounds = (teamId: number) =>
+    nodeCardBounds(graph.nodes.filter((n) => n.teamId === teamId).map((n) => posOf(n.key)));
+  const toggleMerge = (teamId: number): void => {
+    const b = teamBounds(teamId);
+    anchorRef.current = b ? { teamId, x: b.x0, y: b.y0 } : null;
+    toggleMergeInPlace(teamId);
+  };
+  useLayoutEffect(() => {
+    const a = anchorRef.current;
+    if (!a) return;
+    anchorRef.current = null;
+    const b = teamBounds(a.teamId);
+    if (!b) return;
+    const k = tfRef.current.k;
+    if (b.x0 !== a.x || b.y0 !== a.y) panBy((a.x - b.x0) * k, (a.y - b.y0) * k);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per new layout
+  }, [layout]);
 
   const { animRef, animating, eased, displayPos, finishAnim } = useGraphTransition(graph, layoutSig, posOf);
 
@@ -195,9 +268,7 @@ export function LayeredMap() {
     }
   }, [graph, fitView]);
 
-  // Entering or leaving isolation reframes the map onto the new (much smaller,
-  // or restored full) layout. fitView's deps already include the recomputed
-  // layout, so by the time this effect runs the bbox is the isolated one. Skips
+  // Entering or leaving isolation reframes the map onto the new layout. Skips
   // the initial mount so a deep-linked isolated load uses the first-data fit.
   const prevIsolateRef = useRef(isolateId);
   useEffect(() => {
@@ -206,10 +277,8 @@ export function LayeredMap() {
     fitView();
   }, [isolateId, fitView]);
 
-  // Toggling team grouping swaps the layout algorithm (clustered frames <->
-  // flat team-agnostic flow), a wholesale re-flow of the whole map. Reframe onto
-  // the freshly computed layout so the new arrangement is visible immediately.
-  // Skips the initial mount (first-data fit handles that).
+  // Toggling team grouping swaps the layout algorithm, a wholesale re-flow of
+  // the whole map: reframe onto it. Skips the initial mount.
   const prevGroupingRef = useRef(teamGrouping);
   useEffect(() => {
     if (prevGroupingRef.current === teamGrouping) return;
@@ -218,14 +287,13 @@ export function LayeredMap() {
   }, [teamGrouping, fitView]);
 
   // Drop a stale isolate id (e.g. a deep link to a service that no longer
-  // exists, or one swallowed by a merged team) so the URL and map agree. Guard
-  // on a loaded graph: before data arrives isolateGraph also returns the full
-  // (empty) graph, and clearing then would wipe a valid deep link.
+  // exists) so the URL and map agree. Guard on a loaded graph: before data
+  // arrives isolateGraph also returns the full (empty) graph.
   useEffect(() => {
     if (isolateId && fullGraph.nodes.length && graph === fullGraph) setIsolate(null);
   }, [isolateId, fullGraph, graph, setIsolate]);
 
-  const wasDrag = () => wasPan() || wasNodeDrag();
+  const wasDrag = useCallback(() => wasPan() || wasNodeDrag(), [wasPan, wasNodeDrag]);
 
   // ---- dimming (focus, search, team filter) ----
   const focus = useMemo(() => computeFocusSet(focusId, graph), [focusId, graph]);
@@ -240,14 +308,9 @@ export function LayeredMap() {
   const selNodeKey =
     selection?.kind === 'node' ? selection.id : selection?.kind === 'group' ? groupKey(selection.teamId) : null;
 
-  const widthOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_W : NODE_W);
-  const heightOf = (n: GraphNode) => (n.kind === 'group' ? GROUP_H : NODE_H);
-
   // Zoom the camera onto the focus cone when Focus is switched on, and back to
-  // the full layout when it's cleared. First-load and isolate fits are handled
-  // by the effects above; this gives focus mode (which dims rather than prunes)
-  // the same legible reframing isolation already gets. Guarded on focusId so a
-  // metrics poll (which changes posOf/focus) never re-runs the fit.
+  // the full layout when it's cleared. Guarded on focusId so a metrics frame
+  // (which changes posOf/focus) never re-runs the fit.
   const prevFocusRef = useRef(focusId);
   useEffect(() => {
     if (prevFocusRef.current === focusId) return;
@@ -259,10 +322,8 @@ export function LayeredMap() {
     if (!focus) return;
     const box = nodeCardBounds([...focus.nodes].map((k) => posOf(k)));
     if (!box) return;
-    // If the whole cone fits at a readable zoom, frame it. In a layered DAG the
-    // cone usually spans the gateway layer down to datastores, so fitting it
-    // would shrink to specks -- in that case keep the focused node centered and
-    // legible (its cone stays highlighted and pannable) instead.
+    // If the whole cone fits at a readable zoom, frame it; otherwise keep the
+    // focused node centered and legible (its cone stays highlighted).
     if (fitZoom(box, viewport.w, viewport.h) >= labelMinK) {
       fitBounds(box);
       return;
@@ -275,14 +336,12 @@ export function LayeredMap() {
     } else {
       fitBounds(box);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reframe once per focus change; posOf/nodeById churn each poll
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reframe once per focus change; posOf/nodeById churn each frame
   }, [focusId, fitView, fitBounds, centerOn, viewport]);
 
   // Bring a freshly selected node/group to the centre of the visible map (clear
-  // of the drawer) at a legible zoom -- so clicking, searching to, or deep
-  // linking a service actually shows it instead of leaving it a speck. Keyed on
-  // the selected key so it fires once per selection, not on every poll. Edge
-  // selections are left alone; their focus/isolate actions reframe instead.
+  // of the drawer) at a legible zoom. Keyed on the selected key so it fires
+  // once per selection, not on every frame. Edge selections are left alone.
   const prevSelRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selNodeKey) {
@@ -290,206 +349,502 @@ export function LayeredMap() {
       return;
     }
     if (prevSelRef.current === selNodeKey) return;
-    prevSelRef.current = selNodeKey;
     const n = nodeById.get(selNodeKey);
     const p = posOf(selNodeKey);
     if (!n || !p) return;
+    prevSelRef.current = selNodeKey;
     centerOn({ x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) }, { rightInset: DRAWER_W });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- center once per selection; posOf/nodeById churn each poll
-  }, [selNodeKey, centerOn]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- center once per selection; posOf/nodeById churn each frame
+  }, [selNodeKey, centerOn, nodeById]);
 
-  // ---- edge geometry + labels ----
-  // Anchor sides come from the nodes' actual relative positions (the grouped
-  // graph is cyclic and users can drag nodes anywhere, so fixed bottom->top
-  // anchoring would lie about direction). The path runs dependency ->
-  // dependent so the dash/packet animations show data flowing INTO the
-  // dependent, where the arrowhead sits.
-  const geoms = computeEdgeGeometries(
-    graph.edges.map((e) => ({ key: e.key, fromKey: e.targetKey, toKey: e.sourceKey })),
-    (key) => {
+  // ---- edge geometry + views ----
+  // Anchor sides come from the nodes' actual relative positions. The path runs
+  // dependency -> dependent so packets flow INTO the dependent, where the
+  // arrowhead sits. Geometry depends on structure and positions only, so a
+  // metrics frame reuses it.
+  const edgeInputs = useMemo<EdgeInput[]>(
+    () => graph.edges.map((e) => ({ key: e.key, fromKey: e.targetKey, toKey: e.sourceKey })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- edge keys are fixed for a structure
+    [layoutSig],
+  );
+  // While a drag only moves pinned nodes, rebuild just the edges around them.
+  const geomRef = useRef<{ sig: string; layout: unknown; pinned: NodePositions; state: GeometryState } | null>(null);
+  const geoms = useMemo(() => {
+    const rectOf = (key: string) => {
       const p = displayPos(key);
       const n = nodeById.get(key);
       return p && n ? { x: p.x, y: p.y, w: widthOf(n), h: heightOf(n) } : undefined;
-    },
+    };
+    const prev = geomRef.current;
+    let state: GeometryState | null = null;
+    if (prev && prev.sig === layoutSig && prev.layout === layout && !animating && prev.pinned !== pinned) {
+      const moved = new Set<string>();
+      for (const k of Object.keys(pinned)) if (pinned[k] !== prev.pinned[k]) moved.add(k);
+      for (const k of Object.keys(prev.pinned)) if (!(k in pinned)) moved.add(k);
+      if (moved.size <= 64) state = updateEdgeGeometryState(prev.state, edgeInputs, rectOf, moved);
+    }
+    state ??= computeEdgeGeometryState(edgeInputs, rectOf);
+    geomRef.current = { sig: layoutSig, layout, pinned, state };
+    return state.geoms;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on structure + positions by design
+  }, [layoutSig, displayPos]);
+  const edgeViews = useMemo(
+    () =>
+      buildEdgeViews(graph.edges, geoms, {
+        dimmed,
+        focusEdges: focus?.edges ?? null,
+        selEdgeKey,
+        hoverEdge,
+        fadeInOf: (key) => (animating && animRef.current?.newEdges.has(key) ? eased : 1),
+      }),
+    [graph.edges, geoms, dimmed, focus, selEdgeKey, hoverEdge, animating, eased, animRef],
   );
-  const edgeViews = buildEdgeViews(graph.edges, geoms, {
-    dimmed,
-    focusEdges: focus?.edges ?? null,
-    selEdgeKey,
-    hoverEdge,
-    fadeInOf: (key) => (animating && animRef.current?.newEdges.has(key) ? eased : 1),
-  });
 
-  const teams = topology?.teams ?? [];
+  const teams = useMemo(() => topology?.teams ?? [], [topology?.teams]);
   const allMerged = teams.length > 0 && teams.every((t) => mergedTeams.includes(t.id));
 
   // Ownership frames are the visual half of team grouping; with grouping off
   // the map draws bare service cards (each labelled with its team) and no frames.
-  const frameViews = teamGrouping ? buildFrameViews(teams, graph.nodes, displayPos, dimmed) : [];
+  const frameViews = useMemo(
+    () => (teamGrouping ? buildFrameViews(teams, graph.nodes, displayPos, dimmed) : []),
+    [teamGrouping, teams, graph.nodes, displayPos, dimmed],
+  );
 
-  // ---- viewport culling ----
-  // Edge geometry and anchor spreading stay computed over the FULL graph above
-  // (so anchors don't shift as the visible set changes); only the DOM/SVG layers
-  // below are trimmed to what's on screen. This is what makes zooming in cheap:
-  // paint, hit-testing and the per-edge flow animation all scale with the number
-  // of mounted elements, not the graph size.
-  const visRect = useMemo(
-    () => visibleWorldRect(tf, viewport.w, viewport.h, CULL_MARGIN),
-    [tf, viewport],
-  );
-  const visibleEdgeViews = edgeViews.filter((v) => {
-    const s = displayPos(v.e.sourceKey);
-    const t = displayPos(v.e.targetKey);
-    if (!s || !t) return false;
-    return rectsOverlap(visRect, {
-      x0: Math.min(s.x, t.x),
-      y0: Math.min(s.y, t.y),
-      x1: Math.max(s.x, t.x) + NODE_W,
-      y1: Math.max(s.y, t.y) + NODE_H,
-    });
-  });
-  const visibleFrames = frameViews.filter((f) =>
-    rectsOverlap(visRect, { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + f.h }),
-  );
-  const nodeVisible = (key: string, w: number, h: number): boolean => {
-    const p = displayPos(key);
-    return p != null && rectsOverlap(visRect, { x0: p.x, y0: p.y, x1: p.x + w, y1: p.y + h });
+  // ---- level of detail + culling window ----
+  // React state changes only when the level of detail, the label mode, or the
+  // mounted window changes; every other camera move is applied imperatively.
+  const [view, setView] = useState<ViewState | null>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const lod: MapLod = view?.lod ?? 'canvas';
+
+  // ---- canvas drawing ----
+  const paletteRef = useRef<MapPalette | null>(null);
+  const sceneRef = useRef<Omit<CanvasScene, 'labels'> | null>(null);
+  const hoverNodeRef = useRef<string | null>(null);
+  const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
+  sceneRef.current = {
+    drawNodes: lod === 'canvas',
+    frameTitles: lod === 'canvas',
+    nodes: graph.nodes,
+    posOf: displayPos,
+    dimmed,
+    selKey: selNodeKey,
+    hoverKey: lod === 'canvas' ? hoverNodeRef.current : null,
+    frames: frameViews,
+    edges: edgeViews,
   };
 
-  // Too far out to read card text: render cards as clean status nodes and show
-  // the "zoom in" hint, so the overview reads as intentional, not a broken blur.
-  // Never applied while isolated: isolation is the deliberate "make this tree
-  // legible" mode, so its labels stay on even when a deep tree fits below the
-  // threshold (e.g. dynamo-bff fits ~0.44) -- hiding them there defeats the point.
-  const labelsHidden = tf.k < labelMinK && !isolated;
+  const drawNow = useCallback(() => {
+    const cv = surfaceRef.current;
+    const ctx = cv?.getContext('2d');
+    const scene = sceneRef.current;
+    if (!cv || !ctx || !scene) return;
+    paletteRef.current ??= readPalette();
+    const tf = tfRef.current;
+    const { w, h, dpr } = sizeRef.current;
+    const labels = canvasLabelsOn(tf.k, labelMinKRef.current, isolatedRef.current);
+    drawMap(ctx, { ...scene, hoverKey: scene.drawNodes ? hoverNodeRef.current : null, labels }, tf, w, h, dpr, paletteRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reads refs only
+  }, []);
+  const labelMinKRef = useRef(labelMinK);
+  labelMinKRef.current = labelMinK;
+  const isolatedRef = useRef(isolated);
+  isolatedRef.current = isolated;
+
+  const rafRef = useRef(0);
+  const scheduleDraw = useCallback(() => {
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      drawNow();
+    });
+  }, [drawNow]);
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    },
+    [],
+  );
+
+  // Every committed render repaints synchronously, before the browser paints,
+  // so a level-of-detail switch swaps canvas nodes for cards in one frame.
+  const markedRef = useRef(false);
+  useLayoutEffect(() => {
+    drawNow();
+    // one user-timing mark for the first frame with data, so time to first
+    // usable map can be measured from outside (scale checks, devtools)
+    if (!markedRef.current && graph.nodes.length && viewRef.current) {
+      markedRef.current = true;
+      performance.mark('tracemap:map-first-draw');
+    }
+  });
+
+  // Canvas backing store follows the element size and device pixel ratio.
+  useLayoutEffect(() => {
+    const cv = surfaceRef.current;
+    if (!cv) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.max(1, Math.round(viewport.w * dpr));
+    cv.height = Math.max(1, Math.round(viewport.h * dpr));
+    sizeRef.current = { w: viewport.w, h: viewport.h, dpr };
+    drawNow();
+  }, [viewport, drawNow]);
+
+  // Theme colors (CSS variables) resolve into the canvas palette.
+  useLayoutEffect(() => {
+    paletteRef.current = readPalette();
+    drawNow();
+  }, [theme, drawNow]);
+
+  // Web fonts arriving late would leave canvas text in the fallback face.
+  useEffect(() => {
+    void document.fonts?.ready.then(() => scheduleDraw());
+  }, [scheduleDraw]);
+
+  // The camera subscriber: move the DOM world and the backdrop, repaint the
+  // canvas on the next frame, and re-render React only on a LOD/window change.
+  const nodeCount = graph.nodes.length;
+  useEffect(() => {
+    const onCamera = (tf: Transform): void => {
+      const world = worldRef.current;
+      if (world) world.style.transform = `translate(${tf.tx}px, ${tf.ty}px) scale(${tf.k})`;
+      const el = canvasRef.current;
+      if (el) {
+        const tile = dotTilePx(tf.k);
+        applyBackdrop(el, tf, tile, dotAlphaScale(tile / DOT_PITCH));
+      }
+      scheduleDraw();
+
+      const cur = viewRef.current;
+      const nextLod = chooseLod(tf.k, nodeCount, cur?.lod ?? 'canvas');
+      const compact = cardsCompact(tf.k, labelMinK, isolated);
+      const canvasLabels = canvasLabelsOn(tf.k, labelMinK, isolated);
+      const visible = visibleWorldRect(tf, viewport.w, viewport.h, 0);
+      const changed =
+        !cur ||
+        cur.lod !== nextLod ||
+        cur.compact !== compact ||
+        cur.canvasLabels !== canvasLabels ||
+        (nextLod === 'cards' && needsRecull(cur, visible, tf.k));
+      if (!changed) return;
+      const next: ViewState = {
+        rect: visibleWorldRect(tf, viewport.w, viewport.h, CULL_PAD_PX),
+        k: tf.k,
+        lod: nextLod,
+        compact,
+        canvasLabels,
+      };
+      viewRef.current = next;
+      setView(next);
+    };
+    onCamera(tfRef.current);
+    return subscribe(onCamera);
+  }, [subscribe, tfRef, scheduleDraw, viewport, nodeCount, labelMinK, isolated]);
+
+  // ---- hit-testing (canvas level of detail, and edges at every level) ----
+  // Built lazily on the first pointer query after a change, so a drag or a
+  // metrics frame does not pay for them.
+  const hitCacheRef = useRef<{ nodes: unknown; pos: unknown; rects: RectItem[] } | null>(null);
+  const nodeRects = (): RectItem[] => {
+    const c = hitCacheRef.current;
+    if (c && c.nodes === graph.nodes && c.pos === displayPos) return c.rects;
+    const rects: RectItem[] = [];
+    for (const n of graph.nodes) {
+      const p = displayPos(n.key);
+      if (p) rects.push({ key: n.key, rect: { x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) } });
+    }
+    hitCacheRef.current = { nodes: graph.nodes, pos: displayPos, rects };
+    return rects;
+  };
+  const curveCacheRef = useRef<{ geoms: unknown; curves: { key: string; curve: EdgeGeometry['curve'] }[] } | null>(null);
+  const edgeCurves = (): { key: string; curve: EdgeGeometry['curve'] }[] => {
+    const c = curveCacheRef.current;
+    if (c && c.geoms === geoms) return c.curves;
+    const curves = [...geoms].map(([key, g]) => ({ key, curve: g.curve }));
+    curveCacheRef.current = { geoms, curves };
+    return curves;
+  };
+
+  const toWorld = (clientX: number, clientY: number): { x: number; y: number } => {
+    const r = canvasRef.current?.getBoundingClientRect();
+    const t = tfRef.current;
+    if (!r) return { x: 0, y: 0 };
+    return { x: (clientX - r.left - t.tx) / t.k, y: (clientY - r.top - t.ty) / t.k };
+  };
+
+  /** Pointer targets owned by the canvas, not by a DOM card or bar. */
+  const onBackground = (target: EventTarget): boolean =>
+    target === canvasRef.current || target === surfaceRef.current || target === worldRef.current;
+
+  const pick = (clientX: number, clientY: number): Hit | null => {
+    const { x, y } = toWorld(clientX, clientY);
+    const k = tfRef.current.k;
+    if (lod === 'canvas') {
+      const key = hitRect(nodeRects(), x, y, 2 / k);
+      const node = key ? nodeById.get(key) : undefined;
+      if (node) return { kind: 'node', node };
+      // the team name above the frame, or the frame's own title band
+      const frame = frameViews.find(
+        (f) => x >= f.x && x <= f.x + f.w && y >= f.y - (FRAME_LABEL_PX + 6) / k && y <= f.y + FRAME_TITLE_H,
+      );
+      if (frame) return { kind: 'frame', frame };
+    }
+    const edge = hitEdge(edgeCurves(), x, y, EDGE_HIT_PX / k);
+    return edge ? { kind: 'edge', key: edge } : null;
+  };
+
+  const startNodeDrag = (e: ReactMouseEvent, node: GraphNode): void => {
+    finishAnim();
+    const tp = posOf(node.key) ?? displayPos(node.key) ?? { x: 0, y: 0 };
+    beginDrag(e, [{ key: node.key, origX: tp.x, origY: tp.y }]);
+  };
+  const startFrameDrag = (e: ReactMouseEvent, memberKeys: string[]): void => {
+    finishAnim();
+    beginDrag(
+      e,
+      memberKeys.map((k) => {
+        const p = posOf(k) ?? { x: 0, y: 0 };
+        return { key: k, origX: p.x, origY: p.y };
+      }),
+    );
+  };
+  const selectNode = (n: GraphNode): void =>
+    select(n.kind === 'group' ? { kind: 'group', teamId: n.teamId as number } : { kind: 'node', id: n.key });
+  const openNode = (n: GraphNode): void => {
+    if (n.kind === 'group') toggleMerge(n.teamId as number);
+    else navigate('service', n.key);
+  };
+
+  // Stable handler objects so memoized cards and bars never re-render just
+  // because this component did.
+  const handlersRef = useRef<{ card: CardHandlers; frame: FrameHandlers } | null>(null);
+  handlersRef.current = {
+    card: {
+      click: (ev, n) => {
+        ev.stopPropagation();
+        if (wasDrag()) return;
+        selectNode(n);
+      },
+      open: openNode,
+      toggleGroup: (n) => toggleMerge(n.teamId as number),
+      dragStart: (ev, n) => {
+        if (ev.button !== 0) return;
+        ev.stopPropagation();
+        startNodeDrag(ev, n);
+      },
+    },
+    frame: {
+      merge: (teamId) => toggleMerge(teamId),
+      dragStart: (ev, teamId) => {
+        if (ev.button !== 0) return;
+        ev.stopPropagation();
+        const f = frameViews.find((x) => x.teamId === teamId);
+        if (f) startFrameDrag(ev, f.memberKeys);
+      },
+    },
+  };
+  const cardHandlers = useMemo<CardHandlers>(
+    () => ({
+      click: (e, n) => handlersRef.current?.card.click(e, n),
+      open: (n) => handlersRef.current?.card.open(n),
+      toggleGroup: (n) => handlersRef.current?.card.toggleGroup(n),
+      dragStart: (e, n) => handlersRef.current?.card.dragStart(e, n),
+    }),
+    [],
+  );
+  const frameHandlers = useMemo<FrameHandlers>(
+    () => ({
+      merge: (t) => handlersRef.current?.frame.merge(t),
+      dragStart: (e, t) => handlersRef.current?.frame.dragStart(e, t),
+    }),
+    [],
+  );
+
+  // ---- pointer on the canvas ----
+  const setHoverClass = (on: boolean): void => {
+    canvasRef.current?.classList.toggle(styles.canvasHover, on);
+  };
+  const hoverRafRef = useRef(0);
+  const hoverEvRef = useRef<{ x: number; y: number; target: EventTarget } | null>(null);
+  const hoverRef = useRef<() => void>(() => {});
+  hoverRef.current = () => {
+    const ev = hoverEvRef.current;
+    if (!ev) return;
+    const hit = onBackground(ev.target) ? pick(ev.x, ev.y) : null;
+    const nodeKey = hit?.kind === 'node' ? hit.node.key : null;
+    if (hoverNodeRef.current !== nodeKey) {
+      hoverNodeRef.current = nodeKey;
+      scheduleDraw();
+    }
+    const edgeKey = hit?.kind === 'edge' ? hit.key : null;
+    if (useStore.getState().hoverEdge !== edgeKey) setHoverEdge(edgeKey);
+    setHoverClass(hit != null);
+  };
+  const onMouseMove = (e: ReactMouseEvent): void => {
+    if (dragging || wasNodeDrag()) return;
+    hoverEvRef.current = { x: e.clientX, y: e.clientY, target: e.target };
+    if (hoverRafRef.current) return;
+    hoverRafRef.current = requestAnimationFrame(() => {
+      hoverRafRef.current = 0;
+      hoverRef.current();
+    });
+  };
+  const clearHover = (): void => {
+    hoverEvRef.current = null;
+    if (hoverNodeRef.current) {
+      hoverNodeRef.current = null;
+      scheduleDraw();
+    }
+    if (useStore.getState().hoverEdge) setHoverEdge(null);
+    setHoverClass(false);
+  };
+  useEffect(() => () => cancelAnimationFrame(hoverRafRef.current), []);
+
+  const onMouseDown = (e: ReactMouseEvent): void => {
+    if (e.button !== 0) return;
+    if (onBackground(e.target)) {
+      const hit = lod === 'canvas' ? pick(e.clientX, e.clientY) : null;
+      if (hit?.kind === 'node') {
+        startNodeDrag(e, hit.node);
+        return;
+      }
+      if (hit?.kind === 'frame') {
+        startFrameDrag(e, hit.frame.memberKeys);
+        return;
+      }
+    }
+    beginPan(e);
+  };
+
+  const onClick = (e: ReactMouseEvent): void => {
+    if (wasDrag()) return;
+    const hit = onBackground(e.target) ? pick(e.clientX, e.clientY) : null;
+    if (hit?.kind === 'node') {
+      selectNode(hit.node);
+    } else if (hit?.kind === 'frame') {
+      // a team at overview zoom: zoom onto it
+      const f = hit.frame;
+      fitBounds({ x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + f.h });
+    } else if (hit?.kind === 'edge') {
+      select({ kind: 'edge', id: hit.key });
+    } else {
+      select(null);
+      setFocus(null);
+    }
+  };
+
+  const onDoubleClick = (e: ReactMouseEvent): void => {
+    if (!onBackground(e.target) || lod !== 'canvas') return;
+    const hit = pick(e.clientX, e.clientY);
+    if (hit?.kind === 'node') openNode(hit.node);
+    else if (hit?.kind === 'frame') toggleMerge(hit.frame.teamId);
+  };
+
+  // ---- mounted DOM layer ----
+  const rect = view?.rect ?? null;
+  const showCards = lod === 'cards' && rect != null;
+  const compact = view?.compact ?? false;
+
+  const visibleFrames = useMemo(
+    () =>
+      showCards && rect
+        ? frameViews.filter((f) => rectsOverlap(rect, { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + FRAME_TITLE_H }))
+        : [],
+    [showCards, rect, frameViews],
+  );
+  // Metric labels: unhealthy, selected or hovered edges in the window at card
+  // zoom; only the selected and hovered ones at overview zoom.
+  const labelEdges = useMemo(
+    () =>
+      edgeViews.filter((v) => {
+        if (v.isSel || v.isHov) return true;
+        if (!showCards || !rect || v.dim || v.e.status === 'ok') return false;
+        return v.mid.x >= rect.x0 && v.mid.x <= rect.x1 && v.mid.y >= rect.y0 && v.mid.y <= rect.y1;
+      }),
+    [edgeViews, showCards, rect],
+  );
+
+  const cards: JSX.Element[] = [];
+  if (showCards && rect) {
+    for (const n of graph.nodes) {
+      const p = displayPos(n.key);
+      if (!p) continue;
+      if (!rectsOverlap(rect, { x0: p.x, y0: p.y, x1: p.x + widthOf(n), y1: p.y + heightOf(n) })) continue;
+      cards.push(
+        <NodeCard
+          key={n.key}
+          node={n}
+          x={p.x}
+          y={p.y}
+          dim={dimmed(n.key)}
+          selected={selNodeKey === n.key}
+          teamLabel={teamGrouping ? null : n.teamName}
+          compact={compact}
+          fade={animating && animRef.current?.appear.has(n.key) ? eased : undefined}
+          handlers={cardHandlers}
+        />,
+      );
+    }
+  }
+
+  const hintShown =
+    graph.nodes.length > 0 && (lod === 'canvas' ? !(view?.canvasLabels ?? false) : compact);
 
   return (
     <div className={styles.root}>
       <div
         ref={canvasRef}
-        onMouseDown={beginPan}
-        onClick={() => {
-          if (wasDrag()) return;
-          select(null);
-          setFocus(null);
-        }}
-        className={[
-          styles.canvas,
-          dragging ? styles.canvasDragging : '',
-          animating && !dragging ? styles.canvasAnimating : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={{
-          backgroundSize: `${22 * tf.k}px ${22 * tf.k}px`,
-          backgroundPosition: `${tf.tx}px ${tf.ty}px`,
-          ['--dot-k' as string]: dotAlphaScale(tf.k),
-        } as CSSProperties}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseLeave={clearHover}
+        onClick={onClick}
+        onDoubleClick={onDoubleClick}
+        className={[styles.canvas, dragging ? styles.canvasDragging : ''].filter(Boolean).join(' ')}
       >
-        {/* packet glow sits below the world (edges + cards draw over it, so
-            packets read as "absorbed" arriving at a service) */}
+        {/* packet glow sits below the map canvas, so edges and nodes draw over
+            it and packets read as "absorbed" arriving at a service */}
         <PacketCanvas edges={edgeViews} tfRef={tfRef} />
 
-        <div
-          className={`${styles.world} ${animating && !dragging ? styles.worldAnimating : ''}`}
-          style={{ transform: `translate(${tf.tx}px, ${tf.ty}px) scale(${tf.k})` }}
-        >
-          {visibleFrames.map((f) => (
-            <TeamFrameBox key={f.teamId} x={f.x} y={f.y} w={f.w} h={f.h} dim={f.dim} />
-          ))}
+        <canvas ref={surfaceRef} className={styles.surface} />
 
-          <EdgeLayer
-            edges={visibleEdgeViews}
-            wasDrag={wasDrag}
-            onSelect={(key) => select({ kind: 'edge', id: key })}
-            onHover={setHoverEdge}
-          />
-
-          {/* frame title bars render above the edges so their drag/merge
-              interactions cannot be stolen by an edge's invisible hit path */}
+        <div ref={worldRef} className={styles.world}>
+          {/* frame title bars stay DOM at card zoom: they carry drag and merge */}
           {visibleFrames.map((f) => (
             <TeamFrameBar
               key={`bar:${f.teamId}`}
+              teamId={f.teamId}
               name={f.name}
               memberCount={f.memberKeys.length}
               x={f.x}
               y={f.y}
               w={f.w}
               dim={f.dim}
-              onMerge={() => toggleMerge(f.teamId)}
-              onDragStart={(ev) => {
-                if (ev.button !== 0) return;
-                ev.stopPropagation();
-                finishAnim();
-                beginDrag(
-                  ev,
-                  f.memberKeys.map((k) => {
-                    const p = posOf(k) ?? { x: 0, y: 0 };
-                    return { key: k, origX: p.x, origY: p.y };
-                  }),
-                );
-              }}
+              handlers={frameHandlers}
             />
           ))}
 
-          {graph.nodes.map((n) => {
-            const p = displayPos(n.key);
-            if (!p) return null;
-            if (!nodeVisible(n.key, widthOf(n), heightOf(n))) return null;
-            return (
-              <NodeCard
-                key={n.key}
-                node={n}
-                x={p.x}
-                y={p.y}
-                tick={tick}
-                dim={dimmed(n.key)}
-                selected={selNodeKey === n.key}
-                teamLabel={teamGrouping ? null : n.teamName}
-                compact={labelsHidden}
-                fade={animating && animRef.current?.appear.has(n.key) ? eased : undefined}
-                onDragStart={(ev) => {
-                  if (ev.button !== 0) return;
-                  ev.stopPropagation();
-                  // Grabbing a mid-flight node settles the animation first so
-                  // the pinned position is measured from the real target.
-                  finishAnim();
-                  const tp = posOf(n.key) ?? p;
-                  beginDrag(ev, [{ key: n.key, origX: tp.x, origY: tp.y }]);
-                }}
-                onClick={(ev) => {
-                  ev.stopPropagation();
-                  if (wasDrag()) return;
-                  select(n.kind === 'group' ? { kind: 'group', teamId: n.teamId as number } : { kind: 'node', id: n.key });
-                }}
-                onOpen={() => {
-                  if (n.kind === 'group') toggleMerge(n.teamId as number);
-                  else navigate('service', n.key);
-                }}
-                onToggleGroup={n.kind === 'group' ? () => toggleMerge(n.teamId as number) : undefined}
-              />
-            );
-          })}
+          {cards}
 
           {/* fading leftovers of removed nodes (e.g. members converging on a new group) */}
-          {animating &&
+          {showCards &&
+            animating &&
             animRef.current?.ghosts.map((g) => (
               <NodeCard
                 key={`ghost:${g.node.key}`}
                 node={g.node}
                 x={g.from.x + (g.to.x - g.from.x) * eased}
                 y={g.from.y + (g.to.y - g.from.y) * eased}
-                tick={tick}
                 dim={false}
                 selected={false}
                 ghost
                 fade={1 - eased}
-                onClick={() => {}}
-                onOpen={() => {}}
+                handlers={NOOP_CARD_HANDLERS}
               />
             ))}
 
-          <EdgeLabelLayer edges={visibleEdgeViews} />
+          <EdgeLabelLayer edges={labelEdges} />
         </div>
 
         <TeamChips
@@ -508,7 +863,7 @@ export function LayeredMap() {
           <IsolateBanner label={isolateLabel} onExit={() => setIsolate(null)} />
         )}
 
-        {labelsHidden && graph.nodes.length > 0 && <ZoomHint />}
+        {hintShown && <ZoomHint />}
 
         <Legend />
 

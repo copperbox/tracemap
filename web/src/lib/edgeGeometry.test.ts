@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { computeEdgeGeometries, pickSides, type Rect } from './edgeGeometry';
+import {
+  computeEdgeGeometries,
+  computeEdgeGeometryState,
+  pickSides,
+  updateEdgeGeometryState,
+  type Rect,
+} from './edgeGeometry';
 
 const rect = (x: number, y: number, w = 100, h = 50): Rect => ({ x, y, w, h });
 
@@ -102,5 +108,53 @@ describe('computeEdgeGeometries', () => {
     const rev = computeEdgeGeometries([...edges].reverse(), rectOf);
     expect(fwd.get('e1')).toEqual(rev.get('e1'));
     expect(fwd.get('e2')).toEqual(rev.get('e2'));
+  });
+
+  it('exposes the arrowhead as points matching the polygon string', () => {
+    const g = computeEdgeGeometries([{ key: 'a>b', fromKey: 'a', toKey: 'b' }], rectOf).get('a>b');
+    const fromString = (g?.arrow ?? '').split(' ').map((p) => p.split(',').map(Number));
+    expect(g?.arrowPts.map((p) => [p.x, p.y])).toEqual(fromString);
+    // tip first, on the curve's end point
+    expect(g?.arrowPts[0]).toEqual(g?.curve.b);
+  });
+
+});
+
+describe('updateEdgeGeometryState', () => {
+  // a 6x6 grid of nodes with edges to right and lower neighbors and a few diagonals
+  const keys: string[] = [];
+  const base: Record<string, Rect> = {};
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const k = `n${r}${c}`;
+      keys.push(k);
+      base[k] = rect(c * 260, r * 220);
+    }
+  }
+  const edges = keys.flatMap((k) => {
+    const r = Number(k[1]);
+    const c = Number(k[2]);
+    const out = [];
+    if (c < 5) out.push({ key: `${k}>n${r}${c + 1}`, fromKey: k, toKey: `n${r}${c + 1}` });
+    if (r < 5) out.push({ key: `${k}>n${r + 1}${c}`, fromKey: k, toKey: `n${r + 1}${c}` });
+    if (r < 5 && c < 5 && (r + c) % 2 === 0) out.push({ key: `${k}>n${r + 1}${c + 1}`, fromKey: k, toKey: `n${r + 1}${c + 1}` });
+    return out;
+  });
+
+  it('matches a full recompute after moving some nodes', () => {
+    const prev = computeEdgeGeometryState(edges, (k) => base[k]);
+    const movedRects: Record<string, Rect> = { ...base, n22: rect(900, 40), n33: rect(-200, 700) };
+    const moved = new Set(['n22', 'n33']);
+    const inc = updateEdgeGeometryState(prev, edges, (k) => movedRects[k], moved);
+    const full = computeEdgeGeometryState(edges, (k) => movedRects[k]);
+    for (const e of edges) expect(inc.geoms.get(e.key)?.d).toBe(full.geoms.get(e.key)?.d);
+  });
+
+  it('keeps the geometry objects of edges far from the move', () => {
+    const prev = computeEdgeGeometryState(edges, (k) => base[k]);
+    const movedRects: Record<string, Rect> = { ...base, n00: rect(30, 30) };
+    const inc = updateEdgeGeometryState(prev, edges, (k) => movedRects[k], new Set(['n00']));
+    expect(inc.geoms.get('n44>n45')).toBe(prev.geoms.get('n44>n45'));
+    expect(inc.geoms.get('n00>n01')).not.toBe(prev.geoms.get('n00>n01'));
   });
 });

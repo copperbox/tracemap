@@ -41,13 +41,16 @@ export function useNodeDrag(
       }
     };
     const onUp = () => {
-      if (!nodeDragRef.current) return;
+      const nd = nodeDragRef.current;
+      if (!nd) return;
       setPinned((prev) => {
         savePinnedPositions(prev);
         return prev;
       });
+      // cleared after the click that ends the drag; a drag that already began
+      // again in the meantime keeps its own state
       setTimeout(() => {
-        nodeDragRef.current = null;
+        if (nodeDragRef.current === nd) nodeDragRef.current = null;
       }, 0);
     };
     window.addEventListener('mousemove', onMove);

@@ -18,6 +18,13 @@ export interface LayoutInput {
   deps: Map<string, string[]>;
   /** per-node dimensions; nodes default to the service card size */
   dims?: Map<string, { w: number; h: number }>;
+  /**
+   * Target width:height of the whole layout. When set and a layer is wider
+   * than the width that aspect implies, every layer is wrapped into rows so a
+   * large graph packs into a rectangle instead of a strip. Layers keep their
+   * top-to-bottom order and their left-to-right node order.
+   */
+  wrapAspect?: number;
 }
 
 export interface LayoutResult {
@@ -33,6 +40,11 @@ export const GROUP_H = 96;
 // original fixed 216x196 grid pitch
 const GAP_X = 28;
 const GAP_Y = 122;
+// vertical gap between the wrapped rows of one layer (edges between layers
+// still get the full GAP_Y)
+const ROW_GAP = 80;
+// below this row width a layout is small enough to leave unwrapped
+const MIN_WRAP_W = 5000;
 
 export function layoutGraph(input: LayoutInput): LayoutResult {
   const { keys, deps } = input;
@@ -192,6 +204,8 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
   }
   placeLower();
 
+  if (input.wrapAspect) wrapLayers(layers, pos, dimOf, input.wrapAspect);
+
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -204,4 +218,126 @@ export function layoutGraph(input: LayoutInput): LayoutResult {
     y1 = Math.max(y1, p.y + d.h);
   }
   return { pos, bbox: { x0, y0, x1, y1 } };
+}
+
+/**
+ * Cut each layer, in its current x order, into rows no wider than `rowW`.
+ * Returns the rows per layer and the total height they stack to.
+ */
+function packRows(
+  layers: string[][],
+  dimOf: (k: string) => { w: number; h: number },
+  rowW: number,
+): { rows: string[][][]; height: number } {
+  let height = 0;
+  const rows = layers.map((layer) => {
+    const out: string[][] = [];
+    let used = 0;
+    let rowH = 0;
+    for (const k of layer) {
+      const d = dimOf(k);
+      const row = out[out.length - 1];
+      if (row && used + GAP_X + d.w <= rowW) {
+        used += GAP_X + d.w;
+        rowH = Math.max(rowH, d.h);
+        row.push(k);
+      } else {
+        if (row) height += rowH + ROW_GAP;
+        out.push([k]);
+        used = d.w;
+        rowH = d.h;
+      }
+    }
+    if (out.length) height += rowH + GAP_Y;
+    return out;
+  });
+  return { rows, height: Math.max(1, height - GAP_Y) };
+}
+
+/**
+ * Row width that makes the packed layout about `aspect` wide per unit of
+ * height: the smallest width whose packing reaches the aspect, found by
+ * bisection (packing height only shrinks as rows get wider). Never below the
+ * widest node.
+ */
+export function wrapRowWidth(
+  layers: string[][],
+  dimOf: (k: string) => { w: number; h: number },
+  aspect: number,
+): number {
+  let lo = 1;
+  let hi = 1;
+  for (const layer of layers) {
+    let span = 0;
+    for (const k of layer) {
+      const w = dimOf(k).w;
+      span += w + GAP_X;
+      lo = Math.max(lo, w);
+    }
+    hi = Math.max(hi, span);
+  }
+  if (hi / packRows(layers, dimOf, hi).height < aspect) return hi;
+  if (lo / packRows(layers, dimOf, lo).height >= aspect) return lo;
+  for (let i = 0; i < 14 && hi - lo > 64; i++) {
+    const mid = (lo + hi) / 2;
+    if (mid / packRows(layers, dimOf, mid).height >= aspect) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+/**
+ * Re-place nodes as wrapped rows when the layered result is large. Nodes keep their layer order then their left-to-right
+ * order within a layer;
+ * rows are centered on a shared axis and stack downward.
+ */
+function wrapLayers(
+  layers: string[][],
+  pos: Map<string, { x: number; y: number }>,
+  dimOf: (k: string) => { w: number; h: number },
+  aspect: number,
+): void {
+  const ordered = layers
+    .filter((l) => l.length)
+    .map((layer) =>
+      [...layer].sort(
+        (a, b) => (pos.get(a) as { x: number }).x - (pos.get(b) as { x: number }).x || a.localeCompare(b),
+      ),
+    );
+  const span = (ks: string[]): number => ks.reduce((a, k) => a + dimOf(k).w, 0) + GAP_X * (ks.length - 1);
+  // Leave a small layout alone. A large one is wrapped whatever its shape: a
+  // strip (one wide layer), a tower (a long chain of layers), or a layered
+  // result that is simply sparse at fleet scale.
+  let x0 = Infinity;
+  let x1 = -Infinity;
+  let y0 = Infinity;
+  let y1 = -Infinity;
+  for (const [k, p] of pos) {
+    const d = dimOf(k);
+    x0 = Math.min(x0, p.x);
+    x1 = Math.max(x1, p.x + d.w);
+    y0 = Math.min(y0, p.y);
+    y1 = Math.max(y1, p.y + d.h);
+  }
+  if (Math.max(x1 - x0, y1 - y0) <= MIN_WRAP_W) return;
+  // A deep graph has many layers, and stacking each one as its own band makes
+  // a tower instead of a strip. Once wrapping, read the layers as one sequence
+  // (still dependencies first, then their callers) cut into rows.
+  const seq = [ordered.flat()];
+  const rowW = wrapRowWidth(seq, dimOf, aspect);
+  const { rows } = packRows(seq, dimOf, rowW);
+  let y = 0;
+  for (const layerRows of rows) {
+    layerRows.forEach((row, i) => {
+      let x = (rowW - span(row)) / 2;
+      let rowH = 0;
+      for (const k of row) {
+        const d = dimOf(k);
+        pos.set(k, { x, y });
+        x += d.w + GAP_X;
+        rowH = Math.max(rowH, d.h);
+      }
+      y += rowH + (i === layerRows.length - 1 ? GAP_Y : ROW_GAP);
+    });
+  }
 }

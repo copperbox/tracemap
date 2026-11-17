@@ -33,3 +33,30 @@ export function visibleWorldRect(tf: Transform, viewW: number, viewH: number, ma
 export function rectsOverlap(a: WorldRect, b: WorldRect): boolean {
   return a.x0 <= b.x1 && a.x1 >= b.x0 && a.y0 <= b.y1 && a.y1 >= b.y0;
 }
+
+/** True when `inner` lies entirely inside `outer`. */
+export function containsRect(outer: WorldRect, inner: WorldRect): boolean {
+  return inner.x0 >= outer.x0 && inner.y0 >= outer.y0 && inner.x1 <= outer.x1 && inner.y1 <= outer.y1;
+}
+
+/** The world rect the mounted DOM layer was last built for, and at what zoom. */
+export interface CullWindow {
+  rect: WorldRect;
+  k: number;
+}
+
+// Zoom drift tolerated before the mounted set is rebuilt. Zooming in keeps a
+// window that is too big (more cards than needed); zooming out exposes its edge.
+const RECULL_ZOOM_RATIO = 1.25;
+
+/**
+ * Whether the mounted set must be rebuilt for the current view: the visible
+ * world rect has left the window, or the zoom drifted far enough that the
+ * window is now much too large. Panning inside the window costs no render.
+ */
+export function needsRecull(win: CullWindow | null, visible: WorldRect, k: number): boolean {
+  if (!win) return true;
+  if (!containsRect(win.rect, visible)) return true;
+  const ratio = k / win.k;
+  return ratio > RECULL_ZOOM_RATIO || ratio < 1 / RECULL_ZOOM_RATIO;
+}

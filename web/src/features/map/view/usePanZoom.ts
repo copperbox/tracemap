@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent, RefObject } from 'react';
-import { centerTransform, fitZoom } from './camera';
+import type { MouseEvent as ReactMouseEvent, MutableRefObject, RefObject } from 'react';
+import { centerTransform, clampZoom, fitZoom } from './camera';
 
 export interface Transform {
   tx: number;
@@ -15,17 +15,64 @@ export interface ViewBounds {
   y1: number;
 }
 
+export type CameraListener = (tf: Transform) => void;
+
+export interface PanZoom {
+  /** Current transform. Read it; change it only through the methods below. */
+  tfRef: MutableRefObject<Transform>;
+  /** Called synchronously on every camera change; returns an unsubscribe. */
+  subscribe: (fn: CameraListener) => () => void;
+  /** True while a pan drag is in progress (changes twice per drag). */
+  dragging: boolean;
+  beginPan: (e: ReactMouseEvent) => void;
+  wasPan: () => boolean;
+  zoomBy: (f: number) => void;
+  /** Zoom by `f` about a screen point (canvas-relative px). */
+  zoomAt: (f: number, mx: number, my: number) => void;
+  fitBounds: (bbox: ViewBounds) => void;
+  centerOn: (bbox: ViewBounds, opts?: { rightInset?: number }) => void;
+  /** Move the camera by a screen-pixel offset. */
+  panBy: (dx: number, dy: number) => void;
+}
+
 /**
- * Viewport state for the map canvas: wheel zoom, drag-to-pan, button zoom,
- * and fit-to-bounds. Node dragging lives in useNodeDrag; the two never run at
- * once because node mousedown handlers stop propagation before beginPan.
+ * Viewport camera for the map canvas: wheel zoom, drag-to-pan, button zoom,
+ * and fit-to-bounds. The transform lives in a ref, not in React state: every
+ * wheel tick and mouse move notifies subscribers, which move the DOM layer
+ * and redraw the canvas directly. React only re-renders when a subscriber
+ * decides the visible set or level of detail changed.
+ *
+ * Node dragging lives in useNodeDrag; the two never run at once because node
+ * mousedown handlers stop propagation before beginPan.
  */
-export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
-  const [tf, setTf] = useState<Transform>({ tx: 60, ty: 40, k: 0.5 });
+export function usePanZoom(canvasRef: RefObject<HTMLDivElement>): PanZoom {
+  const tfRef = useRef<Transform>({ tx: 60, ty: 40, k: 0.5 });
+  const listenersRef = useRef(new Set<CameraListener>());
   const [dragging, setDragging] = useState(false);
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
-  const tfRef = useRef(tf);
-  tfRef.current = tf;
+
+  const setTf = useCallback((next: Transform) => {
+    const cur = tfRef.current;
+    if (cur.tx === next.tx && cur.ty === next.ty && cur.k === next.k) return;
+    tfRef.current = next;
+    for (const fn of listenersRef.current) fn(next);
+  }, []);
+
+  const subscribe = useCallback((fn: CameraListener) => {
+    listenersRef.current.add(fn);
+    return () => {
+      listenersRef.current.delete(fn);
+    };
+  }, []);
+
+  const zoomAt = useCallback(
+    (f: number, mx: number, my: number) => {
+      const s = tfRef.current;
+      const k2 = clampZoom(s.k * f);
+      setTf({ k: k2, tx: mx - ((mx - s.tx) * k2) / s.k, ty: my - ((my - s.ty) * k2) / s.k });
+    },
+    [setTf],
+  );
 
   // Wheel zoom (non-passive listener so preventDefault works).
   useEffect(() => {
@@ -34,16 +81,11 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
-      const mx = e.clientX - r.left;
-      const my = e.clientY - r.top;
-      setTf((s) => {
-        const k2 = Math.max(0.12, Math.min(2.4, s.k * Math.exp(-e.deltaY * 0.0014)));
-        return { k: k2, tx: mx - ((mx - s.tx) * k2) / s.k, ty: my - ((my - s.ty) * k2) / s.k };
-      });
+      zoomAt(Math.exp(-e.deltaY * 0.0014), e.clientX - r.left, e.clientY - r.top);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [canvasRef]);
+  }, [canvasRef, zoomAt]);
 
   // Drag to pan the canvas.
   useEffect(() => {
@@ -53,13 +95,16 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
       const dx = e.clientX - d.x;
       const dy = e.clientY - d.y;
       if (Math.abs(dx) + Math.abs(dy) > 4) d.moved = true;
-      if (d.moved) setTf((s) => ({ ...s, tx: d.tx + dx, ty: d.ty + dy }));
+      if (d.moved) setTf({ k: tfRef.current.k, tx: d.tx + dx, ty: d.ty + dy });
     };
     const onUp = () => {
-      if (!dragRef.current) return;
+      const d = dragRef.current;
+      if (!d) return;
       setDragging(false);
+      // cleared after the click that ends the drag; a drag that already began
+      // again in the meantime keeps its own state
       setTimeout(() => {
-        dragRef.current = null;
+        if (dragRef.current === d) dragRef.current = null;
       }, 0);
     };
     window.addEventListener('mousemove', onMove);
@@ -68,28 +113,26 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, []);
+  }, [setTf]);
 
-  const beginPan = (e: ReactMouseEvent) => {
+  const beginPan = useCallback((e: ReactMouseEvent) => {
     if (e.button !== 0) return;
     dragRef.current = { x: e.clientX, y: e.clientY, tx: tfRef.current.tx, ty: tfRef.current.ty, moved: false };
     setDragging(true);
-  };
+  }, []);
 
   /** True while (or just after) a pan drag actually moved, so click handlers can ignore it. */
-  const wasPan = () => dragRef.current?.moved ?? false;
+  const wasPan = useCallback(() => dragRef.current?.moved ?? false, []);
 
-  const zoomBy = (f: number) => {
-    const el = canvasRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const mx = r.width / 2;
-    const my = r.height / 2;
-    setTf((s) => {
-      const k2 = Math.max(0.12, Math.min(2.4, s.k * f));
-      return { k: k2, tx: mx - ((mx - s.tx) * k2) / s.k, ty: my - ((my - s.ty) * k2) / s.k };
-    });
-  };
+  const zoomBy = useCallback(
+    (f: number) => {
+      const el = canvasRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      zoomAt(f, r.width / 2, r.height / 2);
+    },
+    [canvasRef, zoomAt],
+  );
 
   /** Center the given world-space bounds in the canvas at a comfortable zoom. */
   const fitBounds = useCallback(
@@ -106,7 +149,7 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
         k,
       });
     },
-    [canvasRef],
+    [canvasRef, setTf],
   );
 
   /**
@@ -119,10 +162,28 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>) {
       const el = canvasRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      setTf((s) => centerTransform(bbox, r.width, r.height, s.k, { rightInset: opts.rightInset }));
+      setTf(centerTransform(bbox, r.width, r.height, tfRef.current.k, { rightInset: opts.rightInset }));
     },
-    [canvasRef],
+    [canvasRef, setTf],
   );
 
-  return { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn };
+  const panBy = useCallback(
+    (dx: number, dy: number) => {
+      const s = tfRef.current;
+      setTf({ k: s.k, tx: s.tx + dx, ty: s.ty + dy });
+    },
+    [setTf],
+  );
+
+  return { tfRef, subscribe, dragging, beginPan, wasPan, zoomBy, zoomAt, fitBounds, centerOn, panBy };
+}
+
+/**
+ * Keep the dotted backdrop of `el` in step with the camera without React:
+ * tile size, offset and the brightness compensation variable.
+ */
+export function applyBackdrop(el: HTMLElement, tf: Transform, tile: number, dotK: number): void {
+  el.style.backgroundSize = `${tile}px ${tile}px`;
+  el.style.backgroundPosition = `${tf.tx}px ${tf.ty}px`;
+  el.style.setProperty('--dot-k', String(dotK));
 }

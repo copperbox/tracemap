@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { DOT, fmtErr, fmtMs, fmtRps } from '../../../lib/format';
 import type { EdgeView } from './edgeViews';
 import styles from './EdgeLabelLayer.module.css';
@@ -7,7 +8,7 @@ import styles from './EdgeLabelLayer.module.css';
  * selected, hovered, or unhealthy. Selection/hover shows the full triple;
  * an unhealthy edge alone shows just its p95.
  */
-export function EdgeLabelLayer({ edges }: { edges: EdgeView[] }) {
+export const EdgeLabelLayer = memo(function EdgeLabelLayer({ edges }: { edges: EdgeView[] }) {
   return (
     <>
       {edges
@@ -38,4 +39,4 @@ export function EdgeLabelLayer({ edges }: { edges: EdgeView[] }) {
         })}
     </>
   );
-}
+});
