@@ -1,20 +1,20 @@
 import type { ServiceDetail } from '../../../api/types';
-import { DOT, fmtErr, fmtMs, fmtRps, jit } from '../../../lib/format';
+import { DOT, fmtErr, fmtMs, fmtRps } from '../../../lib/format';
 import { sloView, stColor } from '../../../lib/status';
 import styles from './KpiCards.module.css';
 
 /** The four headline KPI cards: throughput, latency, error rate, SLO attainment. */
-export function KpiCards({ detail, tick }: { detail: ServiceDetail; tick: number }) {
+export function KpiCards({ detail }: { detail: ServiceDetail }) {
   const s = detail.service;
   const k = detail.kpis;
   const slo = sloView(s.sloTarget, s.sloAttain);
   const c = stColor(s.status);
 
   const kpis = [
-    { label: 'THROUGHPUT', value: `${fmtRps(k.rps * jit(s.id, tick))}/s`, sub: 'avg over selected range', color: 'var(--text)' },
+    { label: 'THROUGHPUT', value: `${fmtRps(k.rps)}/s`, sub: 'avg over selected range', color: 'var(--text)' },
     {
       label: 'LATENCY P95',
-      value: fmtMs(k.p95 == null ? null : k.p95 * jit(s.id + 'l', tick, 0.06)),
+      value: fmtMs(k.p95),
       sub: `p50 ${fmtMs(k.p50)} ${DOT} p99 ${fmtMs(k.p99)}`,
       color: s.status === 'ok' ? 'var(--text)' : c,
     },

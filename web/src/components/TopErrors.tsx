@@ -1,5 +1,6 @@
 import type { OperationErrors } from '../api/types';
 import { DOT, fmtCount } from '../lib/format';
+import { useStore } from '../state/store';
 import styles from './TopErrors.module.css';
 
 /**
@@ -9,6 +10,8 @@ import styles from './TopErrors.module.css';
  * When `onSelectOperation` is supplied, operation headers become clickable
  * (used on the service page to filter the recent-traces list); `activeOperation`
  * marks the currently selected one.
+ *
+ * An error with a `sampleTraceId` opens that kept trace when clicked.
  */
 export function TopErrors({
   ops,
@@ -19,6 +22,7 @@ export function TopErrors({
   onSelectOperation?: (operation: string) => void;
   activeOperation?: string | null;
 }) {
+  const openTrace = useStore((s) => s.openTrace);
   if (!ops.length) return null;
   const clickable = !!onSelectOperation;
   return (
@@ -39,15 +43,34 @@ export function TopErrors({
                   {fmtCount(op.errorCount)} {op.errorCount === 1 ? 'err' : 'errs'}
                 </span>
               </div>
-              {op.errors.map((e, i) => (
-                <div key={`${e.code}-${i}`} className={styles.err}>
-                  <span className={styles.code}>{e.code}</span>
-                  {e.message && <span className={styles.msg}>{e.message}</span>}
-                  <span className={styles.count}>
-                    {DOT} {fmtCount(e.count)}
-                  </span>
-                </div>
-              ))}
+              {op.errors.map((e, i) => {
+                const body = (
+                  <>
+                    <span className={styles.code}>{e.code}</span>
+                    {e.message && <span className={styles.msg}>{e.message}</span>}
+                    <span className={styles.count}>
+                      {DOT} {fmtCount(e.count)}
+                    </span>
+                    {e.sampleTraceId && <span className={styles.traceLink}>trace</span>}
+                  </>
+                );
+                const sample = e.sampleTraceId;
+                return sample ? (
+                  <button
+                    key={`${e.code}-${i}`}
+                    type="button"
+                    className={`${styles.err} ${styles.errLink} hov-row`}
+                    title="Open a kept trace with this error"
+                    onClick={() => openTrace(sample)}
+                  >
+                    {body}
+                  </button>
+                ) : (
+                  <div key={`${e.code}-${i}`} className={styles.err}>
+                    {body}
+                  </div>
+                );
+              })}
             </div>
           );
         })}

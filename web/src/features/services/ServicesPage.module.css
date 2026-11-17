@@ -61,12 +61,34 @@
   text-align: right;
 }
 
+.body {
+  position: relative;
+}
+
+/* Fixed height so the list can be windowed (ROW_H in ServicesPage.tsx). */
 .row {
+  box-sizing: border-box;
+  height: 54px;
   border-top: 1px solid var(--line);
   cursor: pointer;
 }
 
+.row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .dot {
+  display: block;
   width: 8px;
   height: 8px;
   border-radius: 50%;

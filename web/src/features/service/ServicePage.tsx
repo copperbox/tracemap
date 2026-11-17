@@ -38,7 +38,6 @@ export function ServicePage() {
   const range = useStore((s) => s.range);
   const setRange = useStore((s) => s.setRange);
   const openTrace = useStore((s) => s.openTrace);
-  const tick = useStore((s) => s.tick);
 
   const [opFilter, setOpFilter] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
@@ -120,7 +119,7 @@ export function ServicePage() {
         ) : d ? (
           <>
             <ServiceHeader service={d.service} upCount={up.length} downCount={down.length} />
-            <KpiCards detail={d} tick={tick} />
+            <KpiCards detail={d} />
             <Suspense fallback={<ChartSkeleton />}>
               <ChartGrid series={d.series} range={range} />
             </Suspense>

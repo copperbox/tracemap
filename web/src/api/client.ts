@@ -1,5 +1,6 @@
 import type {
   ErrorBreakdown,
+  LiveStructure,
   ServiceDetail,
   ServiceList,
   Topology,
@@ -7,10 +8,26 @@ import type {
   TraceListItem,
 } from './types';
 
+/** A non-2xx response; `status` lets callers tell "gone" (404) from a fault. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`/api${path}`);
-  if (!res.ok) throw new Error(`${path}: ${res.status}`);
+  if (!res.ok) throw new ApiError(`${path}: ${res.status}`, res.status);
   return res.json() as Promise<T>;
+}
+
+async function getBinary(path: string): Promise<ArrayBuffer> {
+  const res = await fetch(`/api${path}`, { cache: 'no-store' });
+  if (!res.ok) throw new ApiError(`${path}: ${res.status}`, res.status);
+  return res.arrayBuffer();
 }
 
 async function send<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -21,13 +38,18 @@ async function send<T>(method: string, path: string, body?: unknown): Promise<T>
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`${path}: ${res.status} ${text}`);
+    throw new ApiError(`${path}: ${res.status} ${text}`, res.status);
   }
   return res.json() as Promise<T>;
 }
 
 export const api = {
   topology: () => get<Topology>('/topology'),
+  /** Path of the live notice stream, for EventSource. */
+  liveStreamUrl: '/api/live',
+  liveStructure: () => get<LiveStructure>('/live/structure'),
+  /** The latest binary metrics frame (see lib in state/live/frame.ts). */
+  liveMetrics: () => getBinary('/live/metrics'),
   services: () => get<ServiceList>('/services'),
   serviceDetail: (id: string, from: Date, to: Date) =>
     get<ServiceDetail>(

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../../api/client';
+import { api, ApiError } from '../../api/client';
 import type { TraceDetail } from '../../api/types';
 import { CloseIcon } from '../../components/Icon';
 import { DOT, fmtAgo, fmtMs } from '../../lib/format';
@@ -15,15 +15,22 @@ export function TraceModal({ traceId }: { traceId: string }) {
   const [trace, setTrace] = useState<TraceDetail | null>(null);
   const [openSpan, setOpenSpan] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setTrace(null);
     setOpenSpan(null);
+    setError(null);
+    setGone(false);
     api
       .trace(traceId)
       .then((t) => alive && setTrace(t))
-      .catch((err) => alive && setError((err as Error).message));
+      .catch((err) => {
+        if (!alive) return;
+        if (err instanceof ApiError && err.status === 404) setGone(true);
+        else setError((err as Error).message);
+      });
     return () => {
       alive = false;
     };
@@ -48,17 +55,21 @@ export function TraceModal({ traceId }: { traceId: string }) {
             <div className={styles.label}>TRACE</div>
             <div className={styles.idRow}>
               <span className={styles.traceId}>{traceId.slice(0, 16)}</span>
-              <span className={`${styles.statusPill} ${hasError ? styles.error : styles.ok}`}>
-                <span className={styles.statusDot} />
-                {hasError ? 'ERROR' : 'OK'}
-              </span>
+              {trace && (
+                <span className={`${styles.statusPill} ${hasError ? styles.error : styles.ok}`}>
+                  <span className={styles.statusDot} />
+                  {hasError ? 'ERROR' : 'OK'}
+                </span>
+              )}
             </div>
           </div>
           <div className={styles.spacer} />
           <div className={styles.summary}>
             {built
               ? `${fmtMs(built.totalMs)} total ${DOT} ${trace?.spans.length} spans ${DOT} ${spanColors.size} services ${DOT} ${firstStart ? fmtAgo(firstStart) : '--'} ago`
-              : error ?? 'loading\u2026'}
+              : gone
+                ? 'not stored'
+                : error ?? 'loading\u2026'}
           </div>
           <div className={`${styles.closeBtn} hov-btn`} onClick={close}>
             <CloseIcon />
@@ -91,6 +102,13 @@ export function TraceModal({ traceId }: { traceId: string }) {
                 errored span
               </span>
             )}
+          </div>
+        )}
+
+        {gone && (
+          <div className={styles.gone} role="status">
+            This trace is not stored. Only a sample of traces is kept (errors, slow requests and a baseline),
+            and kept traces expire after 30 days.
           </div>
         )}
 

@@ -1,10 +1,21 @@
-import type { TraceListItem } from '../../../api/types';
+import type { KeepReason, TraceListItem } from '../../../api/types';
 import { DOT, fmtAgo, fmtMs } from '../../../lib/format';
 import styles from './TracesPanel.module.css';
 
-const HEADERS = ['TRACE ID', 'ROOT OPERATION', 'DURATION', 'SPANS', 'AGE'];
+const HEADERS = ['TRACE ID', 'ROOT OPERATION', 'KEPT FOR', 'DURATION', 'SPANS', 'AGE'];
+const RIGHT_FROM = 4;
 
-/** Recent traces within the selected range; rows open the trace waterfall. */
+const REASON_LABEL: Record<KeepReason, string> = { error: 'error', slow: 'slow', baseline: 'baseline' };
+const REASON_TITLE: Record<KeepReason, string> = {
+  error: 'Kept because it failed',
+  slow: 'Kept because it was among the slowest for its operation',
+  baseline: 'Kept as a baseline sample of normal traffic',
+};
+
+/**
+ * Recent kept traces within the selected range; rows open the trace waterfall.
+ * The collector keeps a sample, not every trace, so each row says why it was kept.
+ */
 export function TracesPanel({
   traces,
   onOpenTrace,
@@ -34,10 +45,11 @@ export function TracesPanel({
           {filterOp ? 'click the filter to clear' : `within selected range ${DOT} click to inspect`}
         </div>
       </div>
+      <div className={styles.note}>Traces are sampled: errors, slow requests and a baseline of normal ones.</div>
       <div className={styles.headRow}>
         <span />
         {HEADERS.map((h, i) => (
-          <span key={h} className={`${styles.headCell} ${i >= 3 ? styles.headCellRight : ''}`}>
+          <span key={h} className={`${styles.headCell} ${i >= RIGHT_FROM ? styles.headCellRight : ''}`}>
             {h}
           </span>
         ))}
@@ -47,6 +59,13 @@ export function TracesPanel({
           <span className={`${styles.dot} ${t.status === 'error' ? styles.error : styles.ok}`} />
           <span className={styles.traceId}>{t.traceId.slice(0, 16)}</span>
           <span className={styles.rootOp}>{t.rootOperation}</span>
+          <span>
+            {t.reason && (
+              <span className={`${styles.reason} ${styles[t.reason]}`} title={REASON_TITLE[t.reason]}>
+                {REASON_LABEL[t.reason] ?? t.reason}
+              </span>
+            )}
+          </span>
           <span className={styles.durationCell}>
             {/* bar width scales with the slowest trace in the list */}
             <span
@@ -61,7 +80,7 @@ export function TracesPanel({
       ))}
       {!traces.length && (
         <div className={styles.empty}>
-          {filterOp ? `no traces with erroring ${filterOp} in this range` : 'no traces in this range'}
+          {filterOp ? `no kept traces with erroring ${filterOp} in this range` : 'no kept traces in this range'}
         </div>
       )}
     </div>

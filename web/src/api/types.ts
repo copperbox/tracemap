@@ -140,6 +140,8 @@ export interface ErrorCount {
   code: string;
   message: string | null;
   count: number;
+  /** A kept trace that hit this error, when one was stored. */
+  sampleTraceId?: string | null;
 }
 
 export interface OperationErrors {
@@ -160,7 +162,11 @@ export interface TraceListItem {
   time: string;
   spanCount: number;
   status: 'ok' | 'error';
+  /** Why the collector kept this trace. Traces are a sample, not every request. */
+  reason?: KeepReason;
 }
+
+export type KeepReason = 'error' | 'slow' | 'baseline';
 
 export interface TraceSpan {
   spanId: string;
@@ -177,4 +183,55 @@ export interface TraceSpan {
 export interface TraceDetail {
   traceId: string;
   spans: TraceSpan[];
+}
+
+// Live wire contract (GET /api/live, /api/live/structure, /api/live/metrics).
+
+export interface LiveStructureService {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  teamId: number | null;
+  runtime: string | null;
+  region: string | null;
+  isExternal: boolean;
+  sloTarget: number;
+  sloAttain: number | null;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+export interface LiveStructureEdge {
+  /** Index into `services`. */
+  s: number;
+  /** Index into `services`. */
+  t: number;
+  firstSeen: string;
+  lastSeen: string;
+  samples: number;
+  manual: boolean;
+  confidence: number;
+}
+
+/** Index in `services` / `edges` = index in the metrics frame. */
+export interface LiveStructure {
+  version: number;
+  generatedAt: string;
+  teams: Team[];
+  services: LiveStructureService[];
+  edges: LiveStructureEdge[];
+}
+
+/** SSE `hello` payload. */
+export interface LiveHello {
+  structureVersion: number;
+  seq: number;
+  intervalMs: number;
+}
+
+/** SSE `metrics` payload. */
+export interface LiveMetricsNotice {
+  seq: number;
+  structureVersion: number;
 }

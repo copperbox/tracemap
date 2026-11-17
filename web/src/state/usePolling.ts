@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { api } from '../api/client';
+import { startLiveClient, type LiveStats } from './live/liveClient';
+import { isIngesting } from './live/merge';
 import { useStore } from './store';
 
 // Dev-only synthetic topology size (`?synthetic=N`). Read at module load,
@@ -8,7 +10,7 @@ const SYNTHETIC_N = import.meta.env.DEV
   ? Number(new URLSearchParams(window.location.search).get('synthetic')) || 0
   : 0;
 
-/** Polls live topology. */
+/** Feeds the store's topology from the live stream (see live/liveClient.ts). */
 export function useLiveData(): void {
   const setTopology = useStore((s) => s.setTopology);
   const setIngesting = useStore((s) => s.setIngesting);
@@ -29,22 +31,20 @@ export function useLiveData(): void {
         stop?.();
       };
     }
-    let alive = true;
-    const poll = async () => {
-      try {
-        const topo = await api.topology();
-        if (!alive) return;
+    const client = startLiveClient({
+      streamUrl: api.liveStreamUrl,
+      openStream: (url) => new EventSource(url),
+      fetchStructure: api.liveStructure,
+      fetchFrame: api.liveMetrics,
+      visibility: document,
+      onTopology: (topo) => {
         setTopology(topo);
-        setIngesting(topo.services.some((s) => !s.metrics.stale && s.metrics.rps > 0));
-      } catch {
-        if (alive) setIngesting(false);
-      }
-    };
-    void poll();
-    const i = setInterval(poll, 5000);
-    return () => {
-      alive = false;
-      clearInterval(i);
-    };
+        setIngesting(isIngesting(topo));
+      },
+      onFetchError: () => setIngesting(false),
+    });
+    // Dev hook for the scale checks: frame counts and decode + merge time.
+    if (import.meta.env.DEV) (window as unknown as { __live?: LiveStats }).__live = client.stats;
+    return client.stop;
   }, [setTopology, setIngesting]);
 }
