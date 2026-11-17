@@ -129,3 +129,28 @@ describe('CellStore live window', () => {
     expect(s.liveServices(now).seconds).toBe(10);
   });
 });
+
+describe('CellStore keys', () => {
+  it('keeps tuples apart when names contain the old delimiter', () => {
+    const s = new CellStore(opts, 0);
+    // ("a\u0001b", "c") and ("a", "b\u0001c") used to share a map key.
+    s.addRequest(M, 'a\u0001b', 'c', 1, false, null);
+    s.addRequest(M, 'a', 'b\u0001c', 1, true, null);
+    s.addEdge(M, 'a\u0001b', 'c', 'op', 1, false, null);
+    s.addEdge(M, 'a', 'b\u0001c', 'op', 1, true, null);
+    s.addRequest(M, 'svc', 'op', 1, true, { code: 'x\u0001y', message: 'z' });
+    s.addRequest(M, 'svc', 'op', 1, true, { code: 'x', message: 'y\u0001z' });
+    const byKind = new Map(s.takeDirty().batches.map((b) => [b.kind, b]));
+    const op = byKind.get('op_rollup')!;
+    expect(op.keys).toEqual(expect.arrayContaining([['a\u0001b', 'c'], ['a', 'b\u0001c']]));
+    expect(byKind.get('edge_rollup')!.keys).toHaveLength(2);
+    expect(byKind.get('edge_op_rollup')!.n).toEqual([1, 1]);
+    expect(byKind.get('svc_error_rollup')!.keys).toEqual([
+      ['svc', 'op', 'x\u0001y', 'z'],
+      ['svc', 'op', 'x', 'y\u0001z'],
+    ]);
+    const live = s.liveEdges(M * 60_000 + 1);
+    expect(live.entries.size).toBe(2);
+    expect([...live.entries.keys()].map(splitEdgeKey)).toEqual([['a\u0001b', 'c'], ['a', 'b\u0001c']]);
+  });
+});

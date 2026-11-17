@@ -11,6 +11,7 @@
  * - Versions start from the process start time in seconds, so a restarted
  *   server never reuses a version a client cached from the previous one.
  */
+import { edgeKey } from '../pipeline/cells.js';
 
 export interface StructureService {
   id: string;
@@ -71,7 +72,8 @@ export function edgeConfidence(sampleCount: number, manual: boolean): number {
   return Math.min(99.9, Math.max(50, Math.round(c * 10) / 10));
 }
 
-export const edgeKey = (s: string, t: string): string => s + '\u0001' + t;
+/** Same encoding as the pipeline's liveEdges() keys (collision-free for any ids). */
+export { edgeKey };
 
 /** Keep `prev` order for survivors, append new keys sorted. */
 export function stableOrder(prev: readonly string[], next: Iterable<string>): string[] {

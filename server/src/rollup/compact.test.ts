@@ -59,6 +59,20 @@ describe('mergeRows', () => {
   });
 });
 
+describe('mergeRows keys', () => {
+  it('keeps tuples apart when key values contain the old delimiter', () => {
+    const rows = [row(0, ['a\u0001b', 'c'], 1, 0, null), row(1, ['a', 'b\u0001c'], 2, 0, null)];
+    const m = mergeRows(rows, 10 * MIN);
+    expect(m.keys).toEqual([['a\u0001b', 'c'], ['a', 'b\u0001c']]);
+    expect(m.n).toEqual([1, 2]);
+  });
+
+  it('refuses totals past 2^53 - 1 instead of rounding them', () => {
+    const rows = [row(0, ['a'], Number.MAX_SAFE_INTEGER, 0, null), row(1, ['a'], 1, 0, null)];
+    expect(() => mergeRows(rows, 10 * MIN)).toThrow(RangeError);
+  });
+});
+
 describe('finalThrough1m', () => {
   it('lags now by the grace window plus two flushes', () => {
     expect(finalThrough1m(T0, 3, 10_000)).toBe(T0 - 3 * MIN - 20_000);

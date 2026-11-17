@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { key2, splitKey2 } from '../pipeline/keys.js';
 import { ingestQuery } from '../db/pool.js';
 import type { ServiceType } from './infer.js';
 
@@ -38,7 +39,7 @@ export class ServiceRegistry {
   private dirty = new Map<string, ServiceNote>();
   /** Services seen since the last flush (for last_seen). */
   private seen = new Set<string>();
-  /** Edge observations since the last flush, "source\u0001target" -> count. */
+  /** Edge observations since the last flush, key2(source, target) -> count. */
   private edgeCounts = new Map<string, number>();
 
   constructor(private readonly db: Db = ingestQuery) {}
@@ -120,7 +121,7 @@ export class ServiceRegistry {
 
   /** Record one observation of a learned edge. */
   noteEdge(source: string, target: string): void {
-    const k = source + '\u0001' + target;
+    const k = key2(source, target);
     this.edgeCounts.set(k, (this.edgeCounts.get(k) ?? 0) + 1);
   }
 
@@ -187,9 +188,9 @@ export class ServiceRegistry {
         const dst: string[] = [];
         const cnt: number[] = [];
         for (const [k, n] of edges) {
-          const i = k.indexOf('\u0001');
-          src.push(k.slice(0, i));
-          dst.push(k.slice(i + 1));
+          const [s, t] = splitKey2(k);
+          src.push(s);
+          dst.push(t);
           cnt.push(n);
         }
         // The joins skip edges whose endpoint was merged away meanwhile (FK safety).

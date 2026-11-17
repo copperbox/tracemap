@@ -121,7 +121,7 @@ describe('TraceBuffer decisions', () => {
 
   it('enforces the global span budget, and baseline only spends above half', () => {
     // 1 span/s budget: bucket holds 60, starts at 30.
-    const { buf, sink } = setup({ keptSpansPerSec: 1, errorQuota: 1000, initialBudgetSpans: 30 }, Number.NaN);
+    const { buf, sink } = setup({ keptSpansPerSec: 1, baselineShare: 0, errorQuota: 1000, initialBudgetSpans: 30 }, Number.NaN);
     for (let i = 0; i < 50; i++) buf.add(span(tid(i + 1), { isError: true, sigRef: sig() }), 0);
     buf.sweep(10_000); // 30 + 10 tokens accrued
     expect(sink.kept).toHaveLength(40);
@@ -129,6 +129,44 @@ describe('TraceBuffer decisions', () => {
     buf.add(span(tid(100)), 10_000);
     buf.sweep(20_000); // 10 tokens: under half, no baseline
     expect(sink.kept).toHaveLength(40);
+  });
+
+  it('reserves a share of the budget for baseline keeps under sustained error pressure', () => {
+    // 100 spans/s, a quarter reserved: errors may keep 75/s, baselines get 25/s.
+    const { buf, sink } = setup({ keptSpansPerSec: 100, baselineShare: 0.25, initialBudgetSpans: 0, errorQuota: 1e9, baselineQuota: 1e9 });
+    let n = 0;
+    for (let sec = 0; sec <= 600; sec++) {
+      const at = sec * 1000;
+      // Far more errors than the budget, and steady healthy traffic.
+      for (let i = 0; i < 300; i++) buf.add(span(tid(++n), { isError: true, sigRef: sig() }), at);
+      for (let i = 0; i < 50; i++) buf.add(span(tid(++n), { name: `op${i}`, rootOp: `op${i}` }), at);
+      buf.sweep(at);
+    }
+    const counts = { error: 0, baseline: 0, slow: 0 };
+    for (const k of sink.kept) counts[k.reason]++;
+    // 600 s of budget, all spent, split 75/25 even though errors could use all of it.
+    expect(sink.kept.length).toBeLessThanOrEqual(100 * 600);
+    expect(counts.baseline).toBeGreaterThanOrEqual(25 * 590);
+    expect(counts.baseline).toBeLessThanOrEqual(25 * 600);
+    expect(counts.error).toBeGreaterThanOrEqual(75 * 590);
+    expect(counts.error).toBeLessThanOrEqual(75 * 600);
+  });
+
+  it('lets baseline use the shared budget only while it is over half full', () => {
+    const { buf, sink } = setup({ keptSpansPerSec: 4, baselineShare: 0.25, initialBudgetSpans: 240, baselineQuota: 1e9 });
+    // Both buckets start full: reserve 60 (1/s), shared 180 (3/s).
+    for (let i = 0; i < 200; i++) buf.add(span(tid(i + 1), { name: `op${i}`, rootOp: `op${i}` }), 0);
+    buf.sweep(10_000);
+    // All 60 of the reserve, then the shared bucket from 180 down to its half (90).
+    expect(sink.kept).toHaveLength(60 + 90);
+  });
+
+  it('keeps quota keys apart when names contain a delimiter', () => {
+    const { buf, sink } = setup();
+    buf.add(span(tid(1), { serviceId: 'a|b', rootOp: 'c', name: 'c' }), 0);
+    buf.add(span(tid(2), { serviceId: 'a', rootOp: 'b|c', name: 'b|c' }), 0);
+    buf.sweep(10_000);
+    expect(sink.kept).toHaveLength(2);
   });
 
   it('starts with an empty budget by default', () => {

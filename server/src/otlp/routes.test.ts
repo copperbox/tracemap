@@ -1,7 +1,8 @@
-import { gzipSync } from 'node:zlib';
+import { deflateSync, gzipSync } from 'node:zlib';
 import Fastify from 'fastify';
 import { describe, expect, it, vi } from 'vitest';
 import type { GateResult, Pipeline } from '../pipeline/index.js';
+import { IngestError } from '../pipeline/pipeline.js';
 import { otlpRoutes } from './routes.js';
 
 vi.mock('../pipeline/index.js', () => ({ getPipeline: () => null }));
@@ -28,8 +29,8 @@ function fakePipeline(over: { gate?: GateResult; ingest?: () => void } = {}) {
   return { p: p as unknown as Pipeline, raw: p, counts, seen };
 }
 
-async function app(p: Pipeline) {
-  const a = Fastify();
+async function app(p: Pipeline, bodyLimit?: number) {
+  const a = Fastify(bodyLimit ? { bodyLimit } : {});
   await a.register(otlpRoutes, { pipeline: p });
   return a;
 }
@@ -84,6 +85,47 @@ describe('OTLP routes', () => {
     expect(r.statusCode).toBe(503);
     expect(r.headers['retry-after']).toBeDefined();
     expect(f.counts.failed).toBe(1);
+  });
+
+  it('answers 413 when a compressed body expands past the body limit', async () => {
+    const f = fakePipeline();
+    const a = await app(f.p, 1024 * 1024);
+    // 64 MB of one byte compresses to about 64 KB: well under the limit on the wire.
+    const bomb = Buffer.alloc(64 * 1024 * 1024, 0x20);
+    for (const [enc, body] of [['gzip', gzipSync(bomb)], ['deflate', deflateSync(bomb)]] as const) {
+      expect(body.length).toBeLessThan(1024 * 1024);
+      const r = await a.inject({
+        method: 'POST',
+        url: '/v1/traces',
+        headers: { 'content-type': 'application/json', 'content-encoding': enc },
+        payload: body,
+      });
+      expect(r.statusCode).toBe(413);
+    }
+    expect(f.raw.ingestTraces).not.toHaveBeenCalled();
+    // Just under the limit still decodes.
+    const ok = await a.inject({
+      method: 'POST',
+      url: '/v1/traces',
+      headers: { 'content-type': 'application/json', 'content-encoding': 'gzip' },
+      payload: gzipSync(JSON.stringify(EXPORT).padEnd(1024 * 1024 - 1, ' ')),
+    });
+    expect(ok.statusCode).toBe(200);
+  });
+
+  it('answers 200 with partial success, not a retryable status, once part of a batch was counted', async () => {
+    const f = fakePipeline({ ingest: () => { throw new IngestError(0, true, new Error('boom')); } });
+    const a = await app(f.p);
+    const json = await a.inject({ method: 'POST', url: '/v1/traces', headers: { 'content-type': 'application/json' }, payload: JSON.stringify(EXPORT) });
+    expect(json.statusCode).toBe(200);
+    expect(json.json()).toEqual({ partialSuccess: { rejectedSpans: '1', errorMessage: 'ingest failed: boom' } });
+    expect(f.counts.failed).toBe(1);
+    expect(f.counts.ok).toBeUndefined();
+    // Nothing counted yet: a retry is safe, so 503 stays.
+    const g = fakePipeline({ ingest: () => { throw new IngestError(0, false, new Error('early')); } });
+    const b = await app(g.p);
+    const r = await b.inject({ method: 'POST', url: '/v1/traces', headers: { 'content-type': 'application/json' }, payload: JSON.stringify(EXPORT) });
+    expect(r.statusCode).toBe(503);
   });
 
   it('registers services from /v1/metrics without storing points', async () => {

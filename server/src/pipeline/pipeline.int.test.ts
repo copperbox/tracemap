@@ -65,7 +65,7 @@ describe.skipIf(!URL)('pipeline against TimescaleDB', () => {
   beforeEach(async () => {
     const tables = [
       ...ROLLUP_KINDS.flatMap((k) => TIERS.map((t) => tableName(k.kind, t.name))),
-      'rollup_tier_state', 'collectors', 'service_last_state', 'edge_last_state',
+      'rollup_tier_state', 'rollup_dirty_windows', 'collectors', 'service_last_state', 'edge_last_state',
       'kept_spans', 'kept_traces', 'kept_trace_services', 'edges', 'service_aliases', 'services', 'teams',
     ];
     await pool.query(`TRUNCATE ${tables.join(', ')} RESTART IDENTITY CASCADE`);
@@ -385,6 +385,100 @@ describe.skipIf(!URL)('pipeline against TimescaleDB', () => {
     expect(total.rows[0].n).toBe(2);
     expect(runs).toBeGreaterThan(3);
   }, 60_000);
+
+  /** JSON OTLP body: `n` SERVER spans of `service` starting at `atMs`, every third one an error. */
+  function serverSpans(service: string, n: number, atMs: number, seed: number) {
+    const start = BigInt(atMs) * 1_000_000n;
+    const spans = [];
+    for (let i = 0; i < n; i++) {
+      spans.push({
+        traceId: (seed * 100_000 + i + 1).toString(16).padStart(32, '0'),
+        spanId: (seed * 100_000 + i + 1).toString(16).padStart(16, '0'),
+        name: i % 2 ? 'GET /a' : 'GET /b',
+        kind: 2,
+        startTimeUnixNano: String(start + BigInt(i) * 1000n),
+        endTimeUnixNano: String(start + BigInt(i) * 1000n + 5_000_000n),
+        status: { code: i % 3 === 0 ? 2 : 0 },
+      });
+    }
+    return Buffer.from(JSON.stringify({
+      resourceSpans: [{ resource: { attributes: [{ key: 'service.name', value: { stringValue: service } }] }, scopeSpans: [{ spans }] }],
+    }));
+  }
+
+  it('repairs coarse tiers when a flush lands after compaction passed its window', async () => {
+    const p = await newPipeline();
+    const base = Math.floor((Date.now() - 10 * 60_000) / 60_000) * 60_000 + 7_000;
+    p.ingestTraces(await decodeTraces(serverSpans('late-svc', 30, base, 1), 'application/json'), base);
+    await p.flushRollups(base);
+    // The database becomes unreachable: these spans stay in memory, unflushed.
+    p.ingestTraces(await decodeTraces(serverSpans('late-svc', 12, base + 1_000, 2), 'application/json'), base + 1_000);
+
+    // Compaction runs as if two days passed, so 10m, 1h and 1d all move past the window.
+    const later = base + 2 * 24 * HOUR;
+    const opts = { graceMinutes: 3, flushMs: 10_000, maxWindowsPerRun: { '10m': 1000, '1h': 1000, '1d': 1000 }, chunkRows: 1000 };
+    await compactOnce(pool, opts, later);
+    const wm = await pool.query("SELECT tier, compacted_through FROM rollup_tier_state WHERE kind = 'svc_rollup'");
+    for (const r of wm.rows) expect(r.compacted_through.getTime()).toBeGreaterThan(base);
+    const total = async (kind: string, t: string) => {
+      const err = kind.includes('_error_') ? '0' : 'coalesce(sum(err), 0)::float8';
+      return (await pool.query(`SELECT coalesce(sum(n), 0)::float8 AS n, ${err} AS err FROM ${kind}_${t}`)).rows[0];
+    };
+    expect((await total('svc_rollup', '1d')).n).toBe(30);
+
+    // The collector recovers and flushes the late rows.
+    await p.flushRollups(base + 2_000);
+    const dirty = await pool.query("SELECT kind, tier FROM rollup_dirty_windows WHERE tier = '10m' ORDER BY kind");
+    expect(dirty.rows.map((r) => r.kind)).toEqual(['op_rollup', 'svc_error_rollup', 'svc_rollup']);
+
+    const r = await compactOnce(pool, opts, later);
+    expect(r.repaired).toBe(9); // three kinds x (10m, 1h, 1d)
+    for (const kind of ['svc_rollup', 'op_rollup', 'svc_error_rollup']) {
+      const want = await total(kind, '1m');
+      expect(want.n).toBe(kind === 'svc_error_rollup' ? 14 : 42);
+      for (const t of ['10m', '1h', '1d']) expect(await total(kind, t)).toEqual(want);
+    }
+    expect((await total('svc_rollup', '1d')).err).toBe(14);
+    expect((await pool.query('SELECT count(*)::int AS n FROM rollup_dirty_windows')).rows[0].n).toBe(0);
+    // Nothing left to repair, and re-running changes nothing.
+    expect((await compactOnce(pool, opts, later)).repaired).toBe(0);
+    expect(await total('svc_rollup', '1d')).toEqual(await total('svc_rollup', '1m'));
+    await p.shutdown();
+  }, 120_000);
+
+  it('counts late spans of a kept trace into kept_traces.span_count', async () => {
+    const p = await newPipeline();
+    const traceId = 'abcdef0123456789abcdef0123456789';
+    const now = BigInt(Date.now()) * 1_000_000n;
+    const body = (spanId: string, parent: string | null) => Buffer.from(JSON.stringify({
+      resourceSpans: [{
+        resource: { attributes: [{ key: 'service.name', value: { stringValue: 'gw' } }] },
+        scopeSpans: [{ spans: [{
+          traceId, spanId, ...(parent ? { parentSpanId: parent } : {}), name: 'GET /', kind: parent ? 1 : 2,
+          startTimeUnixNano: String(now), endTimeUnixNano: String(now + 1_000_000n),
+        }] }],
+      }],
+    }));
+    const ingest = async (spanId: string, parent: string | null) =>
+      p.ingestTraces(await decodeTraces(body(spanId, parent), 'application/json'));
+    const count = async () =>
+      (await pool.query('SELECT span_count FROM kept_traces WHERE trace_id = $1', [hexToUuid(traceId)])).rows[0]?.span_count;
+    const spans = async () =>
+      (await pool.query('SELECT count(*)::int AS n FROM kept_spans WHERE trace_id = $1', [hexToUuid(traceId)])).rows[0].n;
+
+    await ingest('0000000000000001', null);
+    p.traces.decideAll();
+    // Late while the trace is still queued: it joins the trace.
+    await ingest('0000000000000002', '0000000000000001');
+    await p.flushKept();
+    expect([await count(), await spans()]).toEqual([2, 2]);
+    // Late after the trace was written: span_count is updated with the spans.
+    await ingest('0000000000000003', '0000000000000001');
+    await ingest('0000000000000004', '0000000000000001');
+    await p.flushKept();
+    expect([await count(), await spans()]).toEqual([4, 4]);
+    await p.shutdown();
+  });
 
   it('writes last state and heartbeats', async () => {
     const p = await newPipeline();

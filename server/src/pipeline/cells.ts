@@ -1,4 +1,5 @@
 import { addValue, mergeInto, newHist, newWideHist } from '../rollup/hist.js';
+import { key2, splitKey2 } from './keys.js';
 import {
   ERROR_MESSAGE_MAX,
   OTHER_ERROR_CODE,
@@ -7,7 +8,6 @@ import {
 } from '../rollup/tiers.js';
 
 const MINUTE_MS = 60_000;
-const SEP = '\u0001';
 
 /** One rollup row being accumulated in memory. */
 export class Cell {
@@ -63,13 +63,13 @@ export class MinuteCells {
   }
 
   opKey(service: string, op: string, cap: number): string {
-    const k = service + SEP + op;
+    const k = key2(service, op);
     if (op === OTHER_OPERATION || this.cells.op_rollup.has(k)) return op;
     return MinuteCells.admit(this.opCount, service, cap) ? op : OTHER_OPERATION;
   }
 
   edgeOpKey(edge: string, op: string, cap: number): string {
-    const k = edge + SEP + op;
+    const k = key2(edge, op);
     if (op === OTHER_OPERATION || this.cells.edge_op_rollup.has(k)) return op;
     return MinuteCells.admit(this.edgeOpCount, edge, cap) ? op : OTHER_OPERATION;
   }
@@ -242,7 +242,7 @@ export class CellStore {
     const mc = this.minuteCells(minute);
     addRed(getCell(mc.cells.svc_rollup, service, () => [service], true), durMs, isErr);
     const op = mc.opKey(service, operation, this.opts.maxOpsPerService);
-    const opKey = service + SEP + op;
+    const opKey = key2(service, op);
     addRed(getCell(mc.cells.op_rollup, opKey, () => [service, op], true), durMs, isErr);
     let sigRef: SigRef | null = null;
     if (isErr && sig) sigRef = this.addError(mc, 'svc', service, opKey, [service, op], sig);
@@ -260,14 +260,14 @@ export class CellStore {
     sig: ErrorSigInput | null,
   ): SigRef | null {
     const mc = this.minuteCells(minute);
-    const edgeKey = source + SEP + target;
+    const edgeKey = key2(source, target);
     addRed(getCell(mc.cells.edge_rollup, edgeKey, () => [source, target], true), durMs, isErr);
     const op = mc.edgeOpKey(edgeKey, operation, this.opts.maxOpsPerService);
-    const eo = getCell(mc.cells.edge_op_rollup, edgeKey + SEP + op, () => [source, target, op], false);
+    const eo = getCell(mc.cells.edge_op_rollup, key2(edgeKey, op), () => [source, target, op], false);
     eo.n++;
     if (isErr) eo.err++;
     eo.dirty = true;
-    if (isErr && sig) return this.addError(mc, 'edge', edgeKey, edgeKey + SEP + op, [source, target, op], sig);
+    if (isErr && sig) return this.addError(mc, 'edge', edgeKey, key2(edgeKey, op), [source, target, op], sig);
     return null;
   }
 
@@ -281,11 +281,11 @@ export class CellStore {
   ): SigRef {
     let code = sig.code;
     let message = (sig.message ?? '').slice(0, ERROR_MESSAGE_MAX);
-    let mapKey = prefix + SEP + code + SEP + message;
+    let mapKey = key2(prefix, key2(code, message));
     if (!mc.sigAllowed(kind, owner, mapKey, this.opts.maxErrorSigsPerService)) {
       code = OTHER_ERROR_CODE;
       message = '';
-      mapKey = prefix + SEP + code + SEP;
+      mapKey = key2(prefix, key2(code, ''));
     }
     const map = kind === 'svc' ? mc.cells.svc_error_rollup : mc.cells.edge_error_rollup;
     const c = getCell(map, mapKey, () => [...prefixKeys, code, message], false);
@@ -307,7 +307,7 @@ export class CellStore {
   /** Histogram of a service operation over minutes [fromMinute, toMinute], or null if unseen. */
   opHist(service: string, op: string, fromMinute: number, toMinute: number): Float64Array | null {
     let out: Float64Array | null = null;
-    const k = service + SEP + op;
+    const k = key2(service, op);
     for (let m = fromMinute; m <= toMinute; m++) {
       const c = this.minutes.get(m)?.cells.op_rollup.get(k);
       if (!c) continue;
@@ -391,9 +391,9 @@ export class CellStore {
     return this.live('svc_rollup', now, minutes, (c) => c.keys[0]);
   }
 
-  /** Per-edge aggregates over the live window, keyed "source\u0001target"; use splitEdgeKey(). */
+  /** Per-edge aggregates over the live window, keyed edgeKey(source, target); use splitEdgeKey(). */
   liveEdges(now = Date.now(), minutes = this.opts.liveMinutes): LiveWindow<string> {
-    return this.live('edge_rollup', now, minutes, (c) => c.keys[0] + SEP + c.keys[1]);
+    return this.live('edge_rollup', now, minutes, (c) => key2(c.keys[0], c.keys[1]));
   }
 
   private live(
@@ -430,8 +430,8 @@ function hasDirty(mc: MinuteCells): boolean {
   return false;
 }
 
+/** Key of the edge (source, target) in liveEdges(). Collision-free for any ids. */
+export const edgeKey = key2;
+
 /** Split a liveEdges() key into [sourceId, targetId]. */
-export function splitEdgeKey(key: string): [string, string] {
-  const i = key.indexOf(SEP);
-  return [key.slice(0, i), key.slice(i + 1)];
-}
+export const splitEdgeKey = splitKey2;

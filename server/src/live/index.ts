@@ -11,13 +11,8 @@ import { RollupReader, SqlRowSource } from '../rollup/read.js';
 import { LiveSnapshot } from './snapshot.js';
 import { SseHub, formatEvent } from './sse.js';
 
-function num(name: string, dflt: number): number {
-  const n = Number(process.env[name]);
-  return process.env[name] && Number.isFinite(n) && n > 0 ? n : dflt;
-}
-
-/** SNAPSHOT_INTERVAL_MS: how often the live snapshot (and frame) is rebuilt. */
-export const SNAPSHOT_INTERVAL_MS = num('SNAPSHOT_INTERVAL_MS', 2000);
+/** SNAPSHOT_INTERVAL_MS (config.snapshotIntervalMs): how often the live snapshot (and frame) is rebuilt. */
+export const SNAPSHOT_INTERVAL_MS = config.snapshotIntervalMs;
 
 export interface Live {
   snapshot: LiveSnapshot;

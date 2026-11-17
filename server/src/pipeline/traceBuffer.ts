@@ -1,6 +1,7 @@
 import type { KeepReason } from '../rollup/tiers.js';
 import type { SigRef } from './cells.js';
 import { RotatingIdSet, hexWords } from './idSet.js';
+import { key2 } from './keys.js';
 import { TokenBucket } from './tokenBucket.js';
 
 const KIND_SERVER = 2;
@@ -103,8 +104,14 @@ export interface TraceBufferOptions {
   slowQuota: number;
   /** Baseline keeps per root operation per minute. */
   baselineQuota: number;
-  /** Global kept-span budget, spans/s; the bucket holds one minute of it. */
+  /** Global kept-span budget, spans/s; the buckets hold one minute of it. */
   keptSpansPerSec: number;
+  /**
+   * Share of the budget (0..1) reserved for baseline keeps. Error and slow
+   * keeps cannot spend it, so healthy operations still get example traces
+   * under error pressure. Default 0.25.
+   */
+  baselineShare?: number;
   /** How long decided trace ids are remembered, ms (at least; two generations). */
   decidedTtlMs: number;
   /** Slots per generation of the decided-dropped id set. */
@@ -141,8 +148,10 @@ export interface TraceBufferStats {
   };
   lateKeptSpans: number;
   lateDroppedSpans: number;
-  /** Tokens left in the kept-span budget. */
+  /** Tokens left in the kept-span budget, both buckets. */
   budgetTokens: number;
+  /** Of those, tokens in the baseline reserve. */
+  baselineBudgetTokens: number;
 }
 
 interface TraceEntry {
@@ -276,9 +285,11 @@ class StringPool {
  *   1. error: an error span whose signature has quota left this minute;
  *   2. slow: root duration at or above that root operation's p99;
  *   3. baseline: quota per root operation per minute.
- * Every keep spends its span count from a global token bucket; baseline keeps
- * spend only while the bucket is over half full, so errors and slow traces
- * get the budget under load.
+ * Every keep spends its span count from the kept-span budget, split in two
+ * buckets: baseline keeps have a reserved share (baselineShare) that error
+ * and slow keeps cannot touch, and may also use the shared bucket while it is
+ * over half full. Errors and slow traces get the rest under load, and
+ * healthy operations still get example traces.
  *
  * Decided ids are remembered for a while: late spans of a kept trace go
  * straight to the writer, late spans of a dropped one are ignored.
@@ -290,7 +301,10 @@ export class TraceBuffer {
   private names = new StringPool();
   private keptIds: RotatingIdSet;
   private droppedIds: RotatingIdSet;
+  /** Budget for every rule except the baseline reserve. */
   private budget: TokenBucket;
+  /** Budget only baseline keeps may spend. */
+  private reserve: TokenBucket;
   private quotaMinute = -1;
   private quota = new Map<string, number>();
   private c = {
@@ -313,8 +327,12 @@ export class TraceBuffer {
     this.slab = new SpanSlab(opts.maxSpans);
     this.keptIds = new RotatingIdSet(Math.max(1024, opts.decidedCapacity >> 4), opts.decidedTtlMs, now);
     this.droppedIds = new RotatingIdSet(opts.decidedCapacity, opts.decidedTtlMs, now);
-    const cap = opts.keptSpansPerSec * 60;
-    this.budget = new TokenBucket(opts.keptSpansPerSec, cap, opts.initialBudgetSpans ?? 0, now);
+    // The two buckets refill at rates that sum to keptSpansPerSec, so the total stays within budget.
+    const share = Math.min(1, Math.max(0, opts.baselineShare ?? 0.25));
+    const rate = opts.keptSpansPerSec;
+    const initial = opts.initialBudgetSpans ?? 0;
+    this.budget = new TokenBucket(rate * (1 - share), rate * (1 - share) * 60, initial * (1 - share), now);
+    this.reserve = new TokenBucket(rate * share, rate * share * 60, initial * share, now);
   }
 
   add(s: SpanInput, now = Date.now()): void {
@@ -503,12 +521,16 @@ export class TraceBuffer {
     }
     // The first rule with quota left decides; if the budget or queue cannot
     // take the trace, it is dropped rather than tried against a weaker rule.
-    const keep = (reason: KeepReason, key: string, cap: number, floor: number): KeepReason | null => {
+    const keep = (reason: KeepReason, key: string, cap: number): KeepReason | null => {
       if (!this.sink.hasRoom(cost)) {
         this.c.dropped.queueFull++;
         return null;
       }
-      if (!this.budget.trySpend(cost, now, floor)) {
+      // Baseline spends its reserve first, then the shared bucket only while it is over half full.
+      const paid = reason === 'baseline'
+        ? this.reserve.trySpend(cost, now) || this.budget.trySpend(cost, now, this.budget.capacity / 2)
+        : this.budget.trySpend(cost, now);
+      if (!paid) {
         this.c.dropped.budget++;
         return null;
       }
@@ -518,18 +540,18 @@ export class TraceBuffer {
 
     for (const ref of t.sigs ?? []) {
       const key = `e${ref.kind}|${ref.mapKey}`;
-      if (this.quotaLeft(key, this.opts.errorQuota, minute)) return keep('error', key, this.opts.errorQuota, 0);
+      if (this.quotaLeft(key, this.opts.errorQuota, minute)) return keep('error', key, this.opts.errorQuota);
     }
     if (t.rootService && t.rootOp) {
-      const rootKey = t.rootService + '|' + t.rootOp;
+      const rootKey = key2(t.rootService, t.rootOp);
       const slowKey = `s|${rootKey}`;
       if (t.rootDur > 0 && this.quotaLeft(slowKey, this.opts.slowQuota, minute)) {
         const p99 = this.hooks.rootP99(t.rootService, t.rootOp, now);
-        if (Number.isFinite(p99) && t.rootDur >= p99) return keep('slow', slowKey, this.opts.slowQuota, 0);
+        if (Number.isFinite(p99) && t.rootDur >= p99) return keep('slow', slowKey, this.opts.slowQuota);
       }
       const baseKey = `b|${rootKey}`;
       if (this.quotaLeft(baseKey, this.opts.baselineQuota, minute)) {
-        return keep('baseline', baseKey, this.opts.baselineQuota, this.budget.capacity / 2);
+        return keep('baseline', baseKey, this.opts.baselineQuota);
       }
     }
     this.c.dropped.notSelected++;
@@ -617,7 +639,8 @@ export class TraceBuffer {
       dropped: { ...this.c.dropped },
       lateKeptSpans: this.c.lateKeptSpans,
       lateDroppedSpans: this.c.lateDroppedSpans,
-      budgetTokens: Math.floor(this.budget.available(now)),
+      budgetTokens: Math.floor(this.budget.available(now) + this.reserve.available(now)),
+      baselineBudgetTokens: Math.floor(this.reserve.available(now)),
     };
   }
 }

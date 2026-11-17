@@ -43,8 +43,8 @@ export function resetTables(): string[] {
   const rollups = ROLLUP_KINDS.flatMap((k) => TIERS.map((t) => tableName(k.kind, t.name)));
   return [
     ...rollups,
-    'rollup_tier_state', 'service_last_state', 'edge_last_state', 'kept_spans', 'kept_traces', 'kept_trace_services',
-    'collectors', 'service_merges', 'service_aliases', 'edges', 'services', 'teams',
+    'rollup_tier_state', 'rollup_dirty_windows', 'service_last_state', 'edge_last_state', 'kept_spans', 'kept_traces',
+    'kept_trace_services', 'collectors', 'service_merges', 'service_aliases', 'edges', 'services', 'teams',
   ];
 }
 

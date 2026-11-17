@@ -89,4 +89,58 @@ describe('EdgePairing', () => {
     expect(r.onServerSpan('0000000000000000', 'b', 10)).toBeNull();
     expect(r.onServerSpan('0000000000000004', 'b', 10)).not.toBeNull();
   });
+
+  it('does not count a replayed guess-resolved client span twice', () => {
+    const r = new EdgePairing(opts, 0);
+    const c = client({ peerGuess: { id: 'pg', type: 'postgres', isExternal: true } });
+    expect(r.onClientSpan(c, 0)).not.toBeNull();
+    expect(r.onClientSpan(c, 100)).toBeNull();
+    expect(r.pendingCount).toBe(0);
+    expect(r.stats()).toMatchObject({ resolvedByGuess: 1, replayedClients: 1 });
+  });
+
+  it('does not count a replayed client/server pair twice (client first)', () => {
+    const r = new EdgePairing(opts, 0);
+    r.onClientSpan(client(), 0);
+    expect(r.onServerSpan('c100000000000001', 'b', 0)).not.toBeNull();
+    // The whole batch again: neither half is held or counted.
+    expect(r.onClientSpan(client(), 100)).toBeNull();
+    expect(r.onServerSpan('c100000000000001', 'b', 100)).toBeNull();
+    expect(r.pendingCount).toBe(0);
+    expect(r.stats()).toMatchObject({ resolvedByServer: 1, replayedClients: 1, lateServers: 1 });
+  });
+
+  it('does not count a replayed client/server pair twice (server first)', () => {
+    const r = new EdgePairing(opts, 0);
+    r.onServerSpan('c100000000000001', 'b', 0);
+    expect(r.onClientSpan(client(), 0)).not.toBeNull();
+    expect(r.onServerSpan('c100000000000001', 'b', 100)).toBeNull();
+    expect(r.onClientSpan(client(), 100)).toBeNull();
+    expect(r.pendingCount).toBe(0);
+    expect(r.stats().resolvedByServer).toBe(1);
+  });
+
+  it('keeps the original arrival time of a duplicate held span, so it still expires and evicts first', () => {
+    const r = new EdgePairing({ ...opts, ttlMs: 1000, maxPending: 3 }, 0);
+    r.onClientSpan(client({ spanId: '0000000000000001' }), 0);
+    r.onServerSpan('ffff000000000001', 'b', 0);
+    r.onClientSpan(client({ spanId: '0000000000000002' }), 900);
+    // Duplicates of the oldest entries arrive late.
+    r.onClientSpan(client({ spanId: '0000000000000001' }), 950);
+    r.onServerSpan('ffff000000000001', 'b', 950);
+    expect(r.pendingCount).toBe(3);
+    r.sweep(1500);
+    // Both originals (t=0) expired; the t=900 entry did not block the sweep.
+    expect(r.pendingCount).toBe(1);
+    expect(r.stats().expired).toBe(2);
+
+    const e = new EdgePairing({ ...opts, maxPending: 2 }, 0);
+    e.onClientSpan(client({ spanId: '0000000000000001' }), 0);
+    e.onClientSpan(client({ spanId: '0000000000000002' }), 1);
+    e.onClientSpan(client({ spanId: '0000000000000001' }), 2);
+    e.onClientSpan(client({ spanId: '0000000000000003' }), 3);
+    // Oldest-first: 0001 (first seen at 0) is the one evicted.
+    expect(e.onServerSpan('0000000000000002', 'b', 4)).not.toBeNull();
+    expect(e.onServerSpan('0000000000000001', 'b', 4)).toBeNull();
+  });
 });

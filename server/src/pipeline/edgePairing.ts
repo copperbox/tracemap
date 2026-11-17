@@ -54,6 +54,8 @@ export interface EdgePairingStats {
   resolvedByServer: number;
   /** Server spans whose client had already resolved (ignored, not double counted). */
   lateServers: number;
+  /** Client spans seen again after they resolved, e.g. an OTLP retry (ignored, not double counted). */
+  replayedClients: number;
   expired: number;
   evicted: number;
   resolvedRemembered: number;
@@ -81,29 +83,37 @@ export class EdgePairing {
   private clients = new Map<string, HeldClient>();
   private servers = new Map<string, HeldServer>();
   private resolved: RotatingIdSet;
-  private counters = { resolvedByGuess: 0, resolvedByServer: 0, lateServers: 0, expired: 0, evicted: 0 };
+  private counters = { resolvedByGuess: 0, resolvedByServer: 0, lateServers: 0, replayedClients: 0, expired: 0, evicted: 0 };
 
   constructor(private readonly opts: EdgePairingOptions, now = Date.now()) {
     this.resolved = new RotatingIdSet(opts.resolvedCapacity, opts.ttlMs, now);
   }
 
   onClientSpan(info: ClientSpanInfo, now = Date.now()): EdgeObservation | null {
+    // The same client span again (a retried batch): it already counted once.
+    const [hi, lo] = hexWords(info.spanId);
+    if (this.resolved.has(hi, lo)) {
+      this.counters.replayedClients++;
+      return null;
+    }
     const server = this.servers.get(info.spanId);
     if (server) {
       this.servers.delete(info.spanId);
       if (server.serviceId !== info.serviceId) {
-        this.markResolved(info.spanId, now);
+        this.resolved.add(hi, lo, now);
         this.counters.resolvedByServer++;
         return observation(info, server.serviceId, null);
       }
     }
     // A real server span beats an attribute guess, so this check comes second.
     if (info.peerGuess && info.peerGuess.id !== info.serviceId) {
-      this.markResolved(info.spanId, now);
+      this.resolved.add(hi, lo, now);
       this.counters.resolvedByGuess++;
       return observation(info, info.peerGuess.id, info.peerGuess);
     }
-    if (!server) {
+    // A duplicate keeps the original entry: Map order must stay arrival order
+    // for sweep() and oldest-first eviction.
+    if (!server && !this.clients.has(info.spanId)) {
       this.clients.set(info.spanId, { info, at: now });
       this.enforceCap();
     }
@@ -112,21 +122,23 @@ export class EdgePairing {
 
   onServerSpan(parentSpanId: string | null, serviceId: string, now = Date.now()): EdgeObservation | null {
     if (!parentSpanId) return null;
+    const [hi, lo] = hexWords(parentSpanId);
     const client = this.clients.get(parentSpanId);
     if (client) {
       this.clients.delete(parentSpanId);
       if (client.info.serviceId === serviceId) return null;
-      this.markResolved(parentSpanId, now);
+      this.resolved.add(hi, lo, now);
       this.counters.resolvedByServer++;
       return observation(client.info, serviceId, null);
     }
-    const [hi, lo] = hexWords(parentSpanId);
     if (this.resolved.has(hi, lo)) {
       this.counters.lateServers++;
       return null;
     }
-    this.servers.set(parentSpanId, { serviceId, at: now });
-    this.enforceCap();
+    if (!this.servers.has(parentSpanId)) {
+      this.servers.set(parentSpanId, { serviceId, at: now });
+      this.enforceCap();
+    }
     return null;
   }
 
@@ -158,11 +170,6 @@ export class EdgePairing {
       resolvedRemembered: this.resolved.size,
       resolvedEarlyRotations: this.resolved.earlyRotations,
     };
-  }
-
-  private markResolved(spanId: string, now: number): void {
-    const [hi, lo] = hexWords(spanId);
-    this.resolved.add(hi, lo, now);
   }
 
   private enforceCap(): void {

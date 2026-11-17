@@ -26,6 +26,18 @@ CREATE TABLE rollup_tier_state (
   PRIMARY KEY (kind, tier)
 );
 
+-- Windows of a coarse tier to rebuild because rows below them changed after
+-- they were compacted. A collector whose 1m write lands in an already built
+-- 10m window (a flush delayed past the grace period) marks that window;
+-- compaction rebuilds it and marks the 1h and then 1d window above it when
+-- those tiers have passed it too. Rows are deleted once rebuilt.
+CREATE TABLE rollup_dirty_windows (
+  kind   TEXT NOT NULL,
+  tier   TEXT NOT NULL,
+  bucket TIMESTAMPTZ NOT NULL,
+  PRIMARY KEY (kind, tier, bucket)
+);
+
 -- Rollup tiers. Each kind exists at 1m (per collector), 10m, 1h and 1d.
 -- n/err are span counts, sum_ms is summed duration in ms, hist is the sparse
 -- log histogram from server/src/rollup/hist.ts. 1m/10m/1h are compressed

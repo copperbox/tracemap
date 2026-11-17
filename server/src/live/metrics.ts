@@ -1,6 +1,7 @@
 import { mergeInto, newWideHist } from '../rollup/hist.js';
 import type { LiveAggregate } from '../pipeline/cells.js';
 import { summarize } from '../pipeline/summary.js';
+import { splitEdgeKey } from '../pipeline/cells.js';
 import { edgeKey } from './structure.js';
 import type { Status } from './frame.js';
 
@@ -43,7 +44,7 @@ function addAgg(into: Map<string, LiveAggregate>, key: string, a: LiveAggregate,
 
 /**
  * Regroup per-id aggregates under canonical ids. Two aliases of one service
- * sum; for edges (keys "source\u0001target") an edge whose ends are now one
+ * sum; for edges (keys edgeKey(source, target)) an edge whose ends are now one
  * service is dropped. Takes ownership of the input aggregates (the pipeline
  * builds fresh ones per call), so merging into them is safe.
  */
@@ -56,9 +57,9 @@ export function canonicalize(
   for (const [key, a] of entries) {
     let k: string;
     if (isEdge) {
-      const i = key.indexOf('\u0001');
-      const s = canon(key.slice(0, i));
-      const t = canon(key.slice(i + 1));
+      const [rs, rt] = splitEdgeKey(key);
+      const s = canon(rs);
+      const t = canon(rt);
       if (s === t) continue;
       k = edgeKey(s, t);
     } else {
@@ -150,7 +151,7 @@ export function computeLive(inp: LiveInputs): LiveOutputs {
   // Inbound live aggregates per target, histograms merged for real quantiles.
   const inboundLive = new Map<string, { n: number; err: number; hist: Float64Array }>();
   for (const [k, a] of inp.edges) {
-    const t = k.slice(k.indexOf('\u0001') + 1);
+    const t = splitEdgeKey(k)[1];
     let agg = inboundLive.get(t);
     if (!agg) {
       agg = { n: 0, err: 0, hist: newWideHist() };
@@ -162,7 +163,7 @@ export function computeLive(inp: LiveInputs): LiveOutputs {
   }
   const inboundStale = new Map<string, LiveMetrics[]>();
   for (const [k, m] of inp.lastEdge) {
-    const t = k.slice(k.indexOf('\u0001') + 1);
+    const t = splitEdgeKey(k)[1];
     const list = inboundStale.get(t) ?? [];
     list.push(m);
     inboundStale.set(t, list);

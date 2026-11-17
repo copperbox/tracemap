@@ -85,6 +85,23 @@ describe('sparse codec', () => {
     bad[3] = 1.5;
     expect(() => encode(bad)).toThrow();
   });
+
+  it('rejects counts beyond 2^53 - 1 and sums that would lose precision', () => {
+    // Bucket 0, count 2^53: varint of 2^53 is seven 0x80 bytes then 0x10.
+    const big = Buffer.from([0, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x10]);
+    expect(() => decode(big)).toThrow(/2\^53/);
+    const h = newWideHist();
+    h[0] = 2 ** 53 - 1;
+    const one = newWideHist();
+    one[0] = 1;
+    const target = decode(encode(h));
+    expect(() => decodeInto(encode(one), target)).toThrow(/overflows/);
+    expect(target[0]).toBe(2 ** 53 - 1);
+    // A per-minute u32 target must not wrap.
+    const narrow = newHist();
+    narrow[0] = 0xffff_ffff;
+    expect(() => decodeInto(encode(one), narrow)).toThrow(/overflows/);
+  });
 });
 
 describe('mergeInto', () => {
@@ -97,5 +114,16 @@ describe('mergeInto', () => {
     mergeInto(a, b);
     expect(histTotal(a)).toBe(3);
     expect(a[bucketOf(5)]).toBe(2);
+  });
+
+  it('throws instead of wrapping or rounding', () => {
+    const one = newWideHist();
+    one[7] = 1;
+    const narrow = newHist();
+    narrow[7] = 0xffff_ffff;
+    expect(() => mergeInto(narrow, one)).toThrow(/overflows/);
+    const wide = newWideHist();
+    wide[7] = Number.MAX_SAFE_INTEGER;
+    expect(() => mergeInto(wide, one)).toThrow(/overflows/);
   });
 });

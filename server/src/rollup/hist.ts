@@ -61,11 +61,23 @@ export function histTotal(hist: ArrayLike<number>): number {
   return t;
 }
 
-/** target += src, bucket by bucket. */
+/** Largest count a bucket of `target` can hold exactly. */
+function limitOf(target: Hist): number {
+  return target instanceof Uint32Array ? 0xffff_ffff : Number.MAX_SAFE_INTEGER;
+}
+
+/**
+ * target += src, bucket by bucket. Throws instead of wrapping a Uint32Array
+ * bucket or rounding a Float64Array one past 2^53.
+ */
 export function mergeInto(target: Hist, src: ArrayLike<number>): Hist {
+  const limit = limitOf(target);
   for (let i = 0; i < HIST_BUCKETS; i++) {
     const c = src[i];
-    if (c) target[i] += c;
+    if (!c) continue;
+    const v = target[i] + c;
+    if (v > limit) throw new RangeError(`histogram bucket ${i} overflows: ${v}`);
+    target[i] = v;
   }
   return target;
 }
@@ -137,9 +149,11 @@ export function encode(hist: ArrayLike<number>): Buffer {
 
 /**
  * Decode a sparse histogram and ADD its counts into `target`.
- * Throws on a malformed buffer rather than silently miscounting.
+ * Throws on a malformed buffer, a count above 2^53 - 1, or a sum the target
+ * cannot hold exactly, rather than silently miscounting.
  */
 export function decodeInto(buf: Uint8Array, target: Hist): Hist {
+  const limit = limitOf(target);
   let pos = 0;
   let idx = 0;
   const readVarint = (): number => {
@@ -149,6 +163,7 @@ export function decodeInto(buf: Uint8Array, target: Hist): Hist {
       if (pos >= buf.length) throw new RangeError('truncated histogram varint');
       const b = buf[pos++];
       v += (b & 127) * mul;
+      if (v > MAX_COUNT) throw new RangeError('histogram varint exceeds 2^53 - 1');
       if (b < 128) return v;
       mul *= 128;
       if (mul > 2 ** 56) throw new RangeError('histogram varint too long');
@@ -158,7 +173,9 @@ export function decodeInto(buf: Uint8Array, target: Hist): Hist {
     idx += readVarint();
     const count = readVarint();
     if (idx >= HIST_BUCKETS) throw new RangeError(`histogram bucket ${idx} out of range`);
-    target[idx] += count;
+    const sum = target[idx] + count;
+    if (sum > limit) throw new RangeError(`histogram bucket ${idx} overflows: ${sum}`);
+    target[idx] = sum;
   }
   return target;
 }

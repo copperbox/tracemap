@@ -8,7 +8,8 @@
  *   counted by THIS collector only. Each entry has n (spans), err (error
  *   spans), sumMs (ms) and a merged Float64Array histogram; `seconds` is the
  *   covered time, so rps = n / seconds. summarize() turns an entry into
- *   rps / p50 / p95 / p99 (ms) / errPct (0..100). Edge keys split with splitEdgeKey().
+ *   rps / p50 / p95 / p99 (ms) / errPct (0..100). Edge keys are edgeKey(source, target)
+ *   (length-prefixed, collision-free); split them with splitEdgeKey().
  * - getPipeline().collectorId: this process's collectors.id (null before
  *   start()). Rows in *_1m tables carry it; other collectors' 1m rows are the
  *   ones with a different id and a recent collectors.heartbeat_at.
@@ -30,10 +31,11 @@ import { ingestPool } from '../db/pool.js';
 import { registry } from '../otlp/registry.js';
 import { Pipeline } from './pipeline.js';
 
-export { Pipeline } from './pipeline.js';
+export { IngestError, Pipeline } from './pipeline.js';
 export type { GateResult, IngestResult, JobStats, OverloadReason, PipelineStats } from './pipeline.js';
-export { splitEdgeKey, type LiveAggregate, type LiveWindow } from './cells.js';
+export { edgeKey, splitEdgeKey, type LiveAggregate, type LiveWindow } from './cells.js';
 export { summarize, type Summary } from './summary.js';
+export { joinKey, key2, key3, splitKey2 } from './keys.js';
 export {
   KEPT_TABLES,
   OTHER_ERROR_CODE,

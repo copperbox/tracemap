@@ -30,6 +30,8 @@ function cleanJson(s: string): string {
  */
 export class KeptWriter implements KeptSink {
   private traces: KeptTrace[] = [];
+  /** Queued traces not yet handed to a write, by trace id: late spans join them directly. */
+  private queuedById = new Map<string, KeptTrace>();
   private late: KeptSpanRow[] = [];
   private queued = 0;
   private attempts = 0;
@@ -54,6 +56,7 @@ export class KeptWriter implements KeptSink {
 
   offer(trace: KeptTrace): void {
     this.traces.push(trace);
+    this.queuedById.set(trace.traceId, trace);
     this.queued += trace.spans.length;
   }
 
@@ -62,7 +65,23 @@ export class KeptWriter implements KeptSink {
       this.s.droppedLateSpans++;
       return false;
     }
-    this.late.push(span);
+    const t = this.queuedById.get(span.traceId);
+    if (t) {
+      // Still queued: the span becomes part of the trace and its span_count.
+      t.spans.push(span);
+      let svc = t.services.get(span.serviceId);
+      if (!svc) {
+        svc = { hasError: false, errorOps: new Set() };
+        t.services.set(span.serviceId, svc);
+      }
+      if (span.isError) {
+        svc.hasError = true;
+        svc.errorOps.add(span.name);
+        t.hasError = true;
+      }
+    } else {
+      this.late.push(span);
+    }
     this.queued++;
     return true;
   }
@@ -91,11 +110,17 @@ export class KeptWriter implements KeptSink {
     }
     const traces = this.traces.slice(0, ti);
     const late = this.late.slice(0, Math.max(0, this.batchSpans - n));
+    // From here on the batch's rows are fixed; later spans of these traces go to `late`.
+    for (const t of traces) this.queuedById.delete(t.traceId);
     const started = performance.now();
     try {
       await this.write(traces, late);
     } catch (err) {
-      if (++this.attempts < MAX_ATTEMPTS) throw err;
+      if (++this.attempts < MAX_ATTEMPTS) {
+        // Still at the head of the queue and retried whole; let late spans join them again.
+        for (const t of traces) this.queuedById.set(t.traceId, t);
+        throw err;
+      }
       this.s.abandonedBatches++;
       this.s.abandonedSpans += n + late.length;
       console.error('kept-trace batch abandoned after repeated failures:', (err as Error).message);
@@ -166,7 +191,13 @@ export class KeptWriter implements KeptSink {
         ts.ops.push([...info.errorOps].join('\u001f'));
       }
     }
-    for (const s of late) push(s);
+    // Late spans of traces already written: count them into span_count in the same transaction.
+    const lateCount = new Map<string, number>();
+    for (const s of late) {
+      const before = sp.time.length;
+      push(s);
+      if (sp.time.length > before) lateCount.set(sp.trace[before]!, (lateCount.get(sp.trace[before]!) ?? 0) + 1);
+    }
 
     const client = await this.pool.connect();
     try {
@@ -192,6 +223,15 @@ export class KeptWriter implements KeptSink {
                   CASE WHEN u.ops = '' THEN '{}'::text[] ELSE string_to_array(u.ops, E'\\x1f') END
            FROM unnest($1::timestamptz[], $2::text[], $3::uuid[], $4::bool[], $5::text[]) AS u(time, svc, trace, has_err, ops)`,
           [ts.time, ts.svc, ts.trace, ts.hasErr, ts.ops],
+        );
+      }
+      if (lateCount.size) {
+        // After the kept_traces insert, so a trace written in this same batch is counted too.
+        await client.query(
+          `UPDATE kept_traces k SET span_count = k.span_count + u.n
+           FROM unnest($1::uuid[], $2::int[]) AS u(trace_id, n)
+           WHERE k.trace_id = u.trace_id`,
+          [[...lateCount.keys()], [...lateCount.values()]],
         );
       }
       await client.query('COMMIT');

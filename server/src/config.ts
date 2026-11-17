@@ -5,6 +5,12 @@ function num(name: string, dflt: number): number {
   return Number.isFinite(n) ? n : dflt;
 }
 
+/** Like num(), but zero or negative also falls back to the default. */
+function positive(name: string, dflt: number): number {
+  const n = num(name, dflt);
+  return n > 0 ? n : dflt;
+}
+
 export const config = {
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://tracemap:tracemap@localhost:5433/tracemap',
   /** Query/UI API port. */
@@ -13,6 +19,8 @@ export const config = {
   otlpPort: num('OTLP_PORT', 4318),
   /** Window considered "current" for live map metrics, minutes. */
   liveWindowMinutes: num('LIVE_WINDOW_MINUTES', 5),
+  /** How often the live snapshot (and its frame) is rebuilt, ms. */
+  snapshotIntervalMs: positive('SNAPSHOT_INTERVAL_MS', 2000),
   retentionDays: 30,
 
   // ---- database pools ----
@@ -66,6 +74,8 @@ export const config = {
   keepBaselineQuota: num('KEEP_BASELINE_QUOTA', 1),
   /** Global kept-span budget, spans/s (one minute of burst). */
   keptSpansPerSec: num('KEPT_SPANS_PER_SEC', 1_000),
+  /** Share of that budget (0..1) reserved for baseline keeps; error and slow keeps cannot spend it. */
+  keepBaselineShare: num('KEEP_BASELINE_SHARE', 0.25),
   /** Budget tokens at start; 0 so a restart cannot grant a fresh burst. */
   keptBudgetInitialSpans: num('KEPT_BUDGET_INITIAL_SPANS', 0),
   /** Spans the kept-trace writer may queue before keeps are dropped. */

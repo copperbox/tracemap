@@ -228,10 +228,17 @@ export async function decodeMetrics(
   return normalizeMetricsBody(obj);
 }
 
-export async function encodeTraceResponse(): Promise<Buffer> {
+/** OTLP partial success: spans the server refused, which the client must not retry. */
+export interface TracePartialSuccess {
+  rejectedSpans: number;
+  errorMessage: string;
+}
+
+export async function encodeTraceResponse(partial?: TracePartialSuccess): Promise<Buffer> {
   const root = await loadRoot();
   const Res = root.lookupType('opentelemetry.proto.collector.trace.v1.ExportTraceServiceResponse');
-  return Buffer.from(Res.encode(Res.create({})).finish());
+  const body = partial ? { partialSuccess: { rejectedSpans: partial.rejectedSpans, errorMessage: partial.errorMessage } } : {};
+  return Buffer.from(Res.encode(Res.create(body)).finish());
 }
 
 export async function encodeMetricsResponse(): Promise<Buffer> {

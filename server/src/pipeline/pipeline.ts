@@ -6,8 +6,7 @@ import type { Config } from '../config.js';
 import type { NormalizedResourceSpans, NormalizedSpan } from '../otlp/decode.js';
 import { inferOwnType, inferPeer, regionOf, runtimeOf, teamOf } from '../otlp/infer.js';
 import type { ServiceRegistry } from '../otlp/registry.js';
-import { compactOnce, DEFAULT_COMPACT_OPTIONS, type CompactResult } from '../rollup/compact.js';
-import { upsertParams, upsertSql } from '../rollup/schema.js';
+import { compactOnce, DEFAULT_COMPACT_OPTIONS, write1mRows, type CompactResult } from '../rollup/compact.js';
 import { CellStore, splitEdgeKey, type LiveWindow, type SigRef } from './cells.js';
 import { EdgePairing, type EdgeObservation, type EdgePairingStats } from './edgePairing.js';
 import { KeptWriter, type KeptWriterStats } from './keptWriter.js';
@@ -30,6 +29,21 @@ export type PipelineOptions = Config;
 export interface IngestResult {
   spans: number;
   edgeObservations: number;
+}
+
+/**
+ * ingestTraces() failed part way. `started` says whether any span was
+ * already (perhaps partly) counted: if so a retry of the batch would count it
+ * twice, so the route must not answer a retryable status.
+ */
+export class IngestError extends Error {
+  constructor(
+    readonly accepted: number,
+    readonly started: boolean,
+    readonly cause: unknown,
+  ) {
+    super(cause instanceof Error ? cause.message : String(cause));
+  }
 }
 
 /** Why ingest is refusing work right now. */
@@ -209,6 +223,7 @@ export class Pipeline {
         slowQuota: opts.keepSlowQuota,
         baselineQuota: opts.keepBaselineQuota,
         keptSpansPerSec: opts.keptSpansPerSec,
+        baselineShare: opts.keepBaselineShare,
         initialBudgetSpans: opts.keptBudgetInitialSpans,
         decidedTtlMs: opts.traceDecidedTtlMs,
         decidedCapacity: opts.traceDecidedCapacity,
@@ -316,29 +331,41 @@ export class Pipeline {
     this.c.req[kind]++;
   }
 
-  /** Fold decoded spans into cells, edge pairing and the trace buffer. Never awaits. */
+  /**
+   * Fold decoded spans into cells, edge pairing and the trace buffer. Never
+   * awaits. Throws IngestError if it fails part way.
+   */
   ingestTraces(batches: NormalizedResourceSpans[], now = Date.now()): IngestResult {
     let spans = 0;
+    let started = false;
     const edgesBefore = this.c.edgeObservations;
     const reg = this.registry;
-    for (const batch of batches) {
-      if (!batch.serviceName || !batch.spans.length) continue;
-      const serviceId = reg.resolve(clean(batch.serviceName));
-      const attrs = batch.resourceAttrs;
-      if (!reg.touch(serviceId, attrs['team.name'] != null)) {
-        reg.note(serviceId, {
-          type: inferOwnType(serviceId),
-          runtime: runtimeOf(attrs),
-          region: regionOf(attrs),
-          teamName: teamOf(attrs),
-          isExternal: false,
-        });
+    try {
+      for (const batch of batches) {
+        if (!batch.serviceName || !batch.spans.length) continue;
+        const serviceId = reg.resolve(clean(batch.serviceName));
+        const attrs = batch.resourceAttrs;
+        if (!reg.touch(serviceId, attrs['team.name'] != null)) {
+          reg.note(serviceId, {
+            type: inferOwnType(serviceId),
+            runtime: runtimeOf(attrs),
+            region: regionOf(attrs),
+            teamName: teamOf(attrs),
+            isExternal: false,
+          });
+        }
+        started = true;
+        for (const span of batch.spans) {
+          this.ingestSpan(serviceId, span, now);
+          spans++;
+        }
       }
-      for (const span of batch.spans) this.ingestSpan(serviceId, span, now);
-      spans += batch.spans.length;
+    } catch (err) {
+      throw new IngestError(spans, started, err);
+    } finally {
+      this.c.accepted += spans;
+      this.countSecond(spans, now);
     }
-    this.c.accepted += spans;
-    this.countSecond(spans, now);
     return { spans, edgeObservations: this.c.edgeObservations - edgesBefore };
   }
 
@@ -462,25 +489,25 @@ export class Pipeline {
 
   // ---- background writers ----
 
-  /** Upsert every changed rollup cell (one statement per table, chunked when huge). */
+  /**
+   * Upsert every changed rollup cell: one transaction per table (chunked
+   * statements when huge), which also marks already-compacted windows dirty.
+   */
   async flushRollups(now = Date.now()): Promise<number> {
     if (this.collectorId == null) return 0;
     const collectorId = this.collectorId;
     return this.jobs.rollup.time(async () => {
       const snap = this.cells.takeDirty();
-      try {
-        await Promise.all(
-          snap.batches.map(async (b) => {
-            const sql = upsertSql(b.kind, '1m');
-            for (let i = 0; i < b.bucketMs.length; i += UPSERT_CHUNK) {
-              const to = Math.min(i + UPSERT_CHUNK, b.bucketMs.length);
-              await this.pool.query(sql, upsertParams(b.kind, '1m', b, i, to, collectorId));
-            }
-          }),
-        );
-      } catch (err) {
+      // Wait for every table's write to settle before touching cell state, so
+      // no write from this flush is still in flight when the next one starts.
+      const results = await Promise.allSettled(
+        snap.batches.map((b) => write1mRows(this.pool, b.kind, b, collectorId, UPSERT_CHUNK)),
+      );
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed) {
+        // Rewriting the tables that did succeed is harmless: rows are replaced whole.
         this.cells.restoreDirty(snap);
-        throw err;
+        throw failed.reason;
       }
       this.c.rowsWritten += snap.rows;
       this.cells.retire(now);
@@ -584,7 +611,7 @@ export class Pipeline {
 
   /**
    * Per-edge aggregates (the caller's client spans) over the live window,
-   * keyed "source\u0001target"; split with splitEdgeKey().
+   * keyed edgeKey(source, target); split with splitEdgeKey().
    */
   liveEdges(now = Date.now()): LiveWindow<string> {
     return this.cells.liveEdges(now);
