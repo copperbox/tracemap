@@ -191,7 +191,7 @@ export function drawMap(
     const buckets = new Map<string, { st: EdgeStroke; list: EdgeView[] }>();
     for (const v of edges) {
       const st = edgeStroke(v, fade);
-      const key = `${v.stroke}|${st.op.toFixed(2)}|${v.w}|${st.arrowOp.toFixed(2)}|${st.minPx}`;
+      const key = `${v.stroke}|${st.op.toFixed(2)}|${v.w}|${st.arrowOp.toFixed(2)}|${st.minPx}|${st.maxPx}`;
       const b = buckets.get(key);
       if (b) b.list.push(v);
       else buckets.set(key, { st, list: [v] });
@@ -201,7 +201,8 @@ export function drawMap(
       const color = resolveVar(pal, v0.stroke);
       ctx.globalAlpha = st.op;
       ctx.strokeStyle = color;
-      ctx.lineWidth = Math.max(v0.w, st.minPx * px);
+      const width = Math.max(v0.w, st.minPx * px);
+      ctx.lineWidth = st.maxPx != null ? Math.min(width, st.maxPx * px) : width;
       const glow = v0.glow && list.length === 1;
       if (glow) {
         ctx.shadowColor = color;

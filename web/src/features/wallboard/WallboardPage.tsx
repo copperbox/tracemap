@@ -80,6 +80,8 @@ export function WallboardPage() {
           </div>
           <div
             ref={listRef}
+            // takes focus when the focused row scrolls away and unmounts
+            tabIndex={-1}
             className={styles.body}
             role="list"
             aria-label="Services"

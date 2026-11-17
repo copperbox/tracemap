@@ -85,6 +85,8 @@ export function ServicesPage() {
           <div
             role="rowgroup"
             ref={listRef}
+            // takes focus when the focused row scrolls away and unmounts
+            tabIndex={-1}
             className={styles.body}
             style={{ height: win.totalHeight }}
             onKeyDown={kb.onKeyDown}

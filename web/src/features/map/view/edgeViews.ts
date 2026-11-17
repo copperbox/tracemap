@@ -10,6 +10,8 @@ export interface EdgeView {
   dim: boolean;
   isSel: boolean;
   isHov: boolean;
+  /** on the focus tree while a focus is active */
+  focused: boolean;
   arrow: string;
   /** arrowhead points (tip first), for the canvas */
   arrowPts: [Pt, Pt, Pt];
@@ -69,6 +71,7 @@ export function buildEdgeViews(
         dim,
         isSel,
         isHov,
+        focused: opts.focusEdges != null && !dim,
         arrow: g.arrow,
         arrowPts: g.arrowPts,
         arrowFill: color,

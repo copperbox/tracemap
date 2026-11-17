@@ -16,13 +16,14 @@ import {
 import { NodeCard, NOOP_CARD_HANDLERS, type CardHandlers } from './NodeCard';
 import { TeamFrameBar, type FrameHandlers } from './TeamFrame';
 import { MapDrawer } from './MapDrawer';
-import { EdgeLabelLayer } from './view/EdgeLabelLayer';
+import { EdgeLabelLayer, edgeLabelText, wantsLabel } from './view/EdgeLabelLayer';
+import { LABEL_BOX_H, labelBoxWidth, placeEdgeLabels } from './view/labelPlacement';
 import { GraphModeToggle } from './view/GraphModeToggle';
 import { Legend } from './view/Legend';
 import { PacketCanvas } from './view/PacketCanvas';
 import { TeamChips } from './view/TeamChips';
 import { ZoomControls } from './view/ZoomControls';
-import { buildEdgeViews } from './view/edgeViews';
+import { buildEdgeViews, type EdgeView } from './view/edgeViews';
 import { DOT_PITCH, dotAlphaScale, dotTilePx } from './view/dotGrid';
 import { buildDimmer } from './view/dimming';
 import { computeFocusSet } from './view/focusSet';
@@ -790,6 +791,61 @@ export function LayeredMap() {
       }),
     [edgeViews, showCards, rect],
   );
+  // Rendered card sizes, measured after commit. A team card grows with its
+  // member chips past the layout's GROUP_H, and labels must clear what is
+  // drawn. Sizes are stable per card, so this re-renders only when new
+  // cards mount with a size not seen before.
+  const cardSizeRef = useRef(new Map<string, { w: number; h: number }>());
+  const [cardSizeVersion, setCardSizeVersion] = useState(0);
+  useLayoutEffect(() => {
+    const world = worldRef.current;
+    if (!world || lod !== 'cards') return;
+    let changed = false;
+    for (const el of world.querySelectorAll<HTMLElement>('[data-node-key]')) {
+      const key = el.dataset.nodeKey;
+      if (!key) continue;
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const prev = cardSizeRef.current.get(key);
+      if (prev && prev.w === w && prev.h === h) continue;
+      cardSizeRef.current.set(key, { w, h });
+      changed = true;
+    }
+    if (changed) setCardSizeVersion((v) => v + 1);
+  });
+
+  // Labels sit on a free part of their edge, never over a card or a team
+  // title bar; one with no free spot hides unless selected or hovered.
+  const labelSpots = useMemo(() => {
+    const shown = labelEdges.filter(wantsLabel);
+    if (!shown.length) return new Map<string, { x: number; y: number }>();
+    const area = rect ?? visibleWorldRect(tfRef.current, viewport.w, viewport.h, CULL_PAD_PX);
+    const obstacles: WorldRect[] = [];
+    for (const n of graph.nodes) {
+      const p = displayPos(n.key);
+      if (!p) continue;
+      const sz = cardSizeRef.current.get(n.key);
+      const box = { x0: p.x, y0: p.y, x1: p.x + (sz?.w ?? widthOf(n)), y1: p.y + (sz?.h ?? heightOf(n)) };
+      if (rectsOverlap(area, box)) obstacles.push(box);
+    }
+    for (const f of frameViews) {
+      const bar = { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + FRAME_TITLE_H };
+      if (rectsOverlap(area, bar)) obstacles.push(bar);
+    }
+    // critical edges claim free spots before degraded ones
+    const rank = (v: EdgeView): number => (v.e.status === 'crit' ? 0 : 1);
+    return placeEdgeLabels(
+      [...shown].sort((x, y) => rank(x) - rank(y)).map((v) => ({
+        key: v.e.key,
+        curve: v.curve,
+        w: labelBoxWidth(edgeLabelText(v)),
+        h: LABEL_BOX_H,
+        force: v.isSel || v.isHov,
+      })),
+      obstacles,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tfRef/viewport only matter when rect is unset
+  }, [labelEdges, rect, graph.nodes, displayPos, frameViews, cardSizeVersion]);
 
   const cards: JSX.Element[] = [];
   if (showCards && rect) {
@@ -907,7 +963,7 @@ export function LayeredMap() {
               />
             ))}
 
-          <EdgeLabelLayer edges={labelEdges} />
+          <EdgeLabelLayer edges={labelEdges} spots={labelSpots} />
         </div>
 
         <TeamChips

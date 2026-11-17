@@ -58,11 +58,11 @@ const frameBuf = (version: number, seq: number, rps = seq) =>
 
 /** A fetch whose promise the test resolves by hand. */
 function deferredFetch<T>() {
-  const calls: { resolve: (v: T) => void; reject: (e: unknown) => void }[] = [];
+  const calls: { resolve: (v: T) => void; reject: (e: unknown) => void; signal?: AbortSignal }[] = [];
   const fn = vi.fn(
-    () =>
+    (signal?: AbortSignal) =>
       new Promise<T>((resolve, reject) => {
-        calls.push({ resolve, reject });
+        calls.push({ resolve, reject, signal });
       }),
   );
   return { fn, calls };
@@ -116,7 +116,7 @@ describe('live client', () => {
     c.stop();
   });
 
-  it('drops metrics notices while a frame fetch is in flight', async () => {
+  it('coalesces notices during a fetch and fetches again when the response is older', async () => {
     const fr = deferredFetch<ArrayBuffer>();
     const c = start(() => Promise.resolve(structure(1)), fr.fn);
     streams[0].onopen?.(null);
@@ -127,13 +127,122 @@ describe('live client', () => {
     streams[0].emit('metrics', { seq: 3, structureVersion: 1 });
     expect(fr.fn).toHaveBeenCalledTimes(1);
     expect(c.stats.noticesDropped).toBe(2);
-    fr.calls[0].resolve(frameBuf(1, 3));
+    // The response was built before seq 3 existed.
+    fr.calls[0].resolve(frameBuf(1, 2));
     await flush();
-    // Nothing queued behind it.
-    expect(fr.fn).toHaveBeenCalledTimes(1);
+    expect(c.stats.lastSeq).toBe(2);
+    expect(fr.fn).toHaveBeenCalledTimes(2);
+    fr.calls[1].resolve(frameBuf(1, 3));
+    await flush();
+    expect(c.stats.lastSeq).toBe(3);
+    expect(topologies[topologies.length - 1].services[0].metrics.rps).toBe(3);
+    // Caught up: nothing queued behind it.
+    expect(fr.fn).toHaveBeenCalledTimes(2);
     streams[0].emit('metrics', { seq: 4, structureVersion: 1 });
+    expect(fr.fn).toHaveBeenCalledTimes(3);
+    c.stop();
+  });
+
+  it('chases an announced frame only once', async () => {
+    const fr = deferredFetch<ArrayBuffer>();
+    const c = start(() => Promise.resolve(structure(1)), fr.fn);
+    streams[0].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    await flush();
+    streams[0].emit('metrics', { seq: 5, structureVersion: 1 });
+    fr.calls[0].resolve(frameBuf(1, 1));
+    await flush();
+    expect(fr.fn).toHaveBeenCalledTimes(2);
+    // The server still serves the old frame: stop until the next notice.
+    fr.calls[1].resolve(frameBuf(1, 1));
+    await flush();
     expect(fr.fn).toHaveBeenCalledTimes(2);
     c.stop();
+  });
+
+  it('aborts in-flight fetches on stop and never publishes after it', async () => {
+    const st = deferredFetch<LiveStructure>();
+    const fr = deferredFetch<ArrayBuffer>();
+    const c = start(st.fn, fr.fn);
+    streams[0].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    st.calls[0].resolve(structure(1));
+    await flush();
+    expect(fr.calls).toHaveLength(1);
+    c.stop();
+    expect(fr.calls[0].signal?.aborted).toBe(true);
+    fr.calls[0].resolve(frameBuf(1, 1));
+    await flush();
+    expect(topologies).toHaveLength(0);
+    expect(c.stats.lastError).toBeNull();
+  });
+
+  it('aborts on pause, ignores the late response, and catches up on return', async () => {
+    const st = deferredFetch<LiveStructure>();
+    const fr = deferredFetch<ArrayBuffer>();
+    const c = start(st.fn, fr.fn);
+    streams[0].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    st.calls[0].resolve(structure(1));
+    await flush();
+    doc.set(true);
+    expect(fr.calls[0].signal?.aborted).toBe(true);
+    fr.calls[0].resolve(frameBuf(1, 1));
+    await flush();
+    expect(topologies).toHaveLength(0);
+    doc.set(false);
+    streams[1].emit('hello', { structureVersion: 1, seq: 2, intervalMs: 2000 });
+    st.calls[1].resolve(structure(1));
+    await flush();
+    expect(fr.calls).toHaveLength(2);
+    fr.calls[1].resolve(frameBuf(1, 2));
+    await flush();
+    expect(topologies).toHaveLength(1);
+    expect(topologies[0].services[0].metrics.rps).toBe(2);
+    c.stop();
+  });
+
+  it('reloads the structure on every hello, even at the same version', async () => {
+    const st = deferredFetch<LiveStructure>();
+    const fetchFrame = vi.fn(() => Promise.resolve(frameBuf(1, 1)));
+    const c = start(st.fn, fetchFrame);
+    streams[0].onopen?.(null);
+    streams[0].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    st.calls[0].resolve(structure(1));
+    await flush();
+    expect(topologies).toHaveLength(1);
+    // The server restarted: same version number, different structure.
+    streams[0].onerror?.(null);
+    await vi.advanceTimersByTimeAsync(2000);
+    const s2 = streams[streams.length - 1];
+    s2.onopen?.(null);
+    const restarted = structure(1);
+    restarted.services[0] = { ...restarted.services[0], id: 'b', name: 'b' };
+    s2.emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    expect(st.fn).toHaveBeenCalledTimes(2);
+    st.calls[1].resolve(restarted);
+    await flush();
+    expect(topologies[topologies.length - 1].services[0].id).toBe('b');
+    c.stop();
+  });
+
+  it('leaves exactly one live client after a StrictMode-style start, stop, start', async () => {
+    const st = deferredFetch<LiveStructure>();
+    const fr = deferredFetch<ArrayBuffer>();
+    const first = start(st.fn, fr.fn);
+    streams[0].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    first.stop();
+    const second = start(st.fn, fr.fn);
+    expect(streams[0].closed).toBe(true);
+    expect(st.calls[0].signal?.aborted).toBe(true);
+    st.calls[0].resolve(structure(1));
+    await flush();
+    expect(fr.calls).toHaveLength(0);
+    streams[1].emit('hello', { structureVersion: 1, seq: 1, intervalMs: 2000 });
+    st.calls[1].resolve(structure(1));
+    await flush();
+    fr.calls[0].resolve(frameBuf(1, 1));
+    await flush();
+    expect(topologies).toHaveLength(1);
+    expect(streams.filter((s) => !s.closed)).toHaveLength(1);
+    second.stop();
   });
 
   it('ignores a frame for another structure until that structure is loaded', async () => {

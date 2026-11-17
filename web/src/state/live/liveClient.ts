@@ -6,12 +6,16 @@ import { checkFrameMatches, mergeFrame, type LiveSnapshot } from './merge';
  * Owns the live feed: the SSE notice stream, the structure, and the binary
  * frames. The stream only says "something new exists"; the client then fetches
  * the structure (when its version moved) or the latest frame. Notices that
- * arrive while a frame fetch is in flight are dropped, not queued: the next
- * fetch returns the newest frame anyway. When the stream is down it polls the
- * frame every 5 s and keeps trying to reconnect with backoff; a stream that
- * goes silent for several intervals counts as down. While the tab is
- * hidden it closes the stream and does nothing; on return it reconnects, and
- * the server's hello brings it up to date.
+ * arrive while a frame fetch is in flight are not queued, but the client
+ * remembers the newest announced seq and fetches once more if the frame it
+ * got is older. Structure versions are opaque (only equality matters), and
+ * the structure is refetched on every hello: a restarted server can reuse a
+ * version number for a different structure. When the stream is down it polls
+ * the frame every 5 s and keeps trying to reconnect with backoff; a stream
+ * that goes silent for several intervals counts as down. While the tab is
+ * hidden it closes the stream, aborts its fetches and does nothing; on return
+ * it reconnects, and the server's hello brings it up to date. Stop and pause
+ * abort in-flight fetches, and a late response never publishes.
  */
 
 /** The subset of EventSource the client uses (lets tests pass a fake). */
@@ -46,8 +50,8 @@ export interface LiveStats {
 export interface LiveClientDeps {
   streamUrl: string;
   openStream: (url: string) => EventSourceLike;
-  fetchStructure: () => Promise<LiveStructure>;
-  fetchFrame: () => Promise<ArrayBuffer>;
+  fetchStructure: (signal: AbortSignal) => Promise<LiveStructure>;
+  fetchFrame: (signal: AbortSignal) => Promise<ArrayBuffer>;
   onTopology: (t: Topology) => void;
   /** A frame or structure fetch failed (the feed may be offline). */
   onFetchError?: (err: unknown) => void;
@@ -87,10 +91,17 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
   let structure: LiveStructure | null = null;
   /** Latest structure version the server has told us about. */
   let wantVersion: number | null = null;
-  let structureLoading = false;
-  let frameLoading = false;
+  /** False from a hello until the structure it implies has loaded. */
+  let structureFresh = false;
+  // In-flight requests. A completion whose controller is no longer the
+  // current one (superseded, stopped, paused) is ignored.
+  let structureReq: AbortController | null = null;
+  let frameReq: AbortController | null = null;
   /** Fetch one more frame when the current one lands (structure just loaded). */
   let frameAgain = false;
+  /** Newest frame seq the server announced, and the last one we refetched for. */
+  let announcedSeq: number | null = null;
+  let chasedSeq: number | null = null;
   let es: EventSourceLike | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -104,23 +115,42 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
     deps.onFetchError?.(err);
   };
 
-  const loadStructure = () => {
-    if (structureLoading || stopped || paused) return;
-    structureLoading = true;
-    deps
-      .fetchStructure()
-      .then((s) => {
-        if (stopped) return;
+  const abortFetches = (): void => {
+    const s = structureReq;
+    const f = frameReq;
+    structureReq = null;
+    frameReq = null;
+    frameAgain = false;
+    s?.abort();
+    f?.abort();
+  };
+
+  /** `restart` drops a load already in flight (it may describe an older server). */
+  const loadStructure = (restart = false) => {
+    if (stopped || paused) return;
+    if (structureReq) {
+      if (!restart) return;
+      structureReq.abort();
+    }
+    const ctrl = new AbortController();
+    structureReq = ctrl;
+    deps.fetchStructure(ctrl.signal).then(
+      (s) => {
+        if (structureReq !== ctrl) return;
+        structureReq = null;
         stats.structureLoads++;
         structure = s;
+        structureFresh = true;
         // Only chase a frame when this is the version we were told about,
         // so a server whose structure lags its frames cannot make us spin.
         if (wantVersion == null || s.version === wantVersion) requestFrame(true);
-      })
-      .catch(fail)
-      .finally(() => {
-        structureLoading = false;
-      });
+      },
+      (err) => {
+        if (structureReq !== ctrl) return;
+        structureReq = null;
+        fail(err);
+      },
+    );
   };
 
   const noteVersion = (v: number) => {
@@ -163,29 +193,52 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
 
   function requestFrame(force: boolean) {
     if (stopped || paused) return;
-    if (!structure) {
+    if (!structure || !structureFresh) {
       loadStructure();
       return;
     }
-    if (frameLoading) {
+    if (frameReq) {
       if (force) frameAgain = true;
       else stats.noticesDropped++;
       return;
     }
-    frameLoading = true;
-    deps
-      .fetchFrame()
-      .then((buf) => {
-        if (!stopped) apply(buf);
-      })
-      .catch(fail)
-      .finally(() => {
-        frameLoading = false;
+    const ctrl = new AbortController();
+    frameReq = ctrl;
+    deps.fetchFrame(ctrl.signal).then(
+      (buf) => {
+        if (frameReq !== ctrl) return;
+        frameReq = null;
+        apply(buf);
+        if (frameAgain) {
+          frameAgain = false;
+          requestFrame(false);
+          return;
+        }
+        // A notice that arrived mid-fetch can name a newer frame than the one
+        // this response carried. Fetch once more for it, and only once, so a
+        // server whose frame lags its notices cannot make us spin.
+        const latest = announcedSeq;
+        if (
+          latest != null &&
+          stats.lastSeq != null &&
+          stats.lastSeq < latest &&
+          chasedSeq !== latest &&
+          structure?.version === wantVersion
+        ) {
+          chasedSeq = latest;
+          requestFrame(false);
+        }
+      },
+      (err) => {
+        if (frameReq !== ctrl) return;
+        frameReq = null;
+        fail(err);
         if (frameAgain) {
           frameAgain = false;
           requestFrame(false);
         }
-      });
+      },
+    );
   }
 
   const startPolling = () => {
@@ -275,8 +328,13 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
       backoff = backoffMin;
       if (h.intervalMs > 0) silenceMs = Math.max(deps.silenceMs ?? 10_000, 4 * h.intervalMs);
       armWatchdog();
-      noteVersion(h.structureVersion);
-      if (structure?.version === h.structureVersion && h.seq !== stats.lastSeq) requestFrame(true);
+      announcedSeq = h.seq;
+      chasedSeq = null;
+      // Every (re)connect reloads the structure, even at an equal version: the
+      // server may have restarted with a different one. Its load fetches the frame.
+      wantVersion = h.structureVersion;
+      structureFresh = false;
+      loadStructure(true);
     });
     stream.addEventListener('structure', (ev) => {
       armWatchdog();
@@ -287,6 +345,7 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
       armWatchdog();
       const n = parse<LiveMetricsNotice>(ev);
       if (!n) return;
+      announcedSeq = n.seq;
       if (structure?.version !== n.structureVersion) {
         noteVersion(n.structureVersion);
         return;
@@ -301,6 +360,7 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
     if (deps.visibility.hidden) {
       paused = true;
       stats.mode = 'paused';
+      abortFetches();
       closeStream();
       stopPolling();
       if (reconnectTimer) clearTimeout(reconnectTimer);
@@ -322,6 +382,7 @@ export function startLiveClient(deps: LiveClientDeps): LiveClient {
       stopped = true;
       stats.mode = 'stopped';
       deps.visibility?.removeEventListener('visibilitychange', onVisibility);
+      abortFetches();
       closeStream();
       stopPolling();
       if (reconnectTimer) clearTimeout(reconnectTimer);

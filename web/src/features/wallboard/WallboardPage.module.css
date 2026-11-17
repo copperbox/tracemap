@@ -152,3 +152,8 @@
   font: 500 12px 'JetBrains Mono', monospace;
   color: var(--dim);
 }
+
+/* the list holds focus only while its active row is scrolled away; arrow keys bring the row (and its ring) back */
+.body:focus {
+  outline: none;
+}

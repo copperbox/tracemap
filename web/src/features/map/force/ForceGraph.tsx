@@ -20,6 +20,11 @@ import styles from './ForceGraph.module.css';
 
 const TAU = Math.PI * 2;
 const LABEL_ZOOM = 0.9;
+// Above this many plain edges on screen they stroke as one-device-pixel
+// hairlines. Software rasterizers (no GPU) stroke a wider batched path about
+// 30x slower: at 10,000 edges that is ~400 ms a frame, which every live frame
+// and every settle slice paid.
+const HAIRLINE_EDGES = 1500;
 
 interface Palette {
   text: string;
@@ -155,6 +160,7 @@ export function ForceGraph() {
     // state, the lit ones (few) stroked on top
     ctx.lineCap = 'round';
     const plain: Path2D[] = [new Path2D(), new Path2D()];
+    let plainCount = 0;
     const lit: [number, number, number, number][] = [];
     for (const l of forceLinks) {
       const s = posByKey.get(l.source);
@@ -179,9 +185,11 @@ export function ForceGraph() {
       const path = plain[dimEdge ? 1 : 0];
       path.moveTo(x1, y1);
       path.lineTo(x2, y2);
+      plainCount++;
     }
     ctx.strokeStyle = pal.edge;
-    ctx.lineWidth = 1.2;
+    // getTransform().a is the device pixel ratio set on resize
+    ctx.lineWidth = plainCount > HAIRLINE_EDGES ? 1 / (ctx.getTransform().a || 1) : 1.2;
     ctx.globalAlpha = 0.5;
     ctx.stroke(plain[0]);
     ctx.globalAlpha = 0.07;

@@ -7,7 +7,15 @@ import {
   type KeyboardEvent,
   type RefObject,
 } from 'react';
-import { keyStep, revealScrollTop, sameRange, windowRange, type WindowRange } from './windowing';
+import {
+  keyStep,
+  keyTargetIndex,
+  revealScrollTop,
+  sameRange,
+  shouldReclaimFocus,
+  windowRange,
+  type WindowRange,
+} from './windowing';
 
 /** Where `list` sits inside `scroller`'s scrolled content, px. */
 function listTopIn(scroller: HTMLElement, list: HTMLElement): number {
@@ -89,6 +97,9 @@ export function useElementWidth(ref: RefObject<HTMLElement | null>): number {
  * Moves keyboard focus to row `index` of a windowed list, scrolling it into
  * view first. A row that is not mounted yet gets focus once the scroll has
  * rendered it. Rows carry `data-row-index` (for the wallboard, the item index).
+ * When the focused row scrolls out of the window and unmounts, focus moves to
+ * the list element (give it tabIndex -1), so arrow keys keep working from the
+ * last active item. Call `afterRender` from a layout effect on every render.
  */
 export function useWindowedFocus(
   scrollRef: RefObject<HTMLElement | null>,
@@ -97,6 +108,33 @@ export function useWindowedFocus(
   coverTop = 0,
 ): { focusRow: (index: number, rowOfIndex?: number) => void; afterRender: () => void } {
   const pending = useRef<number | null>(null);
+  // Whether focus is inside the list. Not cleared when a focused row is
+  // removed, only when the user moves focus elsewhere.
+  const owned = useRef(false);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const onIn = (): void => {
+      owned.current = true;
+    };
+    const onOut = (e: globalThis.FocusEvent): void => {
+      const to = e.relatedTarget as Node | null;
+      if (to && list.contains(to)) return;
+      const from = e.target as Node;
+      // A browser may fire focusout for a row being unmounted; that row is
+      // detached by the time this runs, a row the user left is not.
+      queueMicrotask(() => {
+        if (from.isConnected) owned.current = false;
+      });
+    };
+    list.addEventListener('focusin', onIn);
+    list.addEventListener('focusout', onOut);
+    return () => {
+      list.removeEventListener('focusin', onIn);
+      list.removeEventListener('focusout', onOut);
+    };
+  }, [listRef]);
 
   const tryFocus = useCallback(() => {
     const i = pending.current;
@@ -131,7 +169,15 @@ export function useWindowedFocus(
     [scrollRef, listRef, rowHeight, coverTop, tryFocus],
   );
 
-  return { focusRow, afterRender: tryFocus };
+  const afterRender = useCallback(() => {
+    tryFocus();
+    const list = listRef.current;
+    if (list && shouldReclaimFocus(owned.current, document.activeElement, document.body)) {
+      list.focus({ preventScroll: true });
+    }
+  }, [listRef, tryFocus]);
+
+  return { focusRow, afterRender };
 }
 
 /**
@@ -162,9 +208,10 @@ export function useListKeyboard({
     if (Number.isInteger(i)) setActiveIndex(i);
   };
 
+  const clamped = Math.min(activeIndex, Math.max(0, count - 1));
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    const i = indexOf(e.target);
-    if (!Number.isInteger(i)) return;
+    const i = keyTargetIndex(indexOf(e.target), e.target === e.currentTarget, clamped);
+    if (i == null || count <= 0) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onActivate(i);
@@ -177,5 +224,5 @@ export function useListKeyboard({
     focusRow(next, Math.floor(next / cols));
   };
 
-  return { activeIndex: Math.min(activeIndex, Math.max(0, count - 1)), onFocus, onKeyDown };
+  return { activeIndex: clamped, onFocus, onKeyDown };
 }

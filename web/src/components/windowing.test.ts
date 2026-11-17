@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gridColumns, keyStep, revealScrollTop, windowRange } from './windowing';
+import { gridColumns, keyStep, keyTargetIndex, revealScrollTop, shouldReclaimFocus, windowRange } from './windowing';
 
 const base = { scrollTop: 0, viewportHeight: 500, listTop: 100, rowHeight: 50, rowCount: 5000, overscan: 2 };
 
@@ -69,5 +69,27 @@ describe('keyStep', () => {
     expect(keyStep('PageDown', 3, 100, 1, 10)).toBe(13);
     expect(keyStep('Enter', 3, 10)).toBeNull();
     expect(keyStep('ArrowDown', 0, 0)).toBeNull();
+  });
+});
+
+describe('keyTargetIndex', () => {
+  it('uses the focused row, else the active item when the list itself has focus', () => {
+    expect(keyTargetIndex(7, false, 3)).toBe(7);
+    expect(keyTargetIndex(null, true, 3)).toBe(3);
+    expect(keyTargetIndex(NaN, true, 3)).toBe(3);
+    expect(keyTargetIndex(null, false, 3)).toBeNull();
+  });
+});
+
+describe('shouldReclaimFocus', () => {
+  const body = { isConnected: true };
+  it('reclaims focus a removed row dropped on the body', () => {
+    expect(shouldReclaimFocus(true, body, body)).toBe(true);
+    expect(shouldReclaimFocus(true, null, body)).toBe(true);
+    expect(shouldReclaimFocus(true, { isConnected: false }, body)).toBe(true);
+  });
+  it('leaves focus alone when the list did not have it or it moved elsewhere', () => {
+    expect(shouldReclaimFocus(false, body, body)).toBe(false);
+    expect(shouldReclaimFocus(true, { isConnected: true }, body)).toBe(false);
   });
 });

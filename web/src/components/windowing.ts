@@ -91,3 +91,26 @@ export function keyStep(key: string, index: number, count: number, cols = 1, pag
       return null;
   }
 }
+
+/**
+ * The item a key press on a windowed list acts on: the focused row, or, when
+ * focus sits on the list itself (its row scrolled away and unmounted), the
+ * last active item.
+ */
+export function keyTargetIndex(rowIndex: number | null, onList: boolean, activeIndex: number): number | null {
+  if (rowIndex != null && Number.isInteger(rowIndex)) return rowIndex;
+  return onList ? activeIndex : null;
+}
+
+/**
+ * Whether the list should take focus back after a render: it held focus, and
+ * focus now rests nowhere (the focused row unmounted, which leaves focus on
+ * the body). Focus the user moved elsewhere is left alone.
+ */
+export function shouldReclaimFocus(
+  listHadFocus: boolean,
+  active: { isConnected: boolean } | null,
+  body: unknown,
+): boolean {
+  return listHadFocus && (active == null || active === body || !active.isConnected);
+}
