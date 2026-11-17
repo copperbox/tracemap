@@ -16,6 +16,7 @@
  *   published, however quickly it restarts. This assumes the wall clock does
  *   not step backwards across the restart.
  */
+import { sig4OrNull } from './round.js';
 import { edgeKey } from '../pipeline/cells.js';
 
 export interface StructureService {
@@ -145,7 +146,7 @@ export class StructureTracker {
     const eOrder = stableOrder(this.edgeOrder, edgeById.keys());
     const teams = [...catalog.teams].sort((a, b) => a.name.localeCompare(b.name) || a.id - b.id);
 
-    const services: StructureService[] = order.map((id) => ({ ...byId.get(id)!, sloAttain: slo(id) }));
+    const services: StructureService[] = order.map((id) => ({ ...byId.get(id)!, sloAttain: sig4OrNull(slo(id)) }));
     const edges: StructureEdge[] = eOrder.map((k) => {
       const e = edgeById.get(k)!;
       return {

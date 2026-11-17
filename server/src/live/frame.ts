@@ -14,6 +14,10 @@
  *   ..  u8[nEdges]           same
  *
  * Index i is the i-th service (edge) of the LiveStructure with the same version.
+ *
+ * Each f32 is quantized before it is written (see quantizeF32): the low 12
+ * mantissa bits are zero, so repeated byte patterns compress well. Readers
+ * decode it as a plain f32.
  */
 
 export const FRAME_MAGIC = 0x544d4c31;
@@ -47,7 +51,33 @@ export function frameBytes(nServices: number, nEdges: number): number {
   return FRAME_HEADER_BYTES + (nServices + nEdges) * FIELDS * 4 + nServices + nEdges;
 }
 
-const f = (v: number | null): number => (v == null ? NaN : v);
+/** Mantissa bits dropped by quantizeF32 (f32 has 23, so 11 are kept). */
+const DROP_BITS = 12;
+const DROP_MASK = ~((1 << DROP_BITS) - 1);
+const HALF_STEP = 1 << (DROP_BITS - 1);
+const EXP_MASK = 0x7f80_0000;
+const scratchF = new Float32Array(1);
+const scratchU = new Uint32Array(scratchF.buffer);
+
+/**
+ * `v` as an f32 with only 11 mantissa bits, rounded to nearest: a relative
+ * step of 2^-11 (about 0.05%), so the error is at most 2^-12 of the value.
+ * Latency comes from 10% histogram buckets, so the dropped bits were noise
+ * that only cost compressed bytes. NaN stays NaN (a NaN with only low mantissa
+ * bits must not become Infinity), 0 stays 0, and a finite value that would
+ * round up past the largest f32 is truncated instead.
+ */
+export function quantizeF32(v: number): number {
+  if (Number.isNaN(v)) return NaN;
+  scratchF[0] = v;
+  const bits = scratchU[0];
+  let q = ((bits + HALF_STEP) & DROP_MASK) >>> 0;
+  if ((q & EXP_MASK) === EXP_MASK) q = (bits & DROP_MASK) >>> 0;
+  scratchU[0] = q;
+  return scratchF[0];
+}
+
+const f = (v: number | null): number => (v == null ? NaN : quantizeF32(v));
 
 export function encodeFrame(frame: Frame): Buffer {
   const ns = frame.services.length;
@@ -64,11 +94,11 @@ export function encodeFrame(frame: Frame): Buffer {
   let off = FRAME_HEADER_BYTES;
   for (const list of [frame.services, frame.edges]) {
     for (const m of list) {
-      dv.setFloat32(off, m.rps, true);
+      dv.setFloat32(off, f(m.rps), true);
       dv.setFloat32(off + 4, f(m.p50), true);
       dv.setFloat32(off + 8, f(m.p95), true);
       dv.setFloat32(off + 12, f(m.p99), true);
-      dv.setFloat32(off + 16, m.errPct, true);
+      dv.setFloat32(off + 16, f(m.errPct), true);
       off += FIELDS * 4;
     }
   }

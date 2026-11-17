@@ -8,6 +8,7 @@
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { sig4 } from '../live/round.js';
 
 const BASE_URL = process.env.TEST_DATABASE_URL;
 /**
@@ -18,6 +19,15 @@ const URL = BASE_URL ? BASE_URL.replace(/\/([^/?]+)(\?|$)/, '/$1_api$2') : undef
 if (URL) process.env.DATABASE_URL = URL;
 
 type Json = any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+/**
+ * API numbers carry 4 significant digits (live/round.ts) and the frame keeps
+ * 11 mantissa bits, so compare to within that, and a little more for ratios
+ * of two rounded numbers.
+ */
+function near(actual: number, expected: number): void {
+  expect(Math.abs(actual - expected)).toBeLessThanOrEqual(Math.abs(expected) * 1e-3);
+}
 
 describe.skipIf(!URL)('API read path against TimescaleDB', () => {
   let pool: pg.Pool;
@@ -229,17 +239,17 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect([...svc.keys()].sort()).toEqual(['dup-orders', 'gw', 'orders', 'pg-main']);
     const gw = svc.get('gw').metrics;
     expect(gw.stale).toBe(false);
-    expect(svc.get('orders').metrics.rps / gw.rps).toBeCloseTo(1, 9);
-    expect(svc.get('dup-orders').metrics.rps / gw.rps).toBeCloseTo(6 / 18, 9);
-    expect(svc.get('orders').metrics.errPct).toBeCloseTo((4 / 18) * 100, 9);
+    near(svc.get('orders').metrics.rps / gw.rps, 1);
+    near(svc.get('dup-orders').metrics.rps / gw.rps, 6 / 18);
+    near(svc.get('orders').metrics.errPct, (4 / 18) * 100);
     expect(svc.get('orders').status).toBe('crit');
     // External: node metrics from the calls into it (12 + 6 calls, 4 + 2 errors).
     const pgm = svc.get('pg-main');
     expect(pgm.isExternal).toBe(true);
-    expect(pgm.metrics.rps / gw.rps).toBeCloseTo(1, 9);
-    expect(pgm.metrics.errPct).toBeCloseTo((6 / 18) * 100, 9);
+    near(pgm.metrics.rps / gw.rps, 1);
+    near(pgm.metrics.errPct, (6 / 18) * 100);
     expect([...edges.keys()].sort()).toEqual(['dup-orders>orders', 'dup-orders>pg-main', 'gw>dup-orders', 'gw>orders', 'orders>pg-main']);
-    expect(edges.get('gw>orders').metrics.rps / gw.rps).toBeCloseTo(12 / 18, 9);
+    near(edges.get('gw>orders').metrics.rps / gw.rps, 12 / 18);
 
     const structure = await get('/api/live/structure');
     expect(structure.headers.etag).toMatch(new RegExp(`^"[0-9a-f]+-${structure.json.version}"$`));
@@ -250,7 +260,7 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(frame.services).toHaveLength(structure.json.services.length);
     expect(frame.edges).toHaveLength(structure.json.edges.length);
     const i = structure.json.services.findIndex((s: Json) => s.id === 'orders');
-    expect(frame.services[i].errPct).toBeCloseTo((4 / 18) * 100, 4);
+    near(frame.services[i].errPct, (4 / 18) * 100);
     expect(frame.services[i].status).toBe('crit');
     const e = structure.json.edges.findIndex(
       (x: Json) => structure.json.services[x.s].id === 'gw' && structure.json.services[x.t].id === 'orders',
@@ -339,7 +349,7 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     const list = (await get('/api/services')).json;
     expect(list.edgeCount).toBe(5);
     const orders = list.services.find((s: Json) => s.id === 'orders');
-    expect(orders.errPct).toBeCloseTo((4 / 18) * 100, 9);
+    near(orders.errPct, (4 / 18) * 100);
     expect(orders.spark.length).toBeGreaterThan(0);
   });
 
@@ -348,18 +358,18 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(d.range.bucketSeconds).toBe(60);
     const minute = new Date(Math.floor(SPAN_MS / 60_000) * 60_000).toISOString();
     const pt = d.series.find((p: Json) => p.t === minute);
-    expect(pt.rps * 60).toBeCloseTo(18, 6);
-    expect(pt.errPct).toBeCloseTo((4 / 18) * 100, 9);
+    near(pt.rps * 60, 18);
+    near(pt.errPct, (4 / 18) * 100);
     expect(pt.p95).toBeGreaterThan(10);
     expect(d.series.filter((p: Json) => p.rps != null)).toHaveLength(1);
-    expect(d.kpis.errPct).toBeCloseTo((4 / 18) * 100, 9);
-    expect(d.operations).toEqual([expect.objectContaining({ name: 'GET /orders', errPct: (4 / 18) * 100 })]);
+    near(d.kpis.errPct, (4 / 18) * 100);
+    expect(d.operations).toEqual([expect.objectContaining({ name: 'GET /orders', errPct: sig4((4 / 18) * 100) })]);
     expect(d.neighbors.map((n: Json) => `${n.source}>${n.target}`).sort()).toEqual(['dup-orders>orders', 'gw>orders', 'orders>pg-main']);
     expect(d.aliases).toEqual([]);
 
     const ext = (await get(`/api/services/pg-main?${range()}`)).json;
-    expect(ext.series.find((p: Json) => p.t === minute).rps * 60).toBeCloseTo(18, 6);
-    expect(ext.operations).toEqual([expect.objectContaining({ name: 'SELECT', errPct: (6 / 18) * 100 })]);
+    near(ext.series.find((p: Json) => p.t === minute).rps * 60, 18);
+    expect(ext.operations).toEqual([expect.objectContaining({ name: 'SELECT', errPct: sig4((6 / 18) * 100) })]);
 
     const day = (await get('/api/services/orders')).json;
     expect(day.range.bucketSeconds).toBe(1800);
@@ -428,19 +438,19 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(after.svc.has('dup-orders')).toBe(false);
     const orders = after.svc.get('orders').metrics;
     // Two aliases of one service sum: 18 + 6 handled, 4 + 2 errors.
-    expect(orders.rps / after.svc.get('gw').metrics.rps).toBeCloseTo(24 / 18, 9);
-    expect(orders.errPct).toBeCloseTo((6 / 24) * 100, 9);
+    near(orders.rps / after.svc.get('gw').metrics.rps, 24 / 18);
+    near(orders.errPct, (6 / 24) * 100);
     // dup-orders -> orders became a self-edge and is gone; gw's two edges are one.
     expect([...after.edges.keys()].sort()).toEqual(['gw>orders', 'orders>pg-main']);
     // Rates from one snapshot: a build can wait up to a second for a new structure version.
     const gwAfter = after.svc.get('gw').metrics.rps;
-    expect(after.edges.get('gw>orders').metrics.rps / gwAfter).toBeCloseTo(1, 9);
-    expect(after.edges.get('orders>pg-main').metrics.rps / gwAfter).toBeCloseTo(1, 9);
+    near(after.edges.get('gw>orders').metrics.rps / gwAfter, 1);
+    near(after.edges.get('orders>pg-main').metrics.rps / gwAfter, 1);
 
     const d = (await get(`/api/services/orders?${range()}`)).json;
     expect(d.aliases).toEqual(['dup-orders']);
     const minute = new Date(Math.floor(SPAN_MS / 60_000) * 60_000).toISOString();
-    expect(d.series.find((p: Json) => p.t === minute).rps * 60).toBeCloseTo(24, 6);
+    near(d.series.find((p: Json) => p.t === minute).rps * 60, 24);
     const errs = (await get(`/api/services/orders/errors?${range()}`)).json;
     expect(errs.operations[0].errorCount).toBe(6);
     expect(errs.operations[0].errors.map((e: Json) => [e.code, e.count])).toEqual([
@@ -463,12 +473,12 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
 
     const back = await topo();
     expect([...back.svc.keys()].sort()).toEqual(['dup-orders', 'gw', 'orders', 'pg-main']);
-    expect(back.svc.get('orders').metrics.rps / back.svc.get('gw').metrics.rps).toBeCloseTo(1, 9);
-    expect(back.svc.get('dup-orders').metrics.rps / back.svc.get('gw').metrics.rps).toBeCloseTo(6 / 18, 9);
+    near(back.svc.get('orders').metrics.rps / back.svc.get('gw').metrics.rps, 1);
+    near(back.svc.get('dup-orders').metrics.rps / back.svc.get('gw').metrics.rps, 6 / 18);
     expect(back.edges.has('dup-orders>orders')).toBe(true);
     const d2 = (await get(`/api/services/orders?${range()}`)).json;
     expect(d2.aliases).toEqual([]);
-    expect(d2.series.find((p: Json) => p.t === minute).rps * 60).toBeCloseTo(18, 6);
+    near(d2.series.find((p: Json) => p.t === minute).rps * 60, 18);
     const dup = (await get(`/api/services/dup-orders/errors?${range()}`)).json;
     expect(dup.operations[0].errors[0]).toMatchObject({ code: 'HTTP 503', count: 2 });
   });

@@ -7,6 +7,7 @@ import { chooseBucketSeconds, type ReadRow } from '../rollup/read.js';
 
 export { statusOf, type LiveMetrics } from '../live/metrics.js';
 export { edgeConfidence } from '../live/structure.js';
+export { roundMetrics, sig4, sig4OrNull } from '../live/round.js';
 export type { Status } from '../live/frame.js';
 
 /** Pick a chart bucket size (seconds) a rollup tier can serve, giving at most about 60 points. */

@@ -4,7 +4,7 @@ import { getLive } from '../live/index.js';
 import { edgeKey } from '../live/structure.js';
 import { aliases } from './aliases.js';
 import { readSeries } from './history.js';
-import { chartBucketSeconds, edgeConfidence, errPct, q, statusOf } from './metrics.js';
+import { chartBucketSeconds, edgeConfidence, errPct, q, sig4, sig4OrNull, statusOf } from './metrics.js';
 import { parseRange } from './range.js';
 
 /**
@@ -79,9 +79,10 @@ export async function serviceDetailRoutes(app: FastifyInstance): Promise<void> {
           manual: e.manual,
           firstSeen: e.first_seen,
           confidence: edgeConfidence(Number(e.sample_count), e.manual),
-          rps: m?.rps ?? 0,
-          p95: m?.p95 ?? null,
-          errPct: m?.errPct ?? 0,
+          rps: sig4(m?.rps ?? 0),
+          p95: sig4OrNull(m?.p95 ?? null),
+          errPct: sig4(m?.errPct ?? 0),
+          // Status from the unrounded rate.
           status: statusOf(m?.errPct ?? 0),
           stale: m?.stale ?? true,
         };
@@ -100,28 +101,28 @@ export async function serviceDetailRoutes(app: FastifyInstance): Promise<void> {
         region: s.region,
         isExternal: s.is_external,
         sloTarget: s.slo_target,
-        sloAttain: snapshot.sloOf(id),
+        sloAttain: sig4OrNull(snapshot.sloOf(id)),
         firstSeen: s.first_seen,
         lastSeen: s.last_seen,
         status: statusOf(live?.errPct ?? 0),
       },
       range: { from: from.toISOString(), to: to.toISOString(), bucketSeconds: bucketSec },
       kpis: {
-        rps: live?.rps ?? (total ? total.n / rangeSec : 0),
-        p50: live?.p50 ?? null,
-        p95: live?.p95 ?? null,
-        p99: live?.p99 ?? null,
-        errPct: errPct(total ?? undefined) ?? live?.errPct ?? 0,
-        liveErrPct: live?.errPct ?? 0,
+        rps: sig4(live?.rps ?? (total ? total.n / rangeSec : 0)),
+        p50: sig4OrNull(live?.p50 ?? null),
+        p95: sig4OrNull(live?.p95 ?? null),
+        p99: sig4OrNull(live?.p99 ?? null),
+        errPct: sig4(errPct(total ?? undefined) ?? live?.errPct ?? 0),
+        liveErrPct: sig4(live?.errPct ?? 0),
         stale: live?.stale ?? true,
       },
       series: series.points,
       operations: ops.slice(0, 8).map((o) => ({
         name: o.keys[0],
-        rps: o.n / Math.max(1, (toMs - fromMs) / 1000),
-        errPct: errPct(o),
-        p95: q(o, 0.95),
-        p99: q(o, 0.99),
+        rps: sig4(o.n / Math.max(1, (toMs - fromMs) / 1000)),
+        errPct: sig4OrNull(errPct(o)),
+        p95: sig4OrNull(q(o, 0.95)),
+        p99: sig4OrNull(q(o, 0.99)),
       })),
       neighbors: neighborOut,
       aliases: aliases.aliasesOf(id),

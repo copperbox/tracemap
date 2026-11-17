@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LiveAggregate } from '../pipeline/cells.js';
 import { addValue, newWideHist } from '../rollup/hist.js';
-import { addAggregates, canonicalize, computeLive, statusOf, type LiveMetrics } from './metrics.js';
+import { addAggregates, canonicalize, computeLive, scaleHist, statusOf, type LiveMetrics } from './metrics.js';
 import { edgeKey } from './structure.js';
 
 function agg(n: number, err: number, ms: number): LiveAggregate {
@@ -45,6 +45,20 @@ describe('addAggregates', () => {
     expect(peer.get('a')!.n).toBe(300);
     addAggregates(into, new Map([['b', agg(5, 0, 1)]]));
     expect(into.get('b')!.n).toBe(5);
+  });
+
+  it('scales histograms to whole counts that keep the scaled total', () => {
+    const h = newWideHist();
+    h[10] = 7;
+    h[20] = 5;
+    h[30] = 1;
+    const s = scaleHist(h, 0.3);
+    expect(s.every((c) => Number.isInteger(c) && c >= 0)).toBe(true);
+    expect(s.reduce((x, y) => x + y, 0)).toBe(Math.round(13 * 0.3));
+    expect([s[10], s[20], s[30]]).toEqual([2, 2, 0]);
+    // A tiny share of a non-empty histogram keeps one count; an empty one stays empty.
+    expect(scaleHist(h, 0.001).reduce((x, y) => x + y, 0)).toBe(1);
+    expect(scaleHist(newWideHist(), 0.5).every((c) => c === 0)).toBe(true);
   });
 });
 

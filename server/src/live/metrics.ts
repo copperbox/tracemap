@@ -81,9 +81,34 @@ export function addAggregates(into: Map<string, LiveAggregate>, extra: Map<strin
       addAgg(into, k, a, true);
       continue;
     }
-    const hist = Float64Array.from(a.hist, (c) => c * scale);
-    addAgg(into, k, { n: a.n * scale, err: a.err * scale, sumMs: a.sumMs * scale, hist }, false);
+    addAgg(into, k, { n: a.n * scale, err: a.err * scale, sumMs: a.sumMs * scale, hist: scaleHist(a.hist, scale) }, false);
   }
+}
+
+/**
+ * Histogram counts times `scale`, as whole counts (mergeInto takes only
+ * integers). Largest-remainder rounding keeps the total at round(total *
+ * scale), and at least 1 when the source is not empty, so a small peer share
+ * still has a latency.
+ */
+export function scaleHist(hist: ArrayLike<number>, scale: number): Float64Array {
+  const out = newWideHist();
+  let total = 0;
+  for (let i = 0; i < out.length; i++) total += hist[i];
+  if (!(total > 0) || !(scale > 0)) return out;
+  const want = Math.max(1, Math.round(total * scale));
+  let have = 0;
+  const rest: { i: number; r: number }[] = [];
+  for (let i = 0; i < out.length; i++) {
+    if (!hist[i]) continue;
+    const x = hist[i] * scale;
+    out[i] = Math.floor(x);
+    have += out[i];
+    rest.push({ i, r: x - out[i] });
+  }
+  rest.sort((p, q) => q.r - p.r || hist[q.i] - hist[p.i]);
+  for (let j = 0; have < want && j < rest.length; j++, have++) out[rest[j].i] += 1;
+  return out;
 }
 
 export interface LiveInputs {

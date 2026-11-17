@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { FRAME_MAGIC, decodeFrame, encodeFrame, frameBytes, type Frame } from './frame.js';
+import { FRAME_MAGIC, decodeFrame, encodeFrame, frameBytes, quantizeF32, type Frame, type FrameMetrics } from './frame.js';
 
-const f32 = (v: number) => Math.fround(v);
+// What a reader gets back for a written value.
+const f32 = quantizeF32;
 
 describe('metrics frame', () => {
   const frame: Frame = {
@@ -52,6 +53,40 @@ describe('metrics frame', () => {
   it('encodes nulls as NaN', () => {
     const buf = encodeFrame(frame);
     expect(Number.isNaN(buf.readFloatLE(32 + 20 + 4))).toBe(true);
+  });
+
+  it('quantizes every value to within 2^-12 relative error and keeps NaN, 0, tiny and huge values', () => {
+    const values: number[] = [0, -0, 1, 0.5, 3.1, 40.2, 99.99, 1e-30, 1.5e-38, 3e38, 1e30, 186_000, 12_345.678, 7.000_001];
+    for (let i = 0; i < 2000; i++) values.push(Math.exp((Math.random() - 0.5) * 60));
+    const metric = (v: number): FrameMetrics => ({ rps: v, p50: v, p95: v, p99: null, errPct: v, stale: false, status: 'ok' });
+    const back = decodeFrame(encodeFrame({ seq: 1, structureVersion: 1, generatedAtMs: 0, services: values.map(metric), edges: [] }));
+    back.services.forEach((m, i) => {
+      const v = values[i];
+      for (const got of [m.rps, m.p50!, m.p95!, m.errPct]) {
+        if (v === 0) expect(got).toBe(v);
+        else expect(Math.abs(got - v) / v).toBeLessThanOrEqual(2 ** -12 + 2 ** -23);
+      }
+      expect(m.p99).toBeNull();
+    });
+    // The low 12 mantissa bits of every written f32 are zero.
+    const buf = encodeFrame({ seq: 1, structureVersion: 1, generatedAtMs: 0, services: values.map(metric), edges: [] });
+    for (let off = 32; off < 32 + values.length * 20; off += 4) expect(buf.readUInt32LE(off) & 0xfff).toBe(0);
+  });
+
+  it('keeps NaN (including NaNs with only low mantissa bits) and infinities', () => {
+    const lowNaN = new Float32Array(new Uint32Array([0x7f80_0001]).buffer)[0];
+    expect(Number.isNaN(lowNaN)).toBe(true);
+    expect(Number.isNaN(quantizeF32(lowNaN))).toBe(true);
+    expect(Number.isNaN(quantizeF32(NaN))).toBe(true);
+    expect(quantizeF32(Infinity)).toBe(Infinity);
+    expect(quantizeF32(-Infinity)).toBe(-Infinity);
+    // The largest f32 would round up to Infinity; it is truncated instead.
+    expect(Number.isFinite(quantizeF32(3.4028234663852886e38))).toBe(true);
+    const back = decodeFrame(
+      encodeFrame({ seq: 1, structureVersion: 1, generatedAtMs: 0, services: [{ rps: NaN, p50: null, p95: NaN, p99: 0, errPct: 0, stale: true, status: 'ok' }], edges: [] }),
+    );
+    expect(back.services[0]).toMatchObject({ p50: null, p95: null, p99: 0, errPct: 0 });
+    expect(Number.isNaN(back.services[0].rps)).toBe(true);
   });
 
   it('handles an empty fleet and rejects a foreign buffer', () => {

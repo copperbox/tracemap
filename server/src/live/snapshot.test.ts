@@ -25,12 +25,13 @@ function fixture(opts: { peers?: boolean; sloDelayMs?: number } = {}) {
   const db = {
     failPeers: false,
     peerIds: opts.peers ? [7] : [],
+    services: ['a', 'b'],
   };
   const query = async (text: string): Promise<pg.QueryResult> => {
     const rows = (r: unknown[]) => ({ rows: r, rowCount: r.length }) as unknown as pg.QueryResult;
     if (text.includes('FROM services'))
       return rows(
-        ['a', 'b'].map((id) => ({
+        db.services.map((id) => ({
           id,
           display_name: null,
           description: null,
@@ -94,6 +95,36 @@ describe('LiveSnapshot', () => {
     expect(snap.structure.version).toBe(T0 / 1000 + 1);
     expect(snap.structureBody.etag).toBe(`"boot1-${snap.structure.version}"`);
     expect(snap.frame.etag).toBe(`"boot1-${snap.structure.version}-${snap.seq}"`);
+  });
+
+  it('never sleeps long for a version after the clock steps back; publishes metrics on the old structure and retries later', async () => {
+    const f = fixture();
+    const first = await f.snapshot.build();
+    const v1 = first.structure.version;
+    const published = f.clock.get();
+    f.sleeps.length = 0;
+
+    // The clock steps back five minutes, then the catalog changes.
+    f.clock.set(published - 300_000);
+    f.db.services.push('c');
+    f.snapshot.invalidateCatalog();
+    for (let i = 0; i < 3; i++) {
+      const snap = await f.snapshot.build();
+      expect(snap.structure.version).toBe(v1);
+      expect(snap.structure.services.map((s) => s.id)).toEqual(['a', 'b']);
+      expect(snap.seq).toBe(first.seq + i + 1);
+      expect(decodeFrame(snap.frame.raw).structureVersion).toBe(v1);
+      f.clock.set(f.clock.get() + 2000);
+    }
+    expect(f.sleeps.every((ms) => ms <= 1000)).toBe(true);
+    expect(f.sleeps.reduce((a, b) => a + b, 0)).toBe(0);
+
+    // Once the clock is back within a second of the next version, it is published.
+    f.clock.set(published + 500);
+    const caught = await f.snapshot.build();
+    expect(f.sleeps).toEqual([500]);
+    expect(caught.structure.version).toBe(v1 + 1);
+    expect(caught.structure.services.map((s) => s.id)).toEqual(['a', 'b', 'c']);
   });
 
   it('builds a frame of exactly the documented size', async () => {

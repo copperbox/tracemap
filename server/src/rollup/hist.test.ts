@@ -172,4 +172,48 @@ describe('mergeInto', () => {
     wide[7] = Number.MAX_SAFE_INTEGER;
     expect(() => mergeInto(wide, one)).toThrow(/overflows/);
   });
+
+  it('rejects negative, fractional, NaN and unsafe source counts', () => {
+    for (const bad of [-1, 0.5, 2.25, NaN, Infinity, 2 ** 53]) {
+      const src = newWideHist();
+      src[3] = bad;
+      expect(() => mergeInto(newWideHist(), src), String(bad)).toThrow(/invalid source count/);
+      expect(() => mergeInto(newHist(), src), String(bad)).toThrow(/invalid source count/);
+    }
+  });
+
+  it('rejects a sum a Uint32Array cannot hold, whatever the source type', () => {
+    const narrow = newHist();
+    narrow[2] = 0xffff_fff0;
+    const src = newWideHist();
+    src[2] = 0x20;
+    expect(() => mergeInto(narrow, src)).toThrow(/overflows/);
+    // The bucket was not wrapped.
+    expect(narrow[2]).toBe(0xffff_fff0);
+    // A source count above u32 into a narrow target fails too.
+    const big = newWideHist();
+    big[2] = 2 ** 33;
+    expect(() => mergeInto(newHist(), big)).toThrow(/overflows/);
+  });
+
+  it('rejects a target bucket that already holds an invalid value', () => {
+    const wide = newWideHist();
+    wide[4] = NaN;
+    const one = newWideHist();
+    one[4] = 1;
+    expect(() => mergeInto(wide, one)).toThrow(/invalid/);
+    wide[4] = 0.5;
+    expect(() => mergeInto(wide, one)).toThrow(/invalid/);
+  });
+
+  it('accepts sums up to the limits exactly', () => {
+    const narrow = newHist();
+    narrow[1] = 0xffff_fffe;
+    const one = newWideHist();
+    one[1] = 1;
+    expect(mergeInto(narrow, one)[1]).toBe(0xffff_ffff);
+    const wide = newWideHist();
+    wide[1] = Number.MAX_SAFE_INTEGER - 1;
+    expect(mergeInto(wide, one)[1]).toBe(Number.MAX_SAFE_INTEGER);
+  });
 });

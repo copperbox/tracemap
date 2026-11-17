@@ -32,6 +32,7 @@ import {
   type LiveMetrics,
   type StatusedMetrics,
 } from './metrics.js';
+import { roundMetrics } from './round.js';
 import { StructureTracker, edgeKey, type Catalog, type LiveStructure, type StructureService } from './structure.js';
 
 type Db = (text: string, params?: unknown[]) => Promise<pg.QueryResult>;
@@ -75,6 +76,9 @@ export const DEFAULT_SNAPSHOT_OPTIONS: Omit<SnapshotOptions, 'intervalMs' | 'liv
   now: Date.now,
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 };
+
+/** Longest a build sleeps for the next structure version to become publishable, ms. */
+export const MAX_VERSION_WAIT_MS = 1000;
 
 export interface Snapshot {
   seq: number;
@@ -223,14 +227,19 @@ export class LiveSnapshot {
 
     // The tracker only sees new input when the catalog or SLO numbers were re-read.
     // At most one version per second (see structure.ts): a change that arrives
-    // sooner waits here for the second to turn, at most 1 s, so an API edit is
-    // visible as soon as this build returns.
+    // sooner waits here for the second to turn, so an API edit is visible as
+    // soon as this build returns. The wait is capped at MAX_VERSION_WAIT_MS:
+    // after the clock steps backwards the next version can be minutes away,
+    // and this loop (and every caller joined to it) must not stall that long.
+    // Then this build publishes metrics against the previous structure, and
+    // the tracker stays pending so a later build retries the change.
     let structureChanged = false;
     if (this.catalogChanged || this.sloChanged || this.tracker.pending || !this.tracker.structure) {
       const update = () => this.tracker.update(catalog, (id) => this.slo.get(id) ?? null, now).changed;
       structureChanged = update();
-      if (this.tracker.pending) {
-        await this.opts.sleep(Math.max(0, this.tracker.nextPublishAtMs - now));
+      const waitMs = this.tracker.nextPublishAtMs - now;
+      if (this.tracker.pending && waitMs <= MAX_VERSION_WAIT_MS) {
+        await this.opts.sleep(Math.max(0, waitMs));
         now = this.opts.now();
         structureChanged = update() || structureChanged;
       }
@@ -489,7 +498,7 @@ export function topologyBody(
   nowMs: number,
 ): unknown {
   const strip = ({ status: _s, ...m }: StatusedMetrics): LiveMetrics => m;
-  const metricsOf = (m: StatusedMetrics | undefined) => (m ? strip(m) : EMPTY_METRICS);
+  const metricsOf = (m: StatusedMetrics | undefined) => (m ? roundMetrics(strip(m)) : EMPTY_METRICS);
   return {
     services: structure.services.map((s) => {
       const m = services.get(s.id);

@@ -69,16 +69,22 @@ function limitOf(target: Hist): number {
 }
 
 /**
- * target += src, bucket by bucket. Throws instead of wrapping a Uint32Array
- * bucket or rounding a Float64Array one past 2^53.
+ * target += src, bucket by bucket. Every source count and every resulting sum
+ * must be a non-negative safe integer that the target can hold (u32 for a
+ * Uint32Array); anything else (negative, fractional, NaN, a sum that would
+ * wrap a u32 or round past 2^53) throws before that bucket is written.
+ * Buckets before the bad one are already merged, so a caller that catches
+ * must treat the target as spoiled.
  */
 export function mergeInto(target: Hist, src: ArrayLike<number>): Hist {
   const limit = limitOf(target);
   for (let i = 0; i < HIST_BUCKETS; i++) {
     const c = src[i];
-    if (!c) continue;
+    if (c === 0) continue;
+    // A safe integer above zero; NaN, fractions and negatives all fail here.
+    if (!(c > 0 && Number.isSafeInteger(c))) throw new RangeError(`histogram bucket ${i} has invalid source count ${c}`);
     const v = target[i] + c;
-    if (v > limit) throw new RangeError(`histogram bucket ${i} overflows: ${v}`);
+    if (!(v <= limit && Number.isSafeInteger(v))) throw new RangeError(`histogram bucket ${i} overflows or is invalid: ${v}`);
     target[i] = v;
   }
   return target;

@@ -4,7 +4,7 @@ import { getLive } from '../live/index.js';
 import type { Snapshot } from '../live/snapshot.js';
 import type { RollupReader } from '../rollup/read.js';
 import { aliases } from './aliases.js';
-import { q } from './metrics.js';
+import { q, sig4, sig4OrNull } from './metrics.js';
 
 const HOUR = 3_600_000;
 
@@ -41,7 +41,8 @@ export class SparkCache {
       for (const r of rows) {
         if (!r.n) continue;
         const list = spark.get(r.keys[0]) ?? [];
-        list.push(q(r, 0.95) ?? 0);
+        // Rounded once here, so the shared /services body never prints 16-digit points.
+        list.push(sig4(q(r, 0.95) ?? 0));
         spark.set(r.keys[0], list);
       }
       this.data = { at: now, version: (this.data?.version ?? 0) + 1, spark };
@@ -73,9 +74,9 @@ function listBody(snap: Snapshot, spark: Map<string, number[]>): unknown {
         sloAttain: s.sloAttain,
         lastSeen: s.lastSeen,
         status: m?.status ?? 'ok',
-        rps: m?.rps ?? 0,
-        p95: m?.p95 ?? null,
-        errPct: m?.errPct ?? 0,
+        rps: sig4(m?.rps ?? 0),
+        p95: sig4OrNull(m?.p95 ?? null),
+        errPct: sig4(m?.errPct ?? 0),
         stale: m?.stale ?? true,
         spark: spark.get(s.id) ?? [],
       };

@@ -1,5 +1,5 @@
 import type { ReadQuery, ReadRow, RollupReader } from '../rollup/read.js';
-import { errPct, q } from './metrics.js';
+import { errPct, q, sig4, sig4OrNull } from './metrics.js';
 
 export interface SeriesPoint {
   t: string;
@@ -14,6 +14,7 @@ export interface SeriesPoint {
  * A gap-filled series (time_bucket_gapfill semantics: one point per bucket,
  * nulls where there is no data). Rates divide by the part of a bucket that
  * can hold data, so the bucket containing now is not shown as a dip.
+ * Point values are rounded for output (sig4); `total` keeps exact counts.
  */
 export async function readSeries(
   reader: RollupReader,
@@ -26,11 +27,11 @@ export async function readSeries(
     const r = byBucket.get(slot.startMs);
     return {
       t: new Date(slot.startMs).toISOString(),
-      rps: r ? r.n / slot.seconds : null,
-      errPct: errPct(r),
-      p50: q(r, 0.5),
-      p95: q(r, 0.95),
-      p99: q(r, 0.99),
+      rps: r ? sig4(r.n / slot.seconds) : null,
+      errPct: sig4OrNull(errPct(r)),
+      p50: sig4OrNull(q(r, 0.5)),
+      p95: sig4OrNull(q(r, 0.95)),
+      p99: sig4OrNull(q(r, 0.99)),
     };
   });
   let total: ReadRow | null = null;

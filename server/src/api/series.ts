@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { getLive } from '../live/index.js';
 import { aliases } from './aliases.js';
 import { readSeries } from './history.js';
+import { sig4 } from './metrics.js';
 
 const HOUR = 3_600_000;
 
@@ -39,7 +40,7 @@ export async function seriesRoutes(app: FastifyInstance): Promise<void> {
     const total = top.reduce((a, r) => a + r.n, 0) || 1;
     return {
       points: series.points.map(({ t, rps, errPct, p95 }) => ({ t, rps, errPct, p95 })),
-      operations: top.map((r) => ({ name: r.keys[0], share: r.n / total })),
+      operations: top.map((r) => ({ name: r.keys[0], share: sig4(r.n / total) })),
     };
   });
 }
