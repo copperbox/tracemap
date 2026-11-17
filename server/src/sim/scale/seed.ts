@@ -20,14 +20,27 @@ import pg from 'pg';
 import { config } from '../../config.js';
 import { migrate } from '../../db/migrate.js';
 import { HIST_BUCKETS, quantile } from '../../rollup/hist.js';
-import { ROLLUP_KINDS, TIERS, tableName } from '../../rollup/tiers.js';
+import { KEPT_TABLES, ROLLUP_KINDS, TIERS, tableName } from '../../rollup/tiers.js';
 import type { Opts } from './args.js';
 import { buildFleet, describeFleet, runtimeString, type Fleet } from './fleet.js';
 import { calibrate, incidentWindows } from './model.js';
 import { LAST_MINUTES, planSeed, type SeedPlan } from './seedGen.js';
 import type { SeedWorkerInput, SeedWorkerOutput } from './seedWorker.js';
+import { allOrCancel, type Cancellable } from './tasks.js';
+import {
+  SEED_COLLECTOR_HOST,
+  askOnTerminal,
+  beforeConnect,
+  decide,
+  describeTarget,
+  formatTarget,
+  inspectTarget,
+  markComplete,
+  markFailed,
+  markRunning,
+} from './target.js';
 
-export const SEED_COLLECTOR_HOST = 'tracemap-scale-seed';
+export { SEED_COLLECTOR_HOST };
 
 const iso = (ms: number): string => new Date(ms).toISOString();
 
@@ -56,83 +69,144 @@ export function requireDb(opts: Opts): string {
   return url;
 }
 
-export async function runSeed(opts: Opts, log: (s: string) => void = console.log): Promise<SeedResult> {
+export interface SeedDeps {
+  log?: (s: string) => void;
+  /** Asks the user to confirm; defaults to a y/N prompt when stdin is a terminal. */
+  confirm?: ((question: string) => Promise<boolean>) | null;
+}
+
+/**
+ * Check the target before anything is written: show it, refuse the dev port
+ * and databases with data the harness did not write (unless --force), refuse
+ * a half-finished earlier seed (unless --reset), and require --yes or a
+ * confirmation on the terminal.
+ */
+async function guardTarget(databaseUrl: string, opts: Opts, log: (s: string) => void, confirm: SeedDeps['confirm']): Promise<void> {
+  const target = describeTarget(databaseUrl);
+  log(`[seed] target: ${formatTarget(target)}`);
+  const flags = { reset: !!opts.reset, yes: !!opts.yes, force: !!opts.force };
+  const early = beforeConnect(target, flags);
+  if (early?.action === 'refuse') throw new Error(early.reason);
+  const client = new pg.Client({ connectionString: databaseUrl });
+  await client.connect();
+  let facts;
+  try {
+    facts = await inspectTarget(client);
+  } finally {
+    await client.end();
+  }
+  const d = decide(target, facts, flags, !!confirm);
+  if (d.action === 'refuse') throw new Error(d.reason);
+  if (d.action === 'confirm') {
+    const what = facts.marker ? 'rewrite the harness data in' : 'migrate and seed';
+    if (!(await confirm!(`${what} ${formatTarget(target)}?`))) throw new Error('not confirmed; nothing was written');
+  }
+}
+
+export async function runSeed(opts: Opts, deps: SeedDeps = {}): Promise<SeedResult> {
+  const log = deps.log ?? console.log;
+  const confirm = deps.confirm !== undefined ? deps.confirm : process.stdin.isTTY ? askOnTerminal : null;
   const databaseUrl = requireDb(opts);
-  if (opts.reset && !opts.yes) throw new Error(`--reset empties ${resetTables().length} tables in ${redact(databaseUrl)}; add --yes to confirm`);
+  await guardTarget(databaseUrl, opts, log, confirm);
   const started = performance.now();
   const step = (what: string) => log(`[seed ${((performance.now() - started) / 1000).toFixed(1)}s] ${what}`);
 
   const applied = await migrate(databaseUrl);
   if (applied.length) step(`applied migrations ${applied.join(', ')}`);
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
+  let writing = false;
+  const begin = async () => {
+    if (writing) return;
+    await markRunning(pool, { services: opts.services, teams: opts.teams, topologySeed: opts['topology-seed'], days: opts.days, rate: opts.rate });
+    writing = true;
+  };
   try {
-    if (opts.reset) {
-      await pool.query(`TRUNCATE ${resetTables().join(', ')} CASCADE`);
-      step('reset: emptied rollup, kept-trace and catalog tables');
-    }
-
-    const fleet = buildFleet({ services: opts.services as number, teams: opts.teams as number, seed: opts['topology-seed'] as number });
-    step(`fleet: ${describeFleet(fleet)}`);
-    const calib = calibrate(fleet, opts['calibrate-traces'] as number);
-    const tracesPerSec = (opts.rate as number) / calib.spansPerTrace;
-    step(`calibrated on ${calib.traces} traces: ${calib.spansPerTrace.toFixed(1)} spans/trace, ${tracesPerSec.toFixed(0)} traces/s at ${opts.rate} spans/s`);
-
-    const plan = planSeed({
-      nowMs: Date.now(),
-      days: opts.days as number,
-      recentMinutes: opts['recent-minutes'] as number,
-      graceMinutes: config.rollupGraceMinutes,
-      flushMs: config.rollupFlushMs,
-      tracesPerSec,
-    });
-    step(`range ${iso(plan.startMs)} .. ${iso(plan.anchorMs)}; 1m from ${iso(plan.m0)}; watermarks 10m ${iso(plan.c10)}, 1h ${iso(plan.c1h)}, 1d ${iso(plan.c1d)}`);
-
-    for (const w of incidentWindows(fleet, plan.anchorMs)) {
-      const what = w.kind === 'error' ? `+${Math.round(w.magnitude * 100)}% errors` : `${w.magnitude.toFixed(1)}x latency`;
-      step(`incident: ${fleet.nodes[w.node].id} ${what}, ${iso(w.startMs)} for ${Math.round((w.endMs - w.startMs) / 60_000)} min`);
-    }
-    const crit = fleet.nodes.filter((x) => x.health === 'crit').map((x) => x.id);
-    step(`chronically failing (crit): ${crit.slice(0, 6).join(', ')}${crit.length > 6 ? `, ... (${crit.length})` : ''}`);
-
-    // Upserting into compressed chunks from several workers deadlocks; start clean instead.
-    const compressed = await pool.query<{ t: string }>(
-      `SELECT DISTINCT hypertable_name AS t FROM timescaledb_information.chunks
-       WHERE is_compressed AND hypertable_name = ANY($1::text[]) AND range_end > $2`,
-      [resetTables(), iso(plan.startMs)],
-    );
-    if (compressed.rowCount) {
-      throw new Error(`the seeded range already has compressed chunks (${compressed.rows.map((r) => r.t).join(', ')}); re-seed with --reset --yes`);
-    }
-
-    await writeCatalog(pool, fleet, calib.edgeOpRate, plan);
-    const collectorId = await seedCollector(pool, plan);
-    step(`catalog written (${fleet.teams.length} teams, ${fleet.nodes.length} services, ${fleet.edges.length} edges); seed collector id ${collectorId}`);
-
-    const workers = Math.max(1, Math.min(opts.workers as number, os.availableParallelism()));
-    const outputs = await runWorkers(fleet, calib, plan, databaseUrl, collectorId, workers, opts.chunk as number, step);
-    const rows: Record<string, number> = {};
-    for (const o of outputs) for (const [t, n] of Object.entries(o.counts)) rows[t] = (rows[t] ?? 0) + n;
-
-    const lastRows = await writeLastState(pool, fleet, outputs, plan);
-    rows.service_last_state = lastRows.services;
-    rows.edge_last_state = lastRows.edges;
-    await writeWatermarks(pool, plan);
-    rows.rollup_tier_state = ROLLUP_KINDS.length * 3;
-
-    if (opts.compress) {
-      const before = await dbSize(pool);
-      const chunks = await compressOld(databaseUrl, workers);
-      step(`compressed ${chunks} chunks older than their compression policy (${gib(before)} -> ${gib(await dbSize(pool))})`);
-    }
-
-    const size = await pool.query<{ b: string }>('SELECT pg_database_size(current_database()) AS b');
-    const result = { elapsedMs: performance.now() - started, rows, dbBytes: Number(size.rows[0].b), plan };
-    step('done');
+    const result = await seedInto(pool, databaseUrl, opts, started, step, begin);
+    await markComplete(pool);
     log(formatRows(result));
     return result;
+  } catch (err) {
+    // Once rows are written, leave the database marked half-seeded, so the next seed asks for --reset.
+    if (writing) await markFailed(pool, err instanceof Error ? err.message : String(err)).catch(() => {});
+    throw err;
   } finally {
     await pool.end();
   }
+}
+
+/** Everything after the guard. Calls `begin` just before its first write. */
+async function seedInto(
+  pool: pg.Pool,
+  databaseUrl: string,
+  opts: Opts,
+  started: number,
+  step: (s: string) => void,
+  begin: () => Promise<void>,
+): Promise<SeedResult> {
+  if (opts.reset) {
+    await begin();
+    await pool.query(`TRUNCATE ${resetTables().join(', ')} CASCADE`);
+    step('reset: emptied rollup, kept-trace and catalog tables');
+  }
+
+  const fleet = buildFleet({ services: opts.services as number, teams: opts.teams as number, seed: opts['topology-seed'] as number });
+  step(`fleet: ${describeFleet(fleet)}`);
+  const calib = calibrate(fleet, opts['calibrate-traces'] as number);
+  const tracesPerSec = (opts.rate as number) / calib.spansPerTrace;
+  step(`calibrated on ${calib.traces} traces: ${calib.spansPerTrace.toFixed(1)} spans/trace, ${tracesPerSec.toFixed(0)} traces/s at ${opts.rate} spans/s`);
+
+  const plan = planSeed({
+    nowMs: Date.now(),
+    days: opts.days as number,
+    recentMinutes: opts['recent-minutes'] as number,
+    graceMinutes: config.rollupGraceMinutes,
+    flushMs: config.rollupFlushMs,
+    tracesPerSec,
+  });
+  step(`range ${iso(plan.startMs)} .. ${iso(plan.anchorMs)}; 1m from ${iso(plan.m0)}; watermarks 10m ${iso(plan.c10)}, 1h ${iso(plan.c1h)}, 1d ${iso(plan.c1d)}`);
+
+  for (const w of incidentWindows(fleet, plan.anchorMs)) {
+    const what = w.kind === 'error' ? `+${Math.round(w.magnitude * 100)}% errors` : `${w.magnitude.toFixed(1)}x latency`;
+    step(`incident: ${fleet.nodes[w.node].id} ${what}, ${iso(w.startMs)} for ${Math.round((w.endMs - w.startMs) / 60_000)} min`);
+  }
+  const crit = fleet.nodes.filter((x) => x.health === 'crit').map((x) => x.id);
+  step(`chronically failing (crit): ${crit.slice(0, 6).join(', ')}${crit.length > 6 ? `, ... (${crit.length})` : ''}`);
+
+  // Upserting into compressed chunks from several workers deadlocks; start clean instead.
+  const compressed = await pool.query<{ t: string }>(
+    `SELECT DISTINCT hypertable_name AS t FROM timescaledb_information.chunks
+     WHERE is_compressed AND hypertable_name = ANY($1::text[]) AND range_end > $2`,
+    [resetTables(), iso(plan.startMs)],
+  );
+  if (compressed.rowCount) {
+    throw new Error(`the seeded range already has compressed chunks (${compressed.rows.map((r) => r.t).join(', ')}); re-seed with --reset --yes`);
+  }
+
+  await begin();
+  await writeCatalog(pool, fleet, calib.edgeOpRate, plan);
+  const collectorId = await seedCollector(pool, plan);
+  step(`catalog written (${fleet.teams.length} teams, ${fleet.nodes.length} services, ${fleet.edges.length} edges); seed collector id ${collectorId}`);
+
+  const workers = Math.max(1, Math.min(opts.workers as number, os.availableParallelism()));
+  const outputs = await runWorkers(fleet, calib, plan, databaseUrl, collectorId, workers, opts.chunk as number, step);
+  const rows: Record<string, number> = {};
+  for (const o of outputs) for (const [t, n] of Object.entries(o.counts)) rows[t] = (rows[t] ?? 0) + n;
+
+  const lastRows = await writeLastState(pool, fleet, outputs, plan);
+  rows.service_last_state = lastRows.services;
+  rows.edge_last_state = lastRows.edges;
+  await writeWatermarks(pool, plan);
+  rows.rollup_tier_state = ROLLUP_KINDS.length * 3;
+
+  if (opts.compress) {
+    const before = await dbSize(pool);
+    const chunks = await compressOld(databaseUrl, workers);
+    step(`compressed ${chunks} chunks older than their compression policy (${gib(before)} -> ${gib(await dbSize(pool))})`);
+  }
+
+  const result = { elapsedMs: performance.now() - started, rows, dbBytes: await dbSize(pool), plan };
+  step('done');
+  return result;
 }
 
 const gib = (b: number) => `${(b / 2 ** 30).toFixed(1)} GiB`;
@@ -142,10 +216,21 @@ async function dbSize(pool: pg.Pool): Promise<number> {
   return Number(r.rows[0].b);
 }
 
+/** Hypertables the seed writes and may compress: the rollup tiers and the kept-trace tables, nothing else. */
+export function compressibleTables(): string[] {
+  return [
+    ...ROLLUP_KINDS.flatMap((k) => TIERS.map((t) => tableName(k.kind, t.name))),
+    KEPT_TABLES.spans,
+    KEPT_TABLES.traces,
+    KEPT_TABLES.traceServices,
+  ];
+}
+
 /**
- * Compress every chunk its table's compression policy would already have
- * compressed, as on a collector that has been running for the seeded days.
- * Chunks are independent, so they are compressed in parallel.
+ * Compress every chunk of the seeded hypertables that their compression
+ * policy would already have compressed, as on a collector that has been
+ * running for the seeded days. Other hypertables (legacy or unrelated) are
+ * left alone. Chunks are independent, so they are compressed in parallel.
  */
 async function compressOld(databaseUrl: string, parallel: number): Promise<number> {
   const pool = new pg.Pool({ connectionString: databaseUrl, max: parallel });
@@ -155,7 +240,10 @@ async function compressOld(databaseUrl: string, parallel: number): Promise<numbe
        FROM timescaledb_information.jobs j,
             LATERAL show_chunks(format('%I.%I', j.hypertable_schema, j.hypertable_name)::regclass,
                                 older_than => (j.config->>'compress_after')::interval) c
-       WHERE j.proc_name = 'policy_compression'`,
+       WHERE j.proc_name = 'policy_compression'
+         AND j.hypertable_schema = current_schema()
+         AND j.hypertable_name = ANY($1::text[])`,
+      [compressibleTables()],
     );
     const queue = res.rows.map((r) => r.chunk);
     const work = async () => {
@@ -166,10 +254,6 @@ async function compressOld(databaseUrl: string, parallel: number): Promise<numbe
   } finally {
     await pool.end();
   }
-}
-
-function redact(url: string): string {
-  return url.replace(/\/\/([^:@/]+):[^@/]*@/, '//$1:***@');
 }
 
 export function formatRows(r: SeedResult): string {
@@ -239,7 +323,7 @@ async function seedCollector(pool: pg.Pool, plan: SeedPlan): Promise<number> {
   return res.rows[0].id;
 }
 
-function runWorkers(
+async function runWorkers(
   fleet: Fleet,
   calib: SeedWorkerInput['calib'],
   plan: SeedPlan,
@@ -251,10 +335,10 @@ function runWorkers(
 ): Promise<SeedWorkerOutput[]> {
   let nodesDone = 0;
   let lastReport = performance.now();
-  const one = (index: number) =>
-    new Promise<SeedWorkerOutput>((resolve, reject) => {
-      const input: SeedWorkerInput = { fleet: fleet.config, calib, plan, databaseUrl, collectorId, index, count, chunkRows };
-      const w = new Worker(new URL(`./seedWorker${path.extname(fileURLToPath(import.meta.url))}`, import.meta.url), { workerData: input });
+  const one = (index: number): Cancellable<SeedWorkerOutput> => {
+    const input: SeedWorkerInput = { fleet: fleet.config, calib, plan, databaseUrl, collectorId, index, count, chunkRows };
+    const w = new Worker(new URL(`./seedWorker${path.extname(fileURLToPath(import.meta.url))}`, import.meta.url), { workerData: input });
+    const done = new Promise<SeedWorkerOutput>((resolve, reject) => {
       w.on('message', (m: { progress?: number; done?: SeedWorkerOutput; error?: string }) => {
         if (m.progress) {
           nodesDone += m.progress;
@@ -267,10 +351,13 @@ function runWorkers(
         if (m.error) reject(new Error(`seed worker ${index}: ${m.error}`));
       });
       w.on('error', reject);
-      w.on('exit', (code) => code !== 0 && reject(new Error(`seed worker ${index} exited with ${code}`)));
+      w.on('exit', (code) => (code !== 0 ? reject(new Error(`seed worker ${index} exited with ${code}`)) : reject(new Error(`seed worker ${index} exited without a result`))));
     });
+    return { done, cancel: () => w.terminate() };
+  };
   step(`writing rollups with ${count} workers`);
-  return Promise.all(Array.from({ length: count }, (_, i) => one(i)));
+  // One failed worker stops the others: a half-written seed is marked as such, not extended.
+  return allOrCancel(Array.from({ length: count }, (_, i) => one(i)));
 }
 
 async function writeLastState(pool: pg.Pool, fleet: Fleet, outputs: SeedWorkerOutput[], plan: SeedPlan): Promise<{ services: number; edges: number }> {

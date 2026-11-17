@@ -38,8 +38,24 @@ Stop any server using the database first; a running collector and a `--reset` ge
 each other's way.
 
 ```sh
-npm run scale -- seed --reset --yes
+npm run scale -- seed --yes
 ```
+
+Before it migrates or writes anything, `seed` prints the host, port and database it
+is about to use, and stops when:
+
+- the port is 5433, the dev database's port (add `--force` if that really is a
+  throwaway database);
+- the database already holds services, rollup rows or kept traces that the harness
+  did not write (`--force` to write into it anyway);
+- an earlier seed of this database failed or was interrupted (re-seed with
+  `--reset --yes`);
+- neither `--yes` nor a `y` at the prompt confirms it. Without a terminal, `--yes`
+  is required; `--reset` always needs `--yes`.
+
+The harness recognizes its own databases by the one-row table `scale_harness_seed`,
+which also records whether the last seed finished. If one worker fails, `seed`
+stops the others, marks the database as half-seeded and exits non-zero.
 
 `seed` applies the migrations, then writes:
 
@@ -54,12 +70,17 @@ npm run scale -- seed --reset --yes
   long-running system would have.
 
 The history is shaped like real traffic: a daily curve (peak 15:00 UTC, 20% of peak
-at 03:00), 30% less at weekends, latency histograms per operation, a few historical
-incidents (error or latency spikes on one service, listed in the output, one of them
-about 95 minutes ago), and error-signature rows. It is scaled so that the current time
-of day matches `--rate` (default 20,000 spans/s), so the charts run straight into the
-live load. Running `seed` again without `--reset` rewrites the same rows, but it refuses
-when the seeded range already has compressed chunks (after a 7-day seed it does); use
+at 03:00), 30% less at weekends, a few historical incidents (error or latency spikes
+on one service, listed in the output, one of them about 95 minutes ago), and
+error-signature rows. Latency per operation follows the distribution `load` produces
+(measured by walking 200,000 traces first), and moves over time: it rises with
+traffic (about 1.5x from the nightly low to the weekday peak), drifts a little per
+team from day to day and over tens of minutes, has per-minute noise, and goes up
+during incidents (error incidents too). `load` applies the same model at the current
+time, so latency charts carry on across the point where live data begins. The history
+is scaled so that the current time of day matches `--rate` (default 20,000 spans/s).
+Running `seed` again without `--reset` rewrites the same rows, but it refuses when the
+seeded range already has compressed chunks (after a 7-day seed it does); use
 `--reset --yes` then.
 
 | flag | default | |
@@ -71,8 +92,10 @@ when the seeded range already has compressed chunks (after a 7-day seed it does)
 | `--recent-minutes` | 120 | minutes of 1m rows |
 | `--rate` | 20000 | spans/s the history is scaled to |
 | `--workers` | 8 | threads and connections |
+| `--yes` | | confirm without a prompt |
 | `--reset --yes` | | empty the rollup, kept-trace and catalog tables first (legacy tables are left alone) |
-| `--compress=false` | | skip the compression step |
+| `--force` | | allow port 5433 or a database holding data the harness did not write |
+| `--compress=false` | | skip the compression step (it only touches the rollup and kept-trace hypertables) |
 
 ## 3. Start the server and the web app
 
@@ -99,11 +122,17 @@ npm run scale -- load --otlp http://127.0.0.1:4421 --duration 10m \
   --incident payments-platform-payouts-processor
 ```
 
+`--otlp` takes the collector's base URL, `http://` or `https://`, with an optional
+path prefix: `/v1/traces` is appended, as OTLP exporters do
+(`https://otel.example.com/tracemap` sends to `https://otel.example.com/tracemap/v1/traces`).
+
 `load` registers every service with one request, then sends protobuf exports over
 keep-alive connections at the target rate. Each request carries whole traces
 (about 32 spans each), with unique trace ids and current timestamps, and the same
 error and latency behavior as the seeded history. It honors `429`/`503` with
-`Retry-After` and counts retries. A status line every 5 s shows target, sent and
+`Retry-After` and counts retries. A request that gets no complete answer within
+`--timeout` (default 30 s), or whose connection drops mid-response, counts as a
+network error and is retried. A status line every 5 s shows target, sent and
 accepted spans/s, 4xx/429/5xx counts, request p50, how many connections were busy,
 and how much of its thread the generator used. When the rate falls short it says why:
 `generator-bound`, `collector is shedding load (429)` or `connection-bound`.
@@ -115,6 +144,7 @@ and how much of its thread the generator used. When the rate falls short it says
 | `--connections` | 8 | keep-alive connections |
 | `--batch` | 1000 | spans per request |
 | `--gzip` | off | gzip bodies, as most OTLP exporters do |
+| `--timeout` | 30s | give up on one request after this long |
 | `--incident <id>` | none | push this service into errors while running |
 | `--incident-rate` | 0.3 | failure probability added |
 | `--incident-after` | 30s | when the incident starts |
@@ -138,13 +168,29 @@ endpoint the server does not have is reported as `not available`.
 `npm run scale -- all --api http://127.0.0.1:4403 --otlp http://127.0.0.1:4421` does
 all of it in one go (`--no-seed` to skip the seed, `--probe-every 60s`).
 
+## Reviewing the UI without a backend
+
+Development builds of the web app can generate a synthetic map in the browser, with
+no server or database:
+
+```sh
+npm run dev --workspace web
+```
+
+Then open `http://localhost:5173/?synthetic=5000` (any size works). Teams start
+collapsed at that size; add `&teams=expanded` to start with them open. This is for
+the map only: service pages, traces and errors need a server. Production builds
+ignore the parameter.
+
 ## What to look at
 
 - Map: about 5,000 nodes and 10,300 edges. Around 30 services are red at any time:
   14 fail chronically, about 45 sit at 1 to 2% errors and cross into red now and then,
   and quiet services flicker when one error lands in a small window. With
   `--incident`, the service turns red within a minute, and so do the edges into it.
-- Service page, 7 d: the daily curve and the weekend dip, and the incident spikes.
+- Service page, 7 d: the daily curve and the weekend dip, and the incident spikes,
+  in throughput and in latency. 24 h: p95 rising and falling with traffic, with
+  short-term noise, running on into live data without a step.
   1 h: the recent incident if it is still in range, then live data from the load.
 - SLO rings: chronic failures and services with an incident miss their target.
 - Errors: signatures per operation. Live errors link to a sample trace; seeded history
@@ -157,17 +203,26 @@ all of it in one go (`--no-seed` to skip the seed, `--probe-every 60s`).
 32-core workstation, database on local NVMe, scratch TimescaleDB 2.32 / PG16 container
 shared with other work, November 2026. Defaults unless stated.
 
-Seed, 5,000 services, 7 days: 61.1 to 61.5 million rows in 162 to 171 s on a quiet
-database (about 380,000 rows/s; 320 s when another load was running against the same
-container). 22.6 GiB written, 18.3 GiB after compressing the old chunks. The largest
-tables are `edge_op_rollup_10m` (15.9 M rows), `edge_rollup_10m` (10.9 M),
-`op_rollup_10m` (9.2 M) and `svc_rollup_10m` (5.0 M).
+Seed, 5,000 services, 7 days, with the latency model above: 60.7 million rows in
+225 s (about 270,000 rows/s), measured while other agents ran a 20,000 spans/s load
+against the same container. Before the latency model, a quiet container did 61.1 to
+61.5 million rows in 162 to 171 s (about 380,000 rows/s). 22.1 GiB written, 18.0 GiB
+after compressing the old chunks. The largest tables are `edge_op_rollup_10m`
+(16.0 M rows), `edge_rollup_10m` (11.0 M), `op_rollup_10m` (9.3 M) and
+`svc_rollup_10m` (5.1 M).
 
-Load, 20,000 spans/s for 240 s: 20,001 spans/s sent and accepted, 4,694 requests, no
-non-200 answers, request p50 9 ms. One thread builds about 500,000 spans/s, so the
-generator used 7% of its core. The server's RSS was about 1.0 GB at the end. Every
-one of the 4,744 instrumented services had a `svc_rollup_1m` row each minute (about
-497,000 requests a minute). Kept traces: about 650 spans/s, under the 1,000 budget.
+Load, 20,000 spans/s for 180 s against that seed: 20,000 spans/s sent and accepted,
+3,520 requests, no non-200 answers, request p50 9 ms. One thread builds about 370,000
+spans/s, so the generator used 7% of its core. The server's RSS was 529 MB at the
+end. Kept traces: 117,236 spans in 180 s, about 650 spans/s, under the 1,000 budget.
+Over 24 h the p95 of `edge-gateway-2` ranged from 517 ms at night to 826 ms at the
+afternoon peak; over the last seeded minutes it read 683 to 742 ms and over the first
+live minutes 676 to 686 ms (2-minute buckets), so there is no step at the seam. A
+quieter service (`search-platform-uploads-manager`) read 122 to 130 ms seeded and 121
+to 127 ms live.
+
+The probe table below is from an earlier 240 s run at the same rate, before the
+latency model; the change does not touch the read path.
 
 Probe during that load (p50 / max over 5 requests, sizes raw / gzip):
 

@@ -32,11 +32,13 @@ const SEED: Record<string, FlagSpec> = {
   chunk: { kind: 'number', default: 5000, help: 'rows per upsert statement' },
   compress: { kind: 'bool', default: true, help: 'compress chunks older than their policy, as on a long-running system (--compress=false to skip)' },
   reset: { kind: 'bool', default: false, help: 'clear rollup, kept-trace and catalog tables first (needs --yes)' },
-  yes: { kind: 'bool', default: false, help: 'confirm --reset' },
+  yes: { kind: 'bool', default: false, help: 'confirm writing to the database without a prompt (required with --reset or without a terminal)' },
+  force: { kind: 'bool', default: false, help: 'seed even on port 5433 or into a database holding data the harness did not write' },
 };
 
 const LOAD: Record<string, FlagSpec> = {
-  otlp: { kind: 'string', default: 'http://127.0.0.1:4318', env: 'OTLP_URL', help: 'collector base URL' },
+  otlp: { kind: 'string', default: 'http://127.0.0.1:4318', env: 'OTLP_URL', help: 'collector base URL, http or https; /v1/traces is appended to any path' },
+  timeout: { kind: 'duration', default: 30, help: 'give up on one export request after this long' },
   rate: { kind: 'number', default: 20000, help: 'target spans/s' },
   duration: { kind: 'duration', default: 0, help: 'how long to run (90s, 5m, 1h); 0 = until Ctrl-C' },
   connections: { kind: 'number', default: 8, help: 'parallel keep-alive connections' },

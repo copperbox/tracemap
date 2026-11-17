@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { HIST_BUCKETS, quantile } from '../../rollup/hist.js';
 import { finalThrough1m } from '../../rollup/compact.js';
 import { buildFleet } from './fleet.js';
 import { calibrate, incidentWindows, type IncidentWindow } from './model.js';
@@ -38,8 +39,13 @@ describe('genNode', () => {
 
   type Row = { table: string; bucket: number; key: string; n: number; err: number };
   const rows: Row[] = [];
+  /** Histograms of the red kinds, by table|bucket|key (copied: the generator reuses its arrays). */
+  const hists = new Map<string, Float64Array>();
   const sink: RowSink = {
-    row: (kind, tier, bucket, keys, n, err) => rows.push({ table: `${kind}_${tier}`, bucket, key: keys.join('|'), n, err }),
+    row: (kind, tier, bucket, keys, n, err, _sum, hist) => {
+      rows.push({ table: `${kind}_${tier}`, bucket, key: keys.join('|'), n, err });
+      if (hist) hists.set(`${kind}_${tier}|${bucket}|${keys.join('|')}`, Float64Array.from(hist));
+    },
   };
   const ctx = { fleet, calib, plan, incidents };
   for (const n of fleet.nodes) genNode(ctx, n.idx, sink);
@@ -76,6 +82,71 @@ describe('genNode', () => {
       const hourByDay = sumBy(`${kind}_1h`, DAY);
       for (const [k, v] of exact(`${kind}_1d`)) expect(hourByDay.get(k), k).toEqual(v);
     }
+  });
+
+  it('builds the 1h histogram as the merge of its 10m histograms', () => {
+    let checked = 0;
+    for (const [k, h] of hists) {
+      if (!k.startsWith('svc_rollup_1h|')) continue;
+      const [, b, ...key] = k.split('|');
+      const merged = new Float64Array(HIST_BUCKETS);
+      for (let m = 0; m < 6; m++) {
+        const ten = hists.get(`svc_rollup_10m|${Number(b) + m * 10 * MIN}|${key.join('|')}`);
+        if (ten) for (let i = 0; i < HIST_BUCKETS; i++) merged[i] += ten[i];
+      }
+      expect(Array.from(merged)).toEqual(Array.from(h));
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
+
+  /** p95 over every svc_rollup row of a tier in [from, to). */
+  const fleetP95 = (tier: string, from: number, to: number) => {
+    const h = new Float64Array(HIST_BUCKETS);
+    for (const [k, v] of hists) {
+      const [table, b] = k.split('|');
+      if (table !== `svc_rollup_${tier}` || Number(b) < from || Number(b) >= to) continue;
+      for (let i = 0; i < HIST_BUCKETS; i++) h[i] += v[i];
+    }
+    return quantile(h, 0.95);
+  };
+
+  it('makes latency rise with traffic through the day', () => {
+    // 2026-11-16 is a Monday: peak at 15:00 UTC, low at 03:00.
+    const peak = fleetP95('1h', Date.parse('2026-11-16T14:00:00Z'), Date.parse('2026-11-16T16:00:00Z'));
+    const low = fleetP95('1h', Date.parse('2026-11-16T02:00:00Z'), Date.parse('2026-11-16T04:00:00Z'));
+    expect(peak / low).toBeGreaterThan(1.25);
+  });
+
+  it('gives each service a p95 that moves from bucket to bucket', () => {
+    const svc = fleet.nodes.find((n) => n.instrumented && n.type === 'service')!;
+    const p95s = new Set<number>();
+    for (const [k, v] of hists) {
+      const [table, , id] = k.split('|');
+      if (table === 'svc_rollup_10m' && id === svc.id) p95s.add(quantile(v, 0.95));
+    }
+    expect(p95s.size).toBeGreaterThan(5);
+  });
+
+  it('raises latency into a node during its incidents', () => {
+    let checked = 0;
+    for (const w of incidentWindows(fleet, plan.anchorMs)) {
+      const first = Math.ceil(w.startMs / (10 * MIN)) * 10 * MIN;
+      if (w.endMs - first < 10 * MIN || first - DAY < plan.startMs || first + 10 * MIN > plan.c10) continue;
+      const target = fleet.nodes[w.node].id;
+      const p95At = (b: number) => {
+        const h = new Float64Array(HIST_BUCKETS);
+        for (const [k, v] of hists) {
+          const [table, bucket, , t] = k.split('|');
+          if (table === 'edge_rollup_10m' && Number(bucket) === b && t === target) for (let i = 0; i < HIST_BUCKETS; i++) h[i] += v[i];
+        }
+        return quantile(h, 0.95);
+      };
+      // Same time of day, one day earlier, so the daily curve cancels out.
+      expect(p95At(first) / p95At(first - DAY), `${target} ${w.kind}`).toBeGreaterThan(1.15);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   it('builds 10m from 1m where 1m rows exist', () => {

@@ -8,11 +8,13 @@
  * connections or the collector is what limits the rate.
  */
 import http from 'node:http';
+import https from 'node:https';
 import { performance } from 'node:perf_hooks';
 import { gzipSync } from 'node:zlib';
 import type { Opts } from './args.js';
 import { BatchBuilder, type Batch } from './batch.js';
 import { buildFleet, describeFleet, type Fleet } from './fleet.js';
+import { latencyFactor } from './model.js';
 import { Prng } from './prng.js';
 import { decide } from './retry.js';
 import { noEffects, Walker } from './walker.js';
@@ -53,17 +55,59 @@ const newWindow = (): Window => ({ at: performance.now(), sent: 0, accepted: 0, 
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-function post(agent: http.Agent, url: URL, body: Buffer, gzip: boolean): Promise<{ status: number | null; retryAfter?: string; ms: number }> {
+/**
+ * The OTLP/HTTP traces endpoint for a collector base URL, as OTLP exporters
+ * derive it from OTEL_EXPORTER_OTLP_ENDPOINT: `/v1/traces` appended to any path
+ * prefix. A URL that already ends in `/v1/traces` is used as is.
+ */
+export function tracesEndpoint(base: string): URL {
+  let url: URL;
+  try {
+    url = new URL(base);
+  } catch {
+    throw new Error(`--otlp ${base}: not a URL (use e.g. http://127.0.0.1:4318)`);
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error(`--otlp ${base}: use http:// or https://`);
+  const prefix = url.pathname.replace(/\/+$/, '');
+  if (!prefix.endsWith('/v1/traces')) url.pathname = `${prefix}/v1/traces`;
+  url.hash = '';
+  return url;
+}
+
+/** A keep-alive agent for the endpoint's protocol. */
+export function agentFor(url: URL, maxSockets: number): http.Agent {
+  return url.protocol === 'https:' ? new https.Agent({ keepAlive: true, maxSockets }) : new http.Agent({ keepAlive: true, maxSockets });
+}
+
+export interface PostResult {
+  /** HTTP status, or null when the request failed or the response did not complete. */
+  status: number | null;
+  retryAfter?: string;
+  ms: number;
+}
+
+/**
+ * POST one export request. Always settles: on a complete response, on any
+ * request or response error, when the connection closes before the body
+ * ends, and at `deadlineMs` after the start (the request is then destroyed).
+ */
+export function post(agent: http.Agent, url: URL, body: Buffer, gzip: boolean, deadlineMs = 30_000): Promise<PostResult> {
   const started = performance.now();
   const payload = gzip ? gzipSync(body, { level: 1 }) : body;
   return new Promise((resolve) => {
-    const req = http.request(
+    let settled = false;
+    const settle = (status: number | null, retryAfter?: string) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(deadline);
+      resolve({ status, retryAfter, ms: performance.now() - started });
+    };
+    const request = url.protocol === 'https:' ? https.request : http.request;
+    const req = request(
+      url,
       {
         agent,
         method: 'POST',
-        hostname: url.hostname,
-        port: url.port,
-        path: '/v1/traces',
         headers: {
           'content-type': 'application/x-protobuf',
           'content-length': payload.length,
@@ -72,13 +116,19 @@ function post(agent: http.Agent, url: URL, body: Buffer, gzip: boolean): Promise
       },
       (res) => {
         res.resume();
-        res.on('end', () =>
-          resolve({ status: res.statusCode ?? null, retryAfter: res.headers['retry-after'] as string | undefined, ms: performance.now() - started }),
-        );
+        res.on('end', () => settle(res.statusCode ?? null, res.headers['retry-after'] as string | undefined));
+        // The collector hung up after the headers: the export may not have been taken, so count it as failed.
+        res.on('aborted', () => settle(null));
+        res.on('error', () => settle(null));
+        res.on('close', () => settle(null));
       },
     );
-    req.setTimeout(30_000, () => req.destroy(new Error('timeout')));
-    req.on('error', () => resolve({ status: null, ms: performance.now() - started }));
+    const deadline = setTimeout(() => {
+      settle(null);
+      req.destroy(new Error('deadline'));
+    }, deadlineMs);
+    req.on('error', () => settle(null));
+    req.on('close', () => settle(null));
     req.end(payload);
   });
 }
@@ -105,14 +155,21 @@ export function startLoad(opts: Opts, log: (s: string) => void = console.log, fl
   const batchSpans = Math.max(1, Math.floor(opts.batch as number));
   const durationS = opts.duration as number;
   const gzip = !!opts.gzip;
-  const url = new URL(opts.otlp as string);
+  const url = tracesEndpoint(opts.otlp as string);
+  const deadlineMs = (opts.timeout as number) * 1000;
   const statusEveryMs = (opts['status-every'] as number) * 1000;
 
   const r = new Prng((Date.now() ^ process.pid) >>> 0);
   const effects = noEffects(fleet);
   const walker = new Walker(fleet, r, effects);
   const builder = new BatchBuilder(fleet, walker, r);
-  const agent = new http.Agent({ keepAlive: true, maxSockets: connections });
+  const agent = agentFor(url, connections);
+  // Latency follows the same time-of-day model as the seeded history, so charts continue across the seam.
+  const updateLatency = () => {
+    const now = Date.now();
+    for (let i = 0; i < fleet.nodes.length; i++) effects.latMul[i] = latencyFactor(fleet.nodes[i], now);
+  };
+  updateLatency();
 
   let incidentNode = -1;
   if (opts.incident) {
@@ -121,6 +178,7 @@ export function startLoad(opts: Opts, log: (s: string) => void = console.log, fl
   }
 
   log(`[load] fleet: ${describeFleet(fleet)}`);
+  log(`[load] sending to ${url.href}`);
   const capacity = measureGenerator(builder, batchSpans);
   log(`[load] generator capacity on one thread: ${fmtRate(capacity)} spans/s; target ${fmtRate(rate)} spans/s over ${connections} connections, ${batchSpans} spans per request${gzip ? ', gzip' : ''}`);
   if (capacity < rate * 1.2) log(`[load] warning: one thread cannot build ${fmtRate(rate)} spans/s with headroom; the status line will say "generator-bound"`);
@@ -141,7 +199,7 @@ export function startLoad(opts: Opts, log: (s: string) => void = console.log, fl
   const send = async (batch: Batch): Promise<void> => {
     for (let attempt = 1; ; attempt++) {
       busy++;
-      const res = await post(agent, url, batch.body, gzip);
+      const res = await post(agent, url, batch.body, gzip, deadlineMs);
       busy--;
       totals.requests++;
       win.reqMs.push(res.ms);
@@ -221,6 +279,7 @@ export function startLoad(opts: Opts, log: (s: string) => void = console.log, fl
     win = newWindow();
     const timers = [
       setInterval(statusLine, statusEveryMs),
+      setInterval(updateLatency, 1000),
       setInterval(() => {
         win.busySamples++;
         win.busySum += busy;

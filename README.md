@@ -101,8 +101,9 @@ working backwards from symptoms team by team.
   callers/dependencies, and for edges: the learned relationship (first
   observed, supporting spans, confidence, auto vs manual source) and the
   observed operation mix. Selecting a node or edge also lists its top erroring
-  operations and, under each, the distinct errors actually seen in the traces
-  (exception types, HTTP status codes, queue/db error codes) with counts.
+  operations and, under each, the distinct errors seen (exception types, HTTP
+  status codes, queue/db error codes) with exact counts, each linked to a kept
+  sample trace when one exists.
   The drawer footer can **focus** the selection (dims everything outside its
   dependency cone while keeping the rest on screen) or, on the layered map,
   **isolate** it: the map is redrawn for that node/team/edge's dependency tree
@@ -114,7 +115,8 @@ working backwards from symptoms team by team.
 - **Service pages** - per-service deep dive with KPI cards,
   latency/throughput/error-rate charts (crosshair hover tooltips that stay in
   sync across the charts), top
-  operations, linked upstream/downstream services, and recent traces.
+  operations, linked upstream/downstream services, and recent kept traces
+  (each marked with why it was kept: error, slow or baseline).
   A top-erroring-operations panel lists each failing operation with the
   distinct errors seen; clicking one filters the recent-traces list to that
   operation's failing traces (click again, or the filter chip, to clear).
@@ -124,50 +126,78 @@ working backwards from symptoms team by team.
   chart bundle is code-split, so the page shell paints immediately instead of
   blocking on one combined request.
 - **Trace waterfall** - click a trace to open the full distributed span tree
-  with timing bars and raw OTEL span attributes.
+  with timing bars and raw OTEL span attributes. Only kept traces can be
+  opened (see [Notes & limitations](#notes--limitations)).
 - **Manual curation** - rename services, set descriptions, owning team/group,
   type and SLO target; manually associate dependencies the inference cannot
   see; and merge duplicate services (same service reported under different
-  names) into one canonical service -- historical telemetry is re-pointed and
-  the old name becomes an alias for all future traffic. The duplicate picker
+  names) into one canonical service -- the old name becomes an alias for all
+  future traffic, and its history shows up under the canonical service. The duplicate picker
   is the same searchable dropdown used elsewhere, scoped to team-less services
   (assigned ones are deliberately owned, not stray duplicates). Merges are
-  reversible: each merge is recorded and the re-pointed telemetry is tagged, so
-  the edit modal lists everything merged into a service and an Unmerge button
-  splits a duplicate back out -- restoring its service, telemetry and edges.
+  reversible: each merge is recorded, so the edit modal lists everything merged
+  into a service and an Unmerge button splits a duplicate back out -- restoring
+  its service, history and edges.
 
 ## Architecture
 
 ```
- your services --OTLP/HTTP--> server (Fastify, :4318)  --> TimescaleDB
-                                  |                          spans + edge_events hypertables
-                                  |                          continuous aggregates (1m)
-                                  |                          30-day retention policies
- browser <----- web (React) <-- query API (:4000)
+ your services --OTLP/HTTP--> collector (:4318) --rollup rows, kept traces--> TimescaleDB
+                                in-memory 1m cells,                          1m/10m/1h/1d rollup tiers
+                                trace buffer, edge pairing                   kept_spans / kept_traces
+                                      |
+                                      v live window
+ browser <--SSE push-- web (React) <-- query API (:4000) <-- live snapshot + rollup reader
 ```
 
 - `server/` - Node.js + TypeScript.
   - **OTLP collector** (`:4318`): accepts `POST /v1/traces` and
     `POST /v1/metrics` in both `application/x-protobuf` (vendored
     opentelemetry-proto definitions) and `application/json`, per the
-    [OTLP spec](https://opentelemetry.io/docs/specs/otlp/).
+    [OTLP spec](https://opentelemetry.io/docs/specs/otlp/). A request is
+    decoded and handed to the pipeline without waiting on the database. A
+    malformed payload gets `400`; an overloaded collector answers `429` with
+    `Retry-After`; an internal failure is `503`.
+  - **Rollups, not raw spans**: the collector counts every span into
+    per-minute cells in memory (per service, operation, edge, edge operation
+    and error signature) with a latency histogram, and writes those cells as
+    rollup rows. Raw spans are not stored. The cells of the last few minutes
+    stay open and are rewritten on each flush, so late spans still count.
+    Compaction builds the `10m` tier from `1m`, `1h` from `10m` and `1d` from
+    `1h` (one process at a time, under an advisory lock). Retention: `1m` 3
+    days, `10m` 30 days, `1h` 395 days, `1d` forever.
+  - **Trace curation**: spans are buffered per trace until the trace has been
+    quiet for 10 s (or is 30 s old), then the trace is kept or dropped. Kept:
+    errors (a few per error signature per minute), slow traces (root duration
+    at or above its root operation's p99) and a baseline (one per root
+    operation per minute), all under a global budget of kept spans per second.
+    Kept traces are stored for 30 days; everything else is counted in the
+    rollups and discarded.
   - **Topology inference**: cross-service edges are learned by joining CLIENT
     spans to the SERVER spans they cause (works regardless of batch arrival
     order); databases, queues, and external APIs that never emit telemetry are
     inferred from semantic-convention attributes (`db.system`,
     `messaging.system`, `peer.service`, `server.address`, `url.full`, ...).
     Edge metrics are always the *caller's* measurements of the dependency.
-  - **Query API** (`:4000`): topology, service list/detail, time series,
-    traces, teams, and the curation endpoints (rename/merge/manual edges).
-- `web/` - React + Vite + zustand. Custom SVG map (layered DAG layout - leaf
-  dependencies on top, gateway at the bottom), charts, and the full UI from
-  the design handoff (dark/light themes, green accent). The current view is
-  reflected in the URL (see [Deep links](#deep-links)), so reloads and shared
-  links land on the same place.
-- **TimescaleDB** (Postgres + timescaledb_toolkit): raw `spans` and
-  `edge_events` hypertables with per-minute continuous aggregates
-  (`percentile_agg` sketches for p50/p95/p99) powering all charts, and
-  automatic **30-day retention** on all telemetry.
+  - **Live snapshot**: every 2 s the server builds one snapshot of the whole
+    map in memory, from the collector's live window plus the last known state
+    of services with no current traffic, and shares it with every viewer. The
+    browser subscribes to `/api/live` (server-sent events) and fetches the
+    map structure and a compact binary metrics frame when they change.
+  - **Query API** (`:4000`): live numbers come from the snapshot; history comes
+    from the rollup tiers (the coarsest tier that fits the range, with finer
+    tiers stitched in for the recent part). The API reads no raw spans.
+    Also traces, teams, and the curation endpoints (rename/merge/manual edges).
+- `web/` - React + Vite + zustand. The map (layered DAG layout - leaf
+  dependencies on top, gateway at the bottom) draws nodes and edges on a canvas
+  and mounts DOM cards only for nodes on screen at a readable zoom; long lists
+  render only their visible rows. Charts, and the full UI from the design
+  handoff (dark/light themes, green accent). The current view is reflected in
+  the URL (see [Deep links](#deep-links)), so reloads and shared links land on
+  the same place.
+- **TimescaleDB**: the rollup tiers and kept traces are compressed hypertables
+  with retention policies (the `1d` tier is a plain table); the service
+  catalog, teams, edges, aliases and merges are plain tables.
 
 ## Quick start
 
@@ -256,13 +286,37 @@ dependencies -- they show up unassigned for you to curate in step 4.
 
 ## Configuration
 
-| Env var (server)       | Default                                                 | Purpose                          |
-| ---------------------- | ------------------------------------------------------- | -------------------------------- |
-| `DATABASE_URL`         | `postgres://tracemap:tracemap@localhost:5433/tracemap`  | TimescaleDB connection           |
-| `PORT`                 | `4000`                                                  | Query/management API             |
-| `OTLP_PORT`            | `4318`                                                  | OTLP/HTTP collector              |
-| `EDGE_RESOLVE_TTL_MS`  | `90000`                                                 | Cross-batch span join window     |
-| `LIVE_WINDOW_MINUTES`  | `5`                                                     | "Current" window for map metrics |
+Server settings are environment variables (`server/src/config.ts`):
+
+| Env var (server)             | Default                                                | Purpose |
+| ---------------------------- | ------------------------------------------------------ | ------- |
+| `DATABASE_URL`               | `postgres://tracemap:tracemap@localhost:5433/tracemap` | TimescaleDB connection |
+| `PORT`                       | `4000`                                                 | Query/management API |
+| `OTLP_PORT`                  | `4318`                                                 | OTLP/HTTP collector |
+| `INGEST_POOL_MAX`            | `6`                                                    | Database connections for the collector's writers |
+| `READ_POOL_MAX`              | `10`                                                   | Database connections for API reads |
+| `LIVE_WINDOW_MINUTES`        | `5`                                                    | "Current" window for map metrics |
+| `SNAPSHOT_INTERVAL_MS`       | `2000`                                                 | How often the live snapshot is rebuilt and pushed |
+| `ROLLUP_FLUSH_MS`            | `10000`                                                | How often open rollup cells are written |
+| `ROLLUP_GRACE_MINUTES`       | `3`                                                    | Minutes a rollup cell stays open for late spans |
+| `ROLLUP_MAX_BACKLOG_MINUTES` | `30`                                                   | Closed minutes allowed to wait for the database before ingest answers 429 |
+| `COMPACT_INTERVAL_MS`        | `60000`                                                | How often tier compaction runs |
+| `MAX_OPS_PER_SERVICE`        | `200`                                                  | Distinct operations per service per minute; the rest count as `(other)` |
+| `MAX_ERROR_SIGS_PER_SERVICE` | `100`                                                  | Distinct error signatures per service per minute; the rest count as `(other)` |
+| `EDGE_RESOLVE_TTL_MS`        | `30000`                                                | How long an unpaired client or server span waits for its other half |
+| `EDGE_RESOLVE_MAX_PENDING`   | `500000`                                               | Cap on unpaired spans held; the oldest are evicted first |
+| `TRACE_DECISION_WAIT_MS`     | `10000`                                                | Decide a trace after this long without new spans |
+| `TRACE_MAX_AGE_MS`           | `30000`                                                | Decide a trace at the latest this long after its first span |
+| `TRACE_BUFFER_MAX_SPANS`     | `1000000`                                              | Spans held for undecided traces; past it, new traces cannot be kept |
+| `TRACE_MAX_SPANS_PER_TRACE`  | `2000`                                                 | Spans held per trace |
+| `KEPT_SPANS_PER_SEC`         | `1000`                                                 | Kept-trace budget, spans/s (one minute of burst) |
+| `KEEP_ERROR_QUOTA`           | `3`                                                    | Error keeps per error signature per minute |
+| `KEEP_SLOW_QUOTA`            | `2`                                                    | Slow keeps per root operation per minute |
+| `KEEP_BASELINE_QUOTA`        | `1`                                                    | Baseline keeps per root operation per minute |
+| `KEEP_BASELINE_SHARE`        | `0.25`                                                 | Share of the budget reserved for baseline keeps |
+| `KEPT_QUEUE_MAX_SPANS`       | `200000`                                               | Kept spans queued for the writer before keeps are dropped |
+| `OVERLOAD_LAG_MS`            | `1000`                                                 | Event-loop delay above which ingest answers 429 |
+| `OVERLOAD_MAX_INFLIGHT`      | `512`                                                  | Concurrent OTLP requests above which ingest answers 429 |
 
 Simulator flags: `npm run simulate -- --otlp http://127.0.0.1:4318 --api http://127.0.0.1:4000 --tps 6`.
 While the simulator runs in a terminal, dial the trace rate live: `+` doubles
@@ -292,25 +346,38 @@ with `POST /api/services/:id/merge` to exercise association. Example:
 | Endpoint | Purpose |
 | --- | --- |
 | `POST /v1/traces`, `POST /v1/metrics` (`:4318`) | OTLP/HTTP ingest (protobuf + JSON) |
-| `GET /api/topology` | Full live map: services, edges, teams, current metrics |
+| `GET /api/live` | Server-sent events: `hello`, then a `structure` notice when the map structure changes and a `metrics` notice for each new snapshot |
+| `GET /api/live/structure` | Services, edges and teams of the live snapshot (JSON, `ETag` = structure version) |
+| `GET /api/live/metrics` | Latest metrics frame: rps, p50, p95, p99, error % and status per service and edge (binary) |
+| `GET /api/topology` | Full live map: services, edges, teams, current metrics (JSON, from the same snapshot) |
 | `GET /api/services` | Service list with sparklines + SLO |
 | `GET /api/services/:id?from=&to=` | Detail: KPIs, series, operations, neighbors |
-| `GET /api/services/:id/traces?from=&to=&op=` | Recent traces touching a service (`op` filters to that operation's failures) |
-| `GET /api/services/:id/errors?from=&to=` | Top erroring operations + the errors seen |
-| `GET /api/edges/:source/:target/errors` | Top erroring operations + the errors seen on one edge |
-| `GET /api/traces/:traceId` | Full trace for the waterfall |
+| `GET /api/services/:id/sparklines` | 24 hourly points of p95, throughput and error rate |
+| `GET /api/edges/:source/:target/series` | 24 hourly points of an edge's latency and calls, plus its operation mix |
+| `GET /api/services/:id/traces?from=&to=&op=` | Recent kept traces touching a service, each with the reason it was kept (`op` filters to that operation's failures) |
+| `GET /api/services/:id/errors?from=&to=` | Top erroring operations + the errors seen, exact counts from the error-signature rollups, with a `sampleTraceId` when a trace was kept |
+| `GET /api/edges/:source/:target/errors` | The same for one edge |
+| `GET /api/traces/:traceId` | Full kept trace for the waterfall |
 | `PATCH /api/services/:id` | Rename / describe / team / type / SLO target |
 | `POST /api/services/:id/merge` | Merge a duplicate service into this one (aliases its name) |
 | `POST /api/services/:id/unmerge` | Reverse a merge, splitting a duplicate back into its own service |
 | `POST/DELETE /api/services/:id/dependencies` | Manual dependency association |
 | `GET/POST /api/teams` | Team (group) management |
-| `GET /api/health` | Ingest liveness + counters |
+| `GET /api/health` | Ingest liveness + pipeline counters (accepted, rejected, kept and dropped traces, queue depths, flush times) |
 
 ## Testing
 
 ```sh
-npm test          # server (OTLP decode, peer inference, edge resolver) + web (layout, grouping, formatters)
+npm test          # server (OTLP decode, pipeline, rollups, live snapshot, API) + web (layout, grouping, live client)
 ```
+
+Integration tests run against a real TimescaleDB and are skipped unless
+`TEST_DATABASE_URL` points at a throwaway database, e.g.
+`TEST_DATABASE_URL=postgres://tracemap:tracemap@127.0.0.1:5544/tm_test npm test --workspace server`.
+
+The scale harness (`npm run scale -- seed|load|probe|all`) seeds a database with
+5,000 services and 7 days of history, drives live OTLP load and times every
+endpoint the UI uses. See [docs/scale-harness.md](docs/scale-harness.md).
 
 ## Project layout
 
@@ -322,13 +389,20 @@ colors) stay inline, and shared design tokens are CSS variables in
 `web/src/theme/global.css`.
 
 ```
-server/src/otlp/      OTLP decode (vendored protos), peer inference, edge resolver, ingest
+server/src/otlp/      OTLP decode (vendored protos), peer inference, service registry, ingest routes
+server/src/pipeline/  rollup cells, edge pairing, trace buffer and curation, kept-trace writer
+server/src/rollup/    tier metadata, histogram codec, tier compaction, rollup reader
+server/src/live/      live snapshot, structure + binary metrics frame, SSE hub
 server/src/api/       routes split per resource (service list/detail/edit/merge,
-                      topology, traces, teams, series) + shared range parsing
-server/src/db/        migrations (TimescaleDB schema), pool
+                      topology, traces, errors, teams, series) + shared range parsing
+server/src/db/        migrations (TimescaleDB schema), pools, legacy table drop
 server/src/sim/       demo traffic generator, split by stage (args, topology +
                       procedural augmentation, trace gen, OTLP payload encoding,
                       http, metrics sampling)
+server/src/sim/scale/ scale harness: synthetic fleet, history seed, OTLP load, API probe
+docs/                 scale harness guide
+web/src/state/        store, URL sync, live stream client
+web/src/dev/          dev-only synthetic topology (`?synthetic=N`)
 web/src/lib/          DAG layout, team grouping, community detection, time ranges, formatters, timeSince
 web/src/theme/        global CSS tokens/keyframes + font shorthand helpers
 web/src/features/     map (MapView switches LayeredMap / force/ communities graph,
@@ -339,8 +413,23 @@ web/src/components/   top bar, charts, sparklines, SLO ring, icons
 
 ## Notes & limitations
 
-- Merging services rewrites historical rows and refreshes the aggregates;
-  on very large datasets this is a heavyweight admin operation.
+- Traces are a sample. Only kept traces (errors, slow, baseline, under the
+  `KEPT_SPANS_PER_SEC` budget) can be listed or opened, so a trace id from your
+  own logs may not be found. Counts, error rates and latencies come from the
+  rollups, which count every span.
+- Latency quantiles (p50/p95/p99) are estimated from log histograms whose
+  buckets are 10% wide, so a quantile is accurate to about one bucket.
+- Merging services touches only the catalog (aliases, edges, the merged
+  service). History recorded under the old name is found at read time, so a
+  merge or unmerge is cheap at any data size.
+- Upgrading from a version that stored raw spans leaves the old tables
+  (`spans`, `edge_events`, `metric_points` and their continuous aggregates) in
+  place, unread and unwritten. Drop them with
+  `npm run legacy:drop --workspace server -- --yes` once you no longer need them.
+- Each collector process pairs edges and decides traces on its own, so every
+  span of a trace must reach the same process. Running more than one collector
+  needs a load balancer in front that routes by trace id (for example the
+  OpenTelemetry Collector's `loadbalancing` exporter with `routing_key: traceID`).
 - Deleting a *learned* edge removes it until new telemetry re-learns it;
   deleting a *manual* edge is permanent.
 - OTLP/gRPC (`:4317`) is not implemented; use OTLP/HTTP (`:4318`), which every

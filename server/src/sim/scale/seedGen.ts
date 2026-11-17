@@ -11,8 +11,9 @@ import { HIST_BUCKETS } from '../../rollup/hist.js';
 import { bucketStart, type RollupKindName, type TierName } from '../../rollup/tiers.js';
 import type { Fleet } from './fleet.js';
 import {
+  cdfOf,
   effectAt,
-  lognormalCdfTable,
+  latencyFactor,
   makeCell,
   splitCounts,
   trafficShape,
@@ -103,9 +104,8 @@ interface Leaf {
   key: number;
   ratePerSec: number;
   errBase: number;
-  mu: number;
-  sigma: number;
-  cdf: Float64Array;
+  meanMs: number;
+  cdf: Float32Array;
   /** Node whose incidents apply. */
   effectNode: number;
   /** Error series for each signature (cumulative weights in sigCum). */
@@ -181,8 +181,7 @@ export function genNode(ctx: GenContext, nodeIdx: number, sink: RowSink): LastMi
       const errSeries = node.sigs.map((sig) => add('svc_error_rollup', [node.id, op, sig.code, sig.message], false));
       leaves.push({
         series: s, parent: svcSeries, key: k, ratePerSec: calib.opRate[k] * plan.tracesPerSec, errBase: node.opErr[i],
-        mu: calib.opMu[k], sigma: calib.opSigma[k], cdf: lognormalCdfTable(calib.opMu[k], calib.opSigma[k]),
-        effectNode: nodeIdx, errSeries, sigCum,
+        meanMs: calib.opMeanMs[k], cdf: cdfOf(calib.opCdf, k), effectNode: nodeIdx, errSeries, sigCum,
       });
     });
   }
@@ -201,8 +200,8 @@ export function genNode(ctx: GenContext, nodeIdx: number, sink: RowSink): LastMi
       const errSeries = sigs.map((sig) => add('edge_error_rollup', [node.id, target.id, op, sig.code, sig.message], false));
       leaves.push({
         series: s, parent: es, key: 10_000_000 + k, ratePerSec: calib.edgeOpRate[k] * plan.tracesPerSec,
-        errBase: target.opErr[e.targetOps[j]], mu: calib.edgeOpMu[k], sigma: calib.edgeOpSigma[k],
-        cdf: lognormalCdfTable(calib.edgeOpMu[k], calib.edgeOpSigma[k]), effectNode: e.t, errSeries, sigCum,
+        errBase: target.opErr[e.targetOps[j]], meanMs: calib.edgeOpMeanMs[k], cdf: cdfOf(calib.edgeOpCdf, k),
+        effectNode: e.t, errSeries, sigCum,
       });
     });
   }
@@ -222,9 +221,10 @@ export function genNode(ctx: GenContext, nodeIdx: number, sink: RowSink): LastMi
     const bucketId = Math.floor(b / MIN);
     for (const leaf of leaves) {
       const fx = effectAt(ctx.incidents.get(leaf.effectNode), b, b + grain);
+      const latMul = latencyFactor(fleet.nodes[leaf.effectNode], b, grain) * fx.latMul;
       const leafHist = series[leaf.series].hist ? lvl.hist[leaf.series]! : scratch;
       if (leafHist === scratch) scratch.fill(0);
-      const c = makeCell(leaf.key, bucketId, leaf.ratePerSec * scale, leaf.errBase + fx.errAdd, leaf.mu, leaf.sigma, fx.latMul, leaf.cdf, leafHist);
+      const c = makeCell(leaf.key, bucketId, leaf.ratePerSec * scale, leaf.errBase + fx.errAdd, leaf.meanMs, latMul, leaf.cdf, leafHist);
       if (!c.n) continue;
       lvl.n[leaf.series] += c.n;
       lvl.err[leaf.series] += c.err;
