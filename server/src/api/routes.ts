@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/pool.js';
-import { edgeResolver } from '../otlp/ingest.js';
+import { getPipeline } from '../pipeline/index.js';
 import { topologyRoutes } from './topology.js';
 import { serviceRoutes } from './services.js';
 import { traceRoutes } from './traces.js';
@@ -17,17 +17,14 @@ export async function apiRoutes(app: FastifyInstance): Promise<void> {
   await app.register(errorRoutes);
 
   app.get('/health', async () => {
-    const [svc, spans] = await Promise.all([
-      query<{ n: string }>('SELECT count(*) AS n FROM services'),
-      query<{ n: string }>(
-        `SELECT count(*) AS n FROM spans WHERE time > now() - INTERVAL '1 minute'`,
-      ),
-    ]);
+    const svc = await query<{ n: string }>('SELECT count(*) AS n FROM services');
+    const pipeline = getPipeline().stats();
     return {
       ok: true,
       services: Number(svc.rows[0].n),
-      spansLastMinute: Number(spans.rows[0].n),
-      pendingEdgeResolutions: edgeResolver.pendingCount,
+      spansLastMinute: pipeline.spans.lastMinute,
+      pendingEdgeResolutions: pipeline.edges.pendingClients + pipeline.edges.pendingServers,
+      pipeline,
     };
   });
 }
