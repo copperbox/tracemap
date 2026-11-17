@@ -1,62 +1,95 @@
 import type { FastifyInstance } from 'fastify';
-import { query } from '../db/pool.js';
-import { serviceLiveMetrics, sloAttainment, statusOf } from './metrics.js';
+import { Encoded, NO_COMPRESS, sendEncoded } from '../live/encoded.js';
+import { getLive } from '../live/index.js';
+import type { Snapshot } from '../live/snapshot.js';
+import type { RollupReader } from '../rollup/read.js';
+import { aliases } from './aliases.js';
+import { q } from './metrics.js';
 
-/** GET /services: the services page listing with live metrics and sparklines. */
+const HOUR = 3_600_000;
+
+/**
+ * Hourly p95 over the last 24 h for every service, for the services table.
+ * One fleet-wide read at most every `maxAgeMs`, shared by all viewers; a
+ * stale cache is served while the refresh runs.
+ */
+export class SparkCache {
+  private data: { at: number; version: number; spark: Map<string, number[]> } | null = null;
+  private loading: Promise<void> | null = null;
+
+  constructor(
+    private readonly reader: () => RollupReader,
+    private readonly maxAgeMs = 300_000,
+    private readonly now: () => number = Date.now,
+  ) {}
+
+  async get(): Promise<{ version: number; spark: Map<string, number[]> }> {
+    if (!this.data) await this.refresh();
+    else if (this.now() - this.data.at >= this.maxAgeMs) void this.refresh().catch((err) => console.warn('spark refresh failed:', err.message));
+    return this.data ?? { version: 0, spark: new Map() };
+  }
+
+  refresh(): Promise<void> {
+    this.loading ??= (async () => {
+      const now = this.now();
+      const rows = await this.reader().read(
+        { kind: 'svc_rollup', filter: {}, groupBy: ['service_id'], fromMs: now - 24 * HOUR, toMs: now, bucketMs: HOUR, hist: true },
+        aliases.canonical,
+      );
+      rows.sort((a, b) => a.bucketMs - b.bucketMs);
+      const spark = new Map<string, number[]>();
+      for (const r of rows) {
+        if (!r.n) continue;
+        const list = spark.get(r.keys[0]) ?? [];
+        list.push(q(r, 0.95) ?? 0);
+        spark.set(r.keys[0], list);
+      }
+      this.data = { at: now, version: (this.data?.version ?? 0) + 1, spark };
+    })().finally(() => {
+      this.loading = null;
+    });
+    return this.loading;
+  }
+}
+
+export const sparkCache = new SparkCache(() => getLive().reader);
+
+/** The /services body for one snapshot and spark version, built once and shared. */
+let body: { seq: number; spark: number; enc: Encoded } | null = null;
+
+function listBody(snap: Snapshot, spark: Map<string, number[]>): unknown {
+  return {
+    edgeCount: snap.structure.edges.length,
+    services: snap.structure.services.map((s) => {
+      const m = snap.services.get(s.id);
+      return {
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        teamId: s.teamId,
+        runtime: s.runtime,
+        isExternal: s.isExternal,
+        sloTarget: s.sloTarget,
+        sloAttain: s.sloAttain,
+        lastSeen: s.lastSeen,
+        status: m?.status ?? 'ok',
+        rps: m?.rps ?? 0,
+        p95: m?.p95 ?? null,
+        errPct: m?.errPct ?? 0,
+        stale: m?.stale ?? true,
+        spark: spark.get(s.id) ?? [],
+      };
+    }),
+  };
+}
+
+/** GET /services: the services page listing, live numbers from the snapshot plus cached sparklines. */
 export async function serviceListRoutes(app: FastifyInstance): Promise<void> {
-  app.get('/services', async () => {
-    const [services, svcMetrics, slo, sparks, edgeCount] = await Promise.all([
-      query<{
-        id: string;
-        display_name: string | null;
-        type: string;
-        team_id: number | null;
-        runtime: string | null;
-        is_external: boolean;
-        slo_target: number;
-        last_seen: Date;
-      }>('SELECT id, display_name, type, team_id, runtime, is_external, slo_target, last_seen FROM services ORDER BY id'),
-      serviceLiveMetrics(),
-      sloAttainment(),
-      query<{ service_id: string; t: Date; p95: string | null }>(
-        `SELECT service_id, time_bucket('1 hour', bucket) AS t,
-                approx_percentile(0.95, rollup(lat_agg)) AS p95
-         FROM service_op_metrics_1m
-         WHERE bucket > now() - INTERVAL '24 hours'
-         GROUP BY service_id, 2
-         ORDER BY service_id, 2`,
-      ),
-      query<{ n: string }>('SELECT count(*) AS n FROM edges'),
-    ]);
-
-    const sparkMap = new Map<string, number[]>();
-    for (const row of sparks.rows) {
-      const arr = sparkMap.get(row.service_id) ?? [];
-      arr.push(row.p95 == null ? 0 : Number(row.p95));
-      sparkMap.set(row.service_id, arr);
+  app.get('/services', NO_COMPRESS, async (req, reply) => {
+    const [snap, spark] = await Promise.all([getLive().snapshot.current(), sparkCache.get()]);
+    if (!body || body.seq !== snap.seq || body.spark !== spark.version) {
+      body = { seq: snap.seq, spark: spark.version, enc: Encoded.json(listBody(snap, spark.spark)) };
     }
-
-    return {
-      edgeCount: Number(edgeCount.rows[0]?.n ?? 0),
-      services: services.rows.map((s) => {
-        const m = svcMetrics.get(s.id) ?? { rps: 0, p95: null, errPct: 0, stale: true };
-        return {
-          id: s.id,
-          name: s.display_name ?? s.id,
-          type: s.type,
-          teamId: s.team_id,
-          runtime: s.runtime,
-          isExternal: s.is_external,
-          sloTarget: s.slo_target,
-          sloAttain: slo.get(s.id) ?? null,
-          lastSeen: s.last_seen,
-          status: statusOf(m.errPct),
-          rps: m.rps,
-          p95: m.p95,
-          errPct: m.errPct,
-          spark: sparkMap.get(s.id) ?? [],
-        };
-      }),
-    };
+    return sendEncoded(req, reply, body.enc);
   });
 }

@@ -7,6 +7,7 @@ import { otlpRoutes } from './otlp/routes.js';
 import { registry } from './otlp/registry.js';
 import { getPipeline } from './pipeline/index.js';
 import { apiRoutes } from './api/routes.js';
+import { startLive, stopLive } from './live/index.js';
 
 async function main(): Promise<void> {
   await migrate();
@@ -18,6 +19,8 @@ async function main(): Promise<void> {
   const collector = Fastify({ logger: { level: 'warn' }, bodyLimit: 32 * 1024 * 1024 });
   await collector.register(otlpRoutes, { pipeline });
   await collector.listen({ port: config.otlpPort, host: '0.0.0.0' });
+
+  await startLive();
 
   // Query/management API for the dashboard.
   const api = Fastify({ logger: { level: 'warn' } });
@@ -39,6 +42,7 @@ async function main(): Promise<void> {
     try {
       await collector.close();
       await pipeline.shutdown();
+      await stopLive();
       await api.close();
       await closePools();
     } catch (err) {
