@@ -15,7 +15,7 @@ async function errorBreakdown(q: Omit<ReadQuery, 'groupBy' | 'bucketMs'>) {
   );
   return {
     operations: aggregateErrorRollups(
-      rows.map((r) => ({ operation: r.keys[0], code: r.keys[1], message: r.keys[2], n: r.n, sample: r.sample })),
+      rows.map((r) => ({ operation: r.keys[0], code: r.keys[1], message: r.keys[2], n: r.n, sample: r.sample, sampleAtMs: r.sampleAtMs })),
     ),
   };
 }

@@ -8,10 +8,13 @@
  * - catalog (services, edges, teams, aliases): every CATALOG_REFRESH_MS, or
  *   sooner after an edit through the API;
  * - last known state: once at start;
- * - SLO attainment (30 days): every SLO_REFRESH_MS, in the background;
+ * - SLO attainment (30 days): once before the first snapshot (waiting at most
+ *   sloStartWaitMs), then every SLO_REFRESH_MS in the background;
  * - other collectors: their heartbeat every 10 s, and only when one is alive,
- *   their last-window 1m rows.
+ *   their last-window 1m rows. Rows older than peerMaxAgeMs (refreshes kept
+ *   failing) are no longer added; what they covered shows last-known, stale.
  */
+import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
 import type { AliasMap } from '../api/aliases.js';
 import type { LiveAggregate, LiveWindow } from '../pipeline/cells.js';
@@ -49,8 +52,15 @@ export interface SnapshotOptions {
   peersRefreshMs: number;
   /** A collector heartbeat newer than this counts as alive, ms. */
   peerAliveMs: number;
+  /** Peer rows from a refresh older than this are not added to live numbers, ms. */
+  peerMaxAgeMs: number;
   volatileRefreshMs: number;
+  /** How long start() waits for the first SLO load before publishing without it, ms. */
+  sloStartWaitMs: number;
+  /** Part of every ETag, so a validator from another process never matches. */
+  bootId: string;
   now: () => number;
+  sleep: (ms: number) => Promise<void>;
 }
 
 export const DEFAULT_SNAPSHOT_OPTIONS: Omit<SnapshotOptions, 'intervalMs' | 'liveWindowMinutes'> = {
@@ -58,8 +68,12 @@ export const DEFAULT_SNAPSHOT_OPTIONS: Omit<SnapshotOptions, 'intervalMs' | 'liv
   sloRefreshMs: 300_000,
   peersRefreshMs: 10_000,
   peerAliveMs: 30_000,
+  peerMaxAgeMs: 30_000,
   volatileRefreshMs: 60_000,
+  sloStartWaitMs: 3_000,
+  bootId: randomBytes(4).toString('hex'),
   now: Date.now,
+  sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 };
 
 export interface Snapshot {
@@ -92,8 +106,18 @@ export class LiveSnapshot {
   private slo = new Map<string, number>();
   private sloChanged = false;
   private sloLoading: Promise<void> | null = null;
-  private peers: { at: number; sinceMs: number; ids: number[]; svc: Map<string, LiveAggregate>; edges: Map<string, LiveAggregate> } = {
+  private sloLoaded = false;
+  /** at: last attempt; okAt: last success, which the rows below come from. */
+  private peers: {
+    at: number;
+    okAt: number;
+    sinceMs: number;
+    ids: number[];
+    svc: Map<string, LiveAggregate>;
+    edges: Map<string, LiveAggregate>;
+  } = {
     at: -Infinity,
+    okAt: -Infinity,
     sinceMs: 0,
     ids: [],
     svc: new Map(),
@@ -119,12 +143,19 @@ export class LiveSnapshot {
     this.tracker = new StructureTracker(this.opts.volatileRefreshMs, this.startedAtMs);
   }
 
-  /** Load last state and the catalog, build the first snapshot, then rebuild on a timer. */
+  /**
+   * Load last state and SLO numbers, build the first snapshot, then rebuild on
+   * a timer. A slow SLO query delays the first snapshot by at most
+   * sloStartWaitMs; its numbers are then published as soon as they arrive.
+   */
   async start(): Promise<void> {
-    await this.loadLastState();
-    await this.build();
     const onError = (name: string, err: unknown) => this.noteError(name, err);
-    void this.refreshSlo().catch((err) => onError('slo', err));
+    await this.loadLastState();
+    const slo = this.refreshSlo().catch((err) => onError('slo', err));
+    let timer: NodeJS.Timeout | undefined;
+    await Promise.race([slo, new Promise<void>((resolve) => (timer = setTimeout(resolve, this.opts.sloStartWaitMs)))]);
+    clearTimeout(timer);
+    await this.build();
     this.loop = new SerialLoop('snapshot', this.opts.intervalMs, () => this.build(), onError);
     this.sloLoop = new SerialLoop('slo', this.opts.sloRefreshMs, () => this.refreshSlo(), onError);
     this.loop.start();
@@ -178,7 +209,7 @@ export class LiveSnapshot {
 
   private async doBuild(): Promise<Snapshot> {
     const started = performance.now();
-    const now = this.opts.now();
+    let now = this.opts.now();
     // A failed refresh keeps the previous catalog and peer rows: live numbers must keep flowing.
     if (this.catalogDirty || !this.catalog || now - this.catalogAt >= this.opts.catalogRefreshMs) {
       await this.refreshCatalog(now).catch((err) => {
@@ -190,25 +221,43 @@ export class LiveSnapshot {
     const catalog = this.catalog!;
     const canon = this.aliases.canonical;
 
+    // The tracker only sees new input when the catalog or SLO numbers were re-read.
+    // At most one version per second (see structure.ts): a change that arrives
+    // sooner waits here for the second to turn, at most 1 s, so an API edit is
+    // visible as soon as this build returns.
+    let structureChanged = false;
+    if (this.catalogChanged || this.sloChanged || this.tracker.pending || !this.tracker.structure) {
+      const update = () => this.tracker.update(catalog, (id) => this.slo.get(id) ?? null, now).changed;
+      structureChanged = update();
+      if (this.tracker.pending) {
+        await this.opts.sleep(Math.max(0, this.tracker.nextPublishAtMs - now));
+        now = this.opts.now();
+        structureChanged = update() || structureChanged;
+      }
+      this.catalogChanged = false;
+      this.sloChanged = false;
+    }
+    const structure = this.tracker.structure;
+    if (!structure) throw new Error('no structure version yet: the clock is behind the process start');
+
     const sw = this.source.liveServices(now);
     const ew = this.source.liveEdges(now);
     const svc = canonicalize(sw.entries, canon, false);
     const edges = canonicalize(ew.entries, canon, true);
     if (this.peers.ids.length) {
-      // Peer rows cover whole minutes from the window start to their last flush.
-      const peerSeconds = Math.max(1, (now - this.peers.sinceMs) / 1000);
-      addAggregates(svc, this.peers.svc, Math.min(1, sw.seconds / peerSeconds));
-      addAggregates(edges, this.peers.edges, Math.min(1, ew.seconds / peerSeconds));
+      if (now - this.peers.okAt <= this.opts.peerMaxAgeMs) {
+        // Peer rows cover whole minutes from the window start to their last flush.
+        const peerSeconds = Math.max(1, (now - this.peers.sinceMs) / 1000);
+        addAggregates(svc, this.peers.svc, Math.min(1, sw.seconds / peerSeconds));
+        addAggregates(edges, this.peers.edges, Math.min(1, ew.seconds / peerSeconds));
+      } else {
+        // Peer rows are too old to add, and this collector's share alone would
+        // under-count: show what peers covered from last-known numbers, stale.
+        for (const k of this.peers.svc.keys()) svc.delete(k);
+        for (const k of this.peers.edges.keys()) edges.delete(k);
+      }
     }
 
-    // The tracker only sees new input when the catalog or SLO numbers were re-read.
-    let structureChanged = false;
-    if (this.catalogChanged || this.sloChanged || !this.tracker.structure) {
-      structureChanged = this.tracker.update(catalog, (id) => this.slo.get(id) ?? null, now).changed;
-      this.catalogChanged = false;
-      this.sloChanged = false;
-    }
-    const structure = this.tracker.structure!;
 
     const live = computeLive({
       serviceIds: structure.services.map((s) => s.id),
@@ -229,10 +278,12 @@ export class LiveSnapshot {
     const frame = new Encoded(
       encodeFrame({ seq, structureVersion: structure.version, generatedAtMs: now, services: frameServices, edges: frameEdges }),
       'application/octet-stream',
-      `"${structure.version}-${seq}"`,
+      `"${this.opts.bootId}-${structure.version}-${seq}"`,
     );
     const structureBody =
-      this.snap && this.snap.structure === structure ? this.snap.structureBody : Encoded.json(structure, `"${structure.version}"`);
+      this.snap && this.snap.structure === structure
+        ? this.snap.structureBody
+        : Encoded.json(structure, `"${this.opts.bootId}-${structure.version}"`);
     const serviceById =
       this.snap && this.snap.structure === structure ? this.snap.serviceById : new Map(structure.services.map((s) => [s.id, s]));
 
@@ -362,14 +413,11 @@ export class LiveSnapshot {
     const aliveSince = new Date(Math.max(now - this.opts.peerAliveMs, this.startedAtMs));
     const res = await this.db('SELECT id FROM collectors WHERE id <> $1 AND heartbeat_at > $2', [me, aliveSince]);
     const ids = res.rows.map((r) => r.id as number);
-    this.peers.ids = ids;
     if (!ids.length) {
-      this.peers.svc = new Map();
-      this.peers.edges = new Map();
+      this.peers = { ...this.peers, okAt: now, ids, svc: new Map(), edges: new Map() };
       return;
     }
     const since = new Date((Math.floor(now / 60_000) - this.opts.liveWindowMinutes + 1) * 60_000);
-    this.peers.sinceMs = since.getTime();
     const canon = this.aliases.canonical;
     const [svc, edges] = await Promise.all([
       this.db('SELECT service_id, n, err, sum_ms, hist FROM svc_rollup_1m WHERE collector_id = ANY($1) AND bucket >= $2', [ids, since]),
@@ -394,8 +442,8 @@ export class LiveSnapshot {
       const t = canon(r.target_id);
       if (s !== t) add(edgeMap, edgeKey(s, t), r);
     }
-    this.peers.svc = svcMap;
-    this.peers.edges = edgeMap;
+    // Replace all of it at once, so a failure part way leaves the last good set intact.
+    this.peers = { at: now, okAt: now, sinceMs: since.getTime(), ids, svc: svcMap, edges: edgeMap };
   }
 
   /**
@@ -418,6 +466,9 @@ export class LiveSnapshot {
       for (const r of inbound) if (r.n > 0 && !slo.has(r.keys[0])) slo.set(r.keys[0], attain(r.n, r.err));
       this.slo = slo;
       this.sloChanged = true;
+      // The first load must not wait for the once-a-minute volatile refresh.
+      if (!this.sloLoaded) this.tracker.expireVolatile();
+      this.sloLoaded = true;
     })().finally(() => {
       this.sloLoading = null;
     });

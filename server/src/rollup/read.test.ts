@@ -8,6 +8,7 @@ import {
   chooseBucketSeconds,
   groupColumns,
   planSegments,
+  sumBuckets,
   type KeyCol,
   type RawRow,
   type ReadQuery,
@@ -278,6 +279,44 @@ describe('RollupReader', () => {
     expect(got).toEqual([expect.objectContaining({ n: 3, sample: '00000000000000000000000000000002' })]);
   });
 
+  it('keeps the sample recorded last when aliases or tiers share an output bucket', async () => {
+    const u = (n: number) => `00000000-0000-0000-0000-00000000000${n}`;
+    const raw = (keys: RawRow['keys'], sample: string, sampleAtMs: number): RawRow => ({
+      bucketMs: 0,
+      keys,
+      n: 1,
+      err: 0,
+      sumMs: 0,
+      hist: null,
+      sample,
+      sampleAtMs,
+    });
+    const q: ReadQuery = { kind: 'svc_error_rollup', filter: {}, groupBy: ['operation'], fromMs: 0, toMs: DAY, bucketMs: DAY };
+    const canon = (id: string) => (id === 'a-old' ? 'a' : id);
+    const rows = [
+      raw({ service_id: 'a', operation: 'GET' }, u(1), 10 * MIN),
+      raw({ service_id: 'a-old', operation: 'GET' }, u(2), 50 * MIN),
+      raw({ service_id: 'a', operation: 'GET' }, u(3), 20 * MIN),
+    ];
+    for (const order of [rows, [...rows].reverse()]) {
+      const got = aggregate(order, q, canon);
+      expect(got).toHaveLength(1);
+      expect(got[0]).toMatchObject({ n: 3, sample: '00000000000000000000000000000002', sampleAtMs: 50 * MIN });
+    }
+    // Same time: the larger id wins whatever the order.
+    const tie = [raw({ service_id: 'a', operation: 'GET' }, u(4), MIN), raw({ service_id: 'a-old', operation: 'GET' }, u(5), MIN)];
+    expect(aggregate(tie, q, canon)[0].sample).toBe('00000000000000000000000000000005');
+    expect(aggregate([...tie].reverse(), q, canon)[0].sample).toBe('00000000000000000000000000000005');
+  });
+
+  it('does not merge groups whose keys only differ in where a separator falls', () => {
+    const raw = (operation: string, code: string): RawRow => ({ bucketMs: 0, keys: { operation, code }, n: 1, err: 0, sumMs: 0, hist: null, sample: null });
+    const q: ReadQuery = { kind: 'svc_error_rollup', filter: {}, groupBy: ['operation', 'code'], fromMs: 0, toMs: DAY, bucketMs: DAY };
+    const rows = aggregate([raw('a\u0001b', 'c'), raw('a', 'b\u0001c')], q);
+    expect(rows).toHaveLength(2);
+    expect(sumBuckets(rows)).toHaveLength(2);
+  });
+
   it('returns no rows (and the caller gap-fills nulls) for an empty store', async () => {
     const { source, calls } = fakeSource([], wmOf({}));
     const reader = new RollupReader(source, { now: () => NOW, lagMs: 10_000 });
@@ -320,6 +359,7 @@ describe('buildSql', () => {
     expect(text).toContain('FROM edge_error_rollup_1m');
     expect(text).toContain('GROUP BY 1, operation, source_id, target_id');
     expect(text).toContain('sample_trace_id');
+    expect(text).toContain('AS sample_at');
     expect(values).toEqual([HOUR, ['a', 'a-old'], new Date(0), new Date(20 * HOUR), new Date(20 * HOUR), new Date(DAY)]);
   });
 

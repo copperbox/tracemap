@@ -35,7 +35,7 @@ export async function readSeries(
   });
   let total: ReadRow | null = null;
   for (const r of rows) {
-    total ??= { bucketMs: r.bucketMs, keys: [], n: 0, err: 0, sumMs: 0, hist: null, sample: null };
+    total ??= { bucketMs: r.bucketMs, keys: [], n: 0, err: 0, sumMs: 0, hist: null, sample: null, sampleAtMs: null };
     total.n += r.n;
     total.err += r.err;
     total.sumMs += r.sumMs;

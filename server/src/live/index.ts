@@ -9,7 +9,7 @@ import { query } from '../db/pool.js';
 import { getPipeline } from '../pipeline/index.js';
 import { RollupReader, SqlRowSource } from '../rollup/read.js';
 import { LiveSnapshot } from './snapshot.js';
-import { SseHub, formatEvent } from './sse.js';
+import { SseHub, attachHub } from './sse.js';
 
 /** SNAPSHOT_INTERVAL_MS (config.snapshotIntervalMs): how often the live snapshot (and frame) is rebuilt. */
 export const SNAPSHOT_INTERVAL_MS = config.snapshotIntervalMs;
@@ -34,12 +34,7 @@ export function getLive(): Live {
     liveWindowMinutes: config.liveWindowMinutes,
   });
   const hub = new SseHub();
-  snapshot.onPublish((snap, structureChanged) => {
-    if (!hub.size) return;
-    // One chunk per publish, so a structure notice is never split from its frame notice.
-    const metrics = formatEvent('metrics', { seq: snap.seq, structureVersion: snap.structure.version });
-    hub.broadcast(structureChanged ? formatEvent('structure', { version: snap.structure.version }) + metrics : metrics);
-  });
+  attachHub(snapshot, hub);
   instance = { snapshot, hub, reader, rows };
   return instance;
 }

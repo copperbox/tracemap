@@ -34,7 +34,7 @@ describe('bucketOf', () => {
 });
 
 describe('quantile', () => {
-  it('stays within about 5% of the true value', () => {
+  it('tracks a smooth distribution closely', () => {
     const h = newHist();
     const values: number[] = [];
     for (let i = 1; i <= 10_000; i++) {
@@ -44,8 +44,54 @@ describe('quantile', () => {
     }
     for (const q of [0.5, 0.95, 0.99]) {
       const truth = values[Math.ceil(q * values.length) - 1];
-      expect(Math.abs(quantile(h, q) - truth) / truth).toBeLessThan(0.06);
+      expect(Math.abs(quantile(h, q) - truth) / truth).toBeLessThan(0.03);
     }
+  });
+
+  it('always lands inside the bucket holding the true value', () => {
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31);
+    const values = Array.from({ length: 5000 }, () => Math.exp(rnd() * 10) * 0.1).sort((a, b) => a - b);
+    const h = newHist();
+    for (const v of values) addValue(h, v);
+    for (let q = 0.01; q < 1; q += 0.01) {
+      const truth = values[Math.ceil(q * values.length) - 1];
+      const i = bucketOf(truth);
+      const got = quantile(h, q);
+      expect(got).toBeGreaterThanOrEqual(bucketLowerMs(i) * (1 - 1e-12));
+      expect(got).toBeLessThanOrEqual(bucketLowerMs(i + 1) * (1 + 1e-12));
+    }
+  });
+
+  it('interpolates by rank inside a bucket instead of snapping to its midpoint', () => {
+    const h = newWideHist();
+    h[50] = 100;
+    const lo = bucketLowerMs(50);
+    expect(quantile(h, 0)).toBeCloseTo(lo, 9);
+    expect(quantile(h, 0.5)).toBeCloseTo(lo * Math.sqrt(1.1), 9);
+    expect(quantile(h, 1)).toBeCloseTo(bucketLowerMs(51), 9);
+    // Monotonic in q, with distinct values for p50, p95, p99.
+    const p = [0.5, 0.95, 0.99].map((q) => quantile(h, q));
+    expect(p[0]).toBeLessThan(p[1]);
+    expect(p[1]).toBeLessThan(p[2]);
+    // A shift in traffic moves the quantile smoothly, not in bucket steps.
+    const g = newWideHist();
+    g[50] = 90;
+    g[51] = 10;
+    const before = quantile(g, 0.95);
+    g[51] = 12;
+    expect(quantile(g, 0.95)).toBeGreaterThan(before);
+    expect(quantile(g, 0.95) / before).toBeLessThan(1.02);
+  });
+
+  it('skips empty buckets and handles q outside [0, 1]', () => {
+    const h = newWideHist();
+    h[10] = 1;
+    h[100] = 1;
+    expect(quantile(h, 0.5)).toBeCloseTo(bucketLowerMs(11), 9);
+    expect(quantile(h, 0.75)).toBeCloseTo(bucketLowerMs(100) * Math.sqrt(1.1), 9);
+    expect(quantile(h, -1)).toBeCloseTo(bucketLowerMs(10), 9);
+    expect(quantile(h, 2)).toBeCloseTo(bucketLowerMs(101), 9);
   });
 
   it('is NaN for an empty histogram', () => {

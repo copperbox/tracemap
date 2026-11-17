@@ -12,6 +12,7 @@
  * edge whose two ends are now one service is dropped.
  */
 import type pg from 'pg';
+import { joinKey } from '../pipeline/keys.js';
 import { decodeInto, mergeInto, newWideHist } from './hist.js';
 import { uuidToHex } from './schema.js';
 import { TIERS, rollupKind, tableName, valueColumns, type RollupKindName, type Tier, type TierName } from './tiers.js';
@@ -133,6 +134,8 @@ export interface RawRow {
   hist: Uint8Array | null;
   /** uuid */
   sample: string | null;
+  /** Start of the source bucket the sample was recorded in; when absent, bucketMs. */
+  sampleAtMs?: number | null;
 }
 
 export interface ReadRow {
@@ -146,6 +149,8 @@ export interface ReadRow {
   hist: Float64Array | null;
   /** 32-hex trace id of the newest sample in the group. */
   sample: string | null;
+  /** Source bucket the sample was recorded in, so later regrouping can keep the newest. */
+  sampleAtMs: number | null;
 }
 
 /** Where rows come from: SQL in production, an in-memory fake in tests. */
@@ -165,11 +170,21 @@ export function groupColumns(q: ReadQuery): KeyCol[] {
 }
 
 /**
+ * Whether a sample recorded at `atMs` should replace the group's current one:
+ * the newest wins, and a tie goes to the larger id so the pick does not depend
+ * on row order.
+ */
+function newerSample(g: ReadRow, sample: string, atMs: number): boolean {
+  if (g.sample == null || g.sampleAtMs == null) return true;
+  return atMs > g.sampleAtMs || (atMs === g.sampleAtMs && sample > g.sample);
+}
+
+/**
  * Map ids to canonical, drop self-edges, regroup by (bucket, groupBy).
- * Samples keep the newest source bucket that has one.
+ * Samples keep the one recorded in the newest source bucket.
  */
 export function aggregate(raw: RawRow[], q: ReadQuery, canon: (id: string) => string = (x) => x): ReadRow[] {
-  const groups = new Map<string, ReadRow & { sampleAt: number }>();
+  const groups = new Map<string, ReadRow>();
   const isEdge = (rollupKind(q.kind).keys as readonly string[]).includes('source_id');
   for (const r of raw) {
     if (isEdge && canon(r.keys.source_id ?? '') === canon(r.keys.target_id ?? '')) continue;
@@ -178,32 +193,36 @@ export function aggregate(raw: RawRow[], q: ReadQuery, canon: (id: string) => st
       const v = r.keys[c] ?? '';
       return ID_COLS.includes(c) ? canon(v) : v;
     });
-    const gk = bucketMs + '\u0001' + keys.join('\u0001');
+    const gk = joinKey([String(bucketMs), ...keys]);
     let g = groups.get(gk);
     if (!g) {
-      g = { bucketMs, keys, n: 0, err: 0, sumMs: 0, hist: null, sample: null, sampleAt: -Infinity };
+      g = { bucketMs, keys, n: 0, err: 0, sumMs: 0, hist: null, sample: null, sampleAtMs: null };
       groups.set(gk, g);
     }
     g.n += r.n;
     g.err += r.err;
     g.sumMs += r.sumMs;
     if (r.hist && r.hist.length) decodeInto(r.hist, (g.hist ??= newWideHist()));
-    if (r.sample && r.bucketMs >= g.sampleAt) {
-      g.sample = uuidToHex(r.sample);
-      g.sampleAt = r.bucketMs;
+    if (r.sample) {
+      const hex = uuidToHex(r.sample);
+      const at = r.sampleAtMs ?? r.bucketMs;
+      if (newerSample(g, hex, at)) {
+        g.sample = hex;
+        g.sampleAtMs = at;
+      }
     }
   }
-  return [...groups.values()].map(({ sampleAt: _s, ...row }) => row);
+  return [...groups.values()];
 }
 
 /** Collapse buckets: one row per key, histograms merged, newest sample kept. */
 export function sumBuckets(rows: ReadRow[]): ReadRow[] {
-  const by = new Map<string, ReadRow & { sampleAt: number }>();
+  const by = new Map<string, ReadRow>();
   for (const r of rows) {
-    const k = r.keys.join('\u0001');
+    const k = joinKey(r.keys);
     let t = by.get(k);
     if (!t) {
-      t = { bucketMs: r.bucketMs, keys: r.keys, n: 0, err: 0, sumMs: 0, hist: null, sample: null, sampleAt: -Infinity };
+      t = { bucketMs: r.bucketMs, keys: r.keys, n: 0, err: 0, sumMs: 0, hist: null, sample: null, sampleAtMs: null };
       by.set(k, t);
     }
     t.bucketMs = Math.min(t.bucketMs, r.bucketMs);
@@ -211,12 +230,15 @@ export function sumBuckets(rows: ReadRow[]): ReadRow[] {
     t.err += r.err;
     t.sumMs += r.sumMs;
     if (r.hist) mergeInto((t.hist ??= newWideHist()), r.hist);
-    if (r.sample && r.bucketMs >= t.sampleAt) {
-      t.sample = r.sample;
-      t.sampleAt = r.bucketMs;
+    if (r.sample) {
+      const at = r.sampleAtMs ?? r.bucketMs;
+      if (newerSample(t, r.sample, at)) {
+        t.sample = r.sample;
+        t.sampleAtMs = at;
+      }
     }
   }
-  return [...by.values()].map(({ sampleAt: _s, ...row }) => row);
+  return [...by.values()];
 }
 
 export interface ReaderOptions {
@@ -317,6 +339,7 @@ export class SqlRowSource implements RowSource {
         sumMs: vals.includes('sum_ms') ? Number(r.sum_ms) : 0,
         hist: (r.hist as Buffer | undefined) ?? null,
         sample: (r.sample as string | undefined) ?? null,
+        sampleAtMs: r.sample_at == null ? null : Number(r.sample_at),
       };
     });
   }
@@ -348,7 +371,10 @@ export function buildSql(q: ReadQuery, segments: Segment[], groupCols: KeyCol[])
       vals.includes('err') ? 'sum(err)::float8 AS err' : null,
       vals.includes('sum_ms') ? 'sum(sum_ms) AS sum_ms' : null,
       vals.includes('sample_trace_id')
-        ? '((array_agg(sample_trace_id ORDER BY bucket DESC) FILTER (WHERE sample_trace_id IS NOT NULL))[1])::text AS sample'
+        ? '((array_agg(sample_trace_id ORDER BY bucket DESC, sample_trace_id DESC) FILTER (WHERE sample_trace_id IS NOT NULL))[1])::text AS sample'
+        : null,
+      vals.includes('sample_trace_id')
+        ? '(extract(epoch FROM max(bucket) FILTER (WHERE sample_trace_id IS NOT NULL)) * 1000)::float8 AS sample_at'
         : null,
     ].filter(Boolean);
     return `SELECT ${b} AS b, ${cols}, ${agg.join(', ')} FROM ${table} WHERE ${where} GROUP BY 1, ${cols}`;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRange, rangeMs } from './range.js';
+import { parseIntParam, parseRange, rangeMs } from './range.js';
 
 describe('rangeMs', () => {
   it('parses explicit from/to ISO timestamps', () => {
@@ -57,5 +57,37 @@ describe('parseRange', () => {
     expect(() =>
       parseRange({ from: '2026-01-01T00:00:00Z', to: '2026-01-01T00:00:00Z' }),
     ).toThrowError('invalid time range');
+  });
+});
+
+describe('parseRange bounds', () => {
+  it('rejects repeated parameters, timestamps outside 1970..9999 and ranges over the cap', () => {
+    expect(() => parseRange({ from: ['2026-01-01T00:00:00Z', '2026-01-02T00:00:00Z'] })).toThrowError('invalid time range');
+    expect(() => parseRange({ from: '1960-01-01T00:00:00Z', to: '1961-01-01T00:00:00Z' })).toThrowError('invalid time range');
+    expect(() => parseRange({ from: '2026-01-01T00:00:00Z', to: '+012000-01-01T00:00:00Z' })).toThrowError('invalid time range');
+    expect(() => parseRange({ from: '2020-01-01T00:00:00Z', to: '2026-01-01T00:00:00Z' })).toThrowError('invalid time range');
+    expect(parseRange({ from: '2024-01-01T00:00:00Z', to: '2026-01-01T00:00:00Z' }).toMs).toBe(Date.parse('2026-01-01T00:00:00Z'));
+  });
+});
+
+describe('parseIntParam', () => {
+  const opts = { def: 25, min: 1, max: 50 };
+  it('defaults when absent or empty and accepts integers in range', () => {
+    expect(parseIntParam({}, 'limit', opts)).toBe(25);
+    expect(parseIntParam({ limit: '' }, 'limit', opts)).toBe(25);
+    expect(parseIntParam({ limit: '1' }, 'limit', opts)).toBe(1);
+    expect(parseIntParam({ limit: '50' }, 'limit', opts)).toBe(50);
+  });
+
+  it('answers 400 for fractions, exponents, signs, out-of-range and repeated values', () => {
+    for (const limit of ['2.5', '1e1', '-3', '+3', '0', '51', 'abc', ' 5', '0x10', '99999999999', ['5', '6']]) {
+      let status = 0;
+      try {
+        parseIntParam({ limit }, 'limit', opts);
+      } catch (err) {
+        status = (err as { statusCode?: number }).statusCode ?? -1;
+      }
+      expect(status, String(limit)).toBe(400);
+    }
   });
 });

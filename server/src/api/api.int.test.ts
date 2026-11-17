@@ -242,7 +242,7 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(edges.get('gw>orders').metrics.rps / gw.rps).toBeCloseTo(12 / 18, 9);
 
     const structure = await get('/api/live/structure');
-    expect(structure.headers.etag).toBe(`"${structure.json.version}"`);
+    expect(structure.headers.etag).toMatch(new RegExp(`^"[0-9a-f]+-${structure.json.version}"$`));
     const frameRes = await app.inject({ method: 'GET', url: '/api/live/metrics', headers: { 'accept-encoding': 'identity' } });
     expect(frameRes.headers['content-type']).toBe('application/octet-stream');
     const frame = mods.decodeFrame(frameRes.rawPayload);
@@ -262,6 +262,77 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(again.statusCode).toBe(304);
     const gz = await app.inject({ method: 'GET', url: '/api/topology', headers: { 'accept-encoding': 'gzip' } });
     expect(gz.headers['content-encoding']).toBe('gzip');
+  });
+
+  it('serves frames of exactly 32 + 20 * (services + edges) + services + edges bytes, compressed or not', async () => {
+    const { gunzipSync, brotliDecompressSync } = await import('node:zlib');
+    for (const enc of ['identity', 'gzip', 'br']) {
+      const res = await app.inject({ method: 'GET', url: '/api/live/metrics', headers: { 'accept-encoding': enc } });
+      expect(res.statusCode).toBe(200);
+      const ce = res.headers['content-encoding'];
+      const raw = ce === 'gzip' ? gunzipSync(res.rawPayload) : ce === 'br' ? brotliDecompressSync(res.rawPayload) : res.rawPayload;
+      const ns = raw.readUInt32LE(12);
+      const ne = raw.readUInt32LE(16);
+      expect(ns).toBe(mods.live.snapshot.latest!.structure.services.length);
+      expect(raw.byteLength).toBe(32 + 20 * (ns + ne) + ns + ne);
+    }
+  });
+
+  it('never matches an ETag from another process and answers bad parameters with 400', async () => {
+    const s = await get('/api/live/structure');
+    expect(s.headers.etag).toMatch(/^"[0-9a-f]+-\d+"$/);
+    const version = s.json.version;
+    // What an older process would have sent for the same version number.
+    for (const stale of [`"${version}"`, `"deadbeef-${version}"`]) {
+      const res = await app.inject({ method: 'GET', url: '/api/live/structure', headers: { 'if-none-match': stale } });
+      expect(res.statusCode).toBe(200);
+    }
+    for (const url of [
+      `/api/services/orders/traces?${range()}&limit=2.5`,
+      `/api/services/orders/traces?${range()}&limit=0`,
+      `/api/services/orders/traces?${range()}&limit=51`,
+      `/api/services/orders/traces?${range()}&limit=1e1`,
+      '/api/services/orders/traces?from=garbage',
+      '/api/services/orders?from=1960-01-01T00:00:00Z&to=1961-01-01T00:00:00Z',
+      '/api/services/orders/errors?to=nope',
+    ]) {
+      expect((await get(url)).status, url).toBe(400);
+    }
+    expect((await get(`/api/services/orders/traces?${range()}&limit=2`)).json.traces.length).toBeLessThanOrEqual(2);
+    const patch = await app.inject({ method: 'PATCH', url: '/api/services/orders', payload: { teamId: 1.5 } });
+    expect(patch.statusCode).toBe(400);
+  });
+
+  it('streams /api/live uncompressed and unbuffered, with a metrics notice per snapshot', async () => {
+    const http = await import('node:http');
+    await app.listen({ port: 0, host: '127.0.0.1' });
+    const port = (app.server.address() as { port: number }).port;
+    const chunks: string[] = [];
+    let headers: Record<string, unknown> = {};
+    const req = http.get({ host: '127.0.0.1', port, path: '/api/live', headers: { 'accept-encoding': 'gzip, br' } }, (res) => {
+      headers = res.headers;
+      res.setEncoding('utf8');
+      res.on('data', (c: string) => chunks.push(c));
+    });
+    const until = async (cond: () => boolean) => {
+      for (let i = 0; i < 100 && !cond(); i++) await new Promise((r) => setTimeout(r, 20));
+      expect(cond()).toBe(true);
+    };
+    try {
+      await until(() => chunks.join('').includes('event: hello'));
+      expect(headers['content-encoding']).toBeUndefined();
+      expect(headers['content-type']).toBe('text/event-stream; charset=utf-8');
+      expect(headers['x-accel-buffering']).toBe('no');
+      expect(headers['cache-control']).toBe('no-cache, no-transform');
+      // Two builds with nothing new: each still sends its own metrics notice, right away.
+      const s1 = await mods.live.snapshot.build();
+      await until(() => chunks.join('').includes(`"seq":${s1.seq},`));
+      const s2 = await mods.live.snapshot.build();
+      await until(() => chunks.join('').includes(`"seq":${s2.seq},`));
+      expect(chunks.join('').match(/event: metrics/g)!.length).toBeGreaterThanOrEqual(2);
+    } finally {
+      req.destroy();
+    }
   });
 
   it('lists services from the snapshot', async () => {
@@ -343,7 +414,6 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
 
   it('merges at read time in milliseconds and unmerges back exactly', async () => {
     const before = await topo();
-    const gwRps = before.svc.get('gw').metrics.rps;
 
     const t0 = performance.now();
     const m = await app.inject({ method: 'POST', url: '/api/services/orders/merge', payload: { sourceId: 'dup-orders' } });
@@ -362,8 +432,10 @@ describe.skipIf(!URL)('API read path against TimescaleDB', () => {
     expect(orders.errPct).toBeCloseTo((6 / 24) * 100, 9);
     // dup-orders -> orders became a self-edge and is gone; gw's two edges are one.
     expect([...after.edges.keys()].sort()).toEqual(['gw>orders', 'orders>pg-main']);
-    expect(after.edges.get('gw>orders').metrics.rps / gwRps).toBeCloseTo(1, 9);
-    expect(after.edges.get('orders>pg-main').metrics.rps / gwRps).toBeCloseTo(1, 9);
+    // Rates from one snapshot: a build can wait up to a second for a new structure version.
+    const gwAfter = after.svc.get('gw').metrics.rps;
+    expect(after.edges.get('gw>orders').metrics.rps / gwAfter).toBeCloseTo(1, 9);
+    expect(after.edges.get('orders>pg-main').metrics.rps / gwAfter).toBeCloseTo(1, 9);
 
     const d = (await get(`/api/services/orders?${range()}`)).json;
     expect(d.aliases).toEqual(['dup-orders']);

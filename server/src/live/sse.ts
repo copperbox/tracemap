@@ -43,6 +43,25 @@ export function formatEvent(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
+/** What attachHub needs from the snapshot (structural, so tests can fake it). */
+export interface Publisher {
+  onPublish(fn: (snap: { seq: number; structure: { version: number } }, structureChanged: boolean) => void): unknown;
+}
+
+/**
+ * Send notices for every published snapshot: `metrics` each time, even when
+ * no number changed (clients treat silence as a dead stream), preceded by
+ * `structure` when the version changed. One chunk per publish, so a structure
+ * notice is never split from its frame notice.
+ */
+export function attachHub(publisher: Publisher, hub: SseHub): void {
+  publisher.onPublish((snap, structureChanged) => {
+    if (!hub.size) return;
+    const metrics = formatEvent('metrics', { seq: snap.seq, structureVersion: snap.structure.version });
+    hub.broadcast(structureChanged ? formatEvent('structure', { version: snap.structure.version }) + metrics : metrics);
+  });
+}
+
 export class SseHub {
   readonly opts: SseOptions;
   private readonly clients = new Set<SseClient>();

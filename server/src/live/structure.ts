@@ -8,8 +8,13 @@
  * - The version bumps immediately when services, edges, teams or their
  *   metadata change, and at most once per `volatileRefreshMs` when only the
  *   volatile fields (lastSeen, samples, confidence, sloAttain) moved.
- * - Versions start from the process start time in seconds, so a restarted
- *   server never reuses a version a client cached from the previous one.
+ * - A version is the Unix second it was published in: at least one more than
+ *   the previous version, never ahead of the clock, and above the second the
+ *   process started in. So at most one version is published per second (a
+ *   change that arrives sooner waits for the next update after the second
+ *   turns), and a restarted process never reuses a version the previous one
+ *   published, however quickly it restarts. This assumes the wall clock does
+ *   not step backwards across the restart.
  */
 import { edgeKey } from '../pipeline/cells.js';
 
@@ -85,7 +90,8 @@ export function stableOrder(prev: readonly string[], next: Iterable<string>): st
 }
 
 export interface StructureUpdate {
-  structure: LiveStructure;
+  /** The structure to publish; null only before the first version could be published. */
+  structure: LiveStructure | null;
   changed: boolean;
 }
 
@@ -96,17 +102,30 @@ export class StructureTracker {
   private stableSig = '';
   private volatileSig = '';
   private volatileAt = -Infinity;
-  private nextVersion: number;
+  /** Smallest version the next publish may use. */
+  private minVersion: number;
+  /** A change is waiting for the clock to reach minVersion; call update() again. */
+  pending = false;
 
   constructor(
     private readonly volatileRefreshMs = 60_000,
     startMs = Date.now(),
   ) {
-    this.nextVersion = Math.floor(startMs / 1000) >>> 0;
+    this.minVersion = Math.floor(startMs / 1000) + 1;
   }
 
   get structure(): LiveStructure | null {
     return this.current;
+  }
+
+  /** Let the next update publish volatile changes without waiting out the refresh interval. */
+  expireVolatile(): void {
+    this.volatileAt = -Infinity;
+  }
+
+  /** Earliest time (ms) the next version may be published. */
+  get nextPublishAtMs(): number {
+    return this.minVersion * 1000;
   }
 
   /**
@@ -114,6 +133,7 @@ export class StructureTracker {
    * and whether its version changed.
    */
   update(catalog: Catalog, slo: (id: string) => number | null, nowMs: number): StructureUpdate {
+    const unchanged = { structure: this.current, changed: false };
     const byId = new Map(catalog.services.map((s) => [s.id, s]));
     const order = stableOrder(this.serviceOrder, byId.keys());
     const index = new Map(order.map((id, i) => [id, i]));
@@ -151,7 +171,18 @@ export class StructureTracker {
 
     const structural = this.current == null || stableSig !== this.stableSig;
     const volatileDue = volatileSig !== this.volatileSig && nowMs - this.volatileAt >= this.volatileRefreshMs;
-    if (!structural && !volatileDue) return { structure: this.current!, changed: false };
+    if (!structural && !volatileDue) {
+      this.pending = false;
+      return unchanged;
+    }
+    // Already published this second: leave all state as it was so the next call sees the change again.
+    const version = Math.floor(nowMs / 1000);
+    if (version < this.minVersion) {
+      this.pending = true;
+      return unchanged;
+    }
+    this.pending = false;
+    this.minVersion = version + 1;
 
     this.serviceOrder = order;
     this.edgeOrder = eOrder;
@@ -159,7 +190,7 @@ export class StructureTracker {
     this.volatileSig = volatileSig;
     this.volatileAt = nowMs;
     this.current = {
-      version: this.nextVersion++ >>> 0,
+      version: version >>> 0,
       generatedAt: new Date(nowMs).toISOString(),
       teams,
       services,

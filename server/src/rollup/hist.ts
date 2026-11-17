@@ -4,8 +4,10 @@
  *
  * Bucket i covers [0.01 * 1.1^i, 0.01 * 1.1^(i+1)) milliseconds, 176 buckets,
  * so 0.01 ms up to about 186 s. Values outside clamp into bucket 0 or 175.
- * A quantile is reported as the geometric midpoint of its bucket, which keeps
- * the relative error near 5%.
+ * A quantile is interpolated inside its bucket by rank, log-linearly between
+ * the bucket's bounds, so it always lands inside the bucket that holds the
+ * true value: the error is at most one bucket width (10%), and much less for
+ * smooth distributions. Series move continuously instead of in 10% steps.
  *
  * In memory a histogram is a dense array of counts: Uint32Array for one
  * collector-minute, Float64Array for anything merged (exact up to 2^53).
@@ -44,7 +46,7 @@ export function bucketLowerMs(i: number): number {
   return HIST_BASE_MS * Math.pow(HIST_GROWTH, i);
 }
 
-/** Geometric midpoint of bucket i, in ms: what a quantile reports. */
+/** Geometric midpoint of bucket i, in ms. */
 export function bucketMidMs(i: number): number {
   return HIST_BASE_MS * Math.pow(HIST_GROWTH, i + 0.5);
 }
@@ -83,19 +85,29 @@ export function mergeInto(target: Hist, src: ArrayLike<number>): Hist {
 }
 
 /**
- * Quantile q in [0, 1], in ms: the midpoint of the first bucket whose
- * cumulative count reaches q * total. NaN for an empty histogram.
+ * Quantile q in [0, 1], in ms. Finds the first bucket whose cumulative count
+ * reaches q * total, then places the value by its rank within that bucket:
+ * lower * 1.1^f, where f is the share of the bucket's count below the target
+ * rank (0 at the lower bound, 1 at the upper). The result never leaves the
+ * bucket. NaN for an empty histogram.
  */
 export function quantile(hist: ArrayLike<number>, q: number): number {
   const total = histTotal(hist);
   if (total <= 0) return NaN;
-  const target = Math.max(q, 0) * total;
+  const target = Math.min(Math.max(q, 0), 1) * total;
   let acc = 0;
   for (let i = 0; i < HIST_BUCKETS; i++) {
-    acc += hist[i];
-    if (acc > 0 && acc >= target) return bucketMidMs(i);
+    const c = hist[i];
+    if (!(c > 0)) continue;
+    if (acc + c >= target) {
+      const f = Math.min(1, Math.max(0, (target - acc) / c));
+      return HIST_BASE_MS * Math.pow(HIST_GROWTH, i + f);
+    }
+    acc += c;
   }
-  return bucketMidMs(HIST_BUCKETS - 1);
+  // Only reachable through float rounding of the target: the top non-empty bucket.
+  for (let i = HIST_BUCKETS - 1; i >= 0; i--) if (hist[i] > 0) return bucketLowerMs(i + 1);
+  return NaN;
 }
 
 // ---- sparse codec ----

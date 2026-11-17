@@ -19,6 +19,14 @@ export async function serviceEditRoutes(app: FastifyInstance): Promise<void> {
       sloTarget?: number;
     };
 
+    // Validate numbers here: a fraction or string would otherwise fail in SQL as a 500.
+    if (body.teamId != null && !(Number.isInteger(body.teamId) && body.teamId > 0 && body.teamId <= 0x7fff_ffff)) {
+      return reply.code(400).send({ error: 'teamId must be a positive integer or null' });
+    }
+    if (body.sloTarget != null && !(typeof body.sloTarget === 'number' && body.sloTarget > 0 && body.sloTarget <= 100)) {
+      return reply.code(400).send({ error: 'sloTarget must be a number above 0 and at most 100' });
+    }
+
     let teamId = body.teamId;
     if (body.teamName) {
       const t = await query<{ id: number }>(

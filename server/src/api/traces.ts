@@ -3,7 +3,7 @@ import { query } from '../db/pool.js';
 import { bigintToSpanHex, hexToUuid, uuidToHex } from '../rollup/schema.js';
 import { KEPT_TABLES } from '../rollup/tiers.js';
 import { aliases } from './aliases.js';
-import { rangeMs } from './range.js';
+import { parseIntParam, parseRange } from './range.js';
 
 /** A kept trace's spans start shortly before its row time and may arrive late; read this much around it. */
 const SPAN_WINDOW_BEFORE_MS = 60_000;
@@ -20,8 +20,8 @@ export async function traceRoutes(app: FastifyInstance): Promise<void> {
   app.get('/services/:id/traces', async (req) => {
     const id = (req.params as { id: string }).id;
     const q = req.query as Record<string, unknown>;
-    const { fromMs, toMs } = rangeMs(q);
-    const limit = Math.max(1, Math.min(50, Number(q.limit ?? 25) || 25));
+    const { fromMs, toMs } = parseRange(q);
+    const limit = parseIntParam(q, 'limit', { def: 25, min: 1, max: 50 });
     // Optional: restrict to traces where this operation errored on the service.
     const op = typeof q.op === 'string' && q.op ? q.op : null;
 

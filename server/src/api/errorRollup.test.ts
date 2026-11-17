@@ -33,9 +33,20 @@ describe('aggregateErrorRollups', () => {
     expect(a.errors[1]).toEqual({ code: 'Timeout', message: null, count: 7 });
   });
 
-  it('sums the same signature from several rows (aliases, tiers) and keeps a sample', () => {
-    const out = aggregateErrorRollups([row('op', 'E', 2, 'm'), row('op', 'E', 3, 'm', 's1'), row('op', 'E', 1, 'm', 's2')]);
-    expect(out).toEqual([{ operation: 'op', errorCount: 6, errors: [{ code: 'E', message: 'm', count: 6, sampleTraceId: 's1' }] }]);
+  it('sums the same signature from several rows (aliases, tiers) and keeps the newest sample', () => {
+    const rows = [
+      row('op', 'E', 2, 'm'),
+      { ...row('op', 'E', 3, 'm', 's-new'), sampleAtMs: 2000 },
+      { ...row('op', 'E', 1, 'm', 's-old'), sampleAtMs: 1000 },
+    ];
+    const want = [{ operation: 'op', errorCount: 6, errors: [{ code: 'E', message: 'm', count: 6, sampleTraceId: 's-new' }] }];
+    expect(aggregateErrorRollups(rows)).toEqual(want);
+    expect(aggregateErrorRollups([...rows].reverse())).toEqual(want);
+  });
+
+  it('does not let a code and message pair collide with another split of the same text', () => {
+    const out = aggregateErrorRollups([row('op', 'a\u0001b', 1, 'c'), row('op', 'a', 1, 'b\u0001c')]);
+    expect(out[0].errors).toHaveLength(2);
   });
 
   it('keeps the overflow buckets as ordinary entries and ignores empty rows', () => {

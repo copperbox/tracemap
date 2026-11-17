@@ -1,3 +1,4 @@
+import { key2 } from '../pipeline/keys.js';
 import type { ErrorCount, OperationErrors } from './errorSignature.js';
 
 /** One error-rollup group: an operation and signature with its exact count. */
@@ -9,6 +10,8 @@ export interface ErrorRollupRow {
   n: number;
   /** 32-hex id of a kept trace showing this error, if any. */
   sample: string | null;
+  /** When the sample was recorded (its source bucket), ms; the newest sample wins. */
+  sampleAtMs?: number | null;
 }
 
 export interface ErrorCountWithSample extends ErrorCount {
@@ -25,7 +28,7 @@ export interface OperationErrorsWithSamples extends Omit<OperationErrors, 'error
  * beyond `sigLimit`.
  */
 export function aggregateErrorRollups(rows: ErrorRollupRow[], opLimit = 5, sigLimit = 4): OperationErrorsWithSamples[] {
-  const ops = new Map<string, { operation: string; errorCount: number; sigs: Map<string, ErrorCountWithSample> }>();
+  const ops = new Map<string, { operation: string; errorCount: number; sigs: Map<string, ErrorCountWithSample & { sampleAt?: number }> }>();
   for (const r of rows) {
     if (!(r.n > 0)) continue;
     let op = ops.get(r.operation);
@@ -34,14 +37,21 @@ export function aggregateErrorRollups(rows: ErrorRollupRow[], opLimit = 5, sigLi
       ops.set(r.operation, op);
     }
     op.errorCount += r.n;
-    const key = r.code + '\u0001' + r.message;
+    const key = key2(r.code, r.message);
     let e = op.sigs.get(key);
     if (!e) {
       e = { code: r.code, message: r.message === '' ? null : r.message, count: 0 };
       op.sigs.set(key, e);
     }
     e.count += r.n;
-    if (r.sample && !e.sampleTraceId) e.sampleTraceId = r.sample;
+    if (r.sample) {
+      // Newest wins; a tie goes to the larger id so row order does not matter.
+      const at = r.sampleAtMs ?? -Infinity;
+      if (e.sampleTraceId == null || at > e.sampleAt! || (at === e.sampleAt && r.sample > e.sampleTraceId)) {
+        e.sampleTraceId = r.sample;
+        e.sampleAt = at;
+      }
+    }
   }
   return [...ops.values()]
     .sort((a, b) => b.errorCount - a.errorCount || a.operation.localeCompare(b.operation))
@@ -49,6 +59,9 @@ export function aggregateErrorRollups(rows: ErrorRollupRow[], opLimit = 5, sigLi
     .map((o) => ({
       operation: o.operation,
       errorCount: o.errorCount,
-      errors: [...o.sigs.values()].sort((a, b) => b.count - a.count || a.code.localeCompare(b.code)).slice(0, sigLimit),
+      errors: [...o.sigs.values()]
+        .sort((a, b) => b.count - a.count || a.code.localeCompare(b.code))
+        .slice(0, sigLimit)
+        .map(({ sampleAt: _a, ...e }) => e),
     }));
 }
