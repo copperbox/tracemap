@@ -275,6 +275,20 @@ export function LayeredMap() {
     }
   }, [graph, fitView]);
 
+  // "Merge all" with no team that owns a service changes nothing: the graph
+  // is the same object, so the fit above does not run. Put back the view the
+  // click set aside, and drop the pending fit so a later metrics update does
+  // not reframe the map. Declared after the fit: it runs in the same commit.
+  const mergeAllFromRef = useRef<{ view: ViewState | null } | null>(null);
+  useLayoutEffect(() => {
+    const from = mergeAllFromRef.current;
+    if (!from) return;
+    mergeAllFromRef.current = null;
+    if (!fitPendingRef.current) return;
+    fitPendingRef.current = false;
+    setView(from.view);
+  });
+
   // Entering or leaving isolation reframes the map onto the new layout. Skips
   // the initial mount so a deep-linked isolated load uses the first-data fit.
   const prevIsolateRef = useRef(isolateId);
@@ -1017,9 +1031,17 @@ export function LayeredMap() {
     // At overview zoom nodes are a few pixels each and there can be thousands
     // on screen: nothing there is worth routing a tooltip around.
     const area = visibleWorldRect(tfRef.current, viewport.w, viewport.h, 0);
+    const obstacles = lod === 'cards' ? labelObstacles(area) : [];
+    // the other edges' standing labels stay readable under a hover
+    for (const o of labelEdges) {
+      const p = o.e.key === v.e.key || !wantsLabel(o) ? undefined : labelSpots.get(o.e.key);
+      if (!p) continue;
+      const w = labelBoxWidth(edgeLabelText(o));
+      obstacles.push({ x0: p.x - w / 2, y0: p.y - LABEL_BOX_H / 2, x1: p.x + w / 2, y1: p.y + LABEL_BOX_H / 2 });
+    }
     return placeEdgeLabels(
       [{ key: v.e.key, curve: v.curve, w: labelBoxWidth(edgeLabelText(v, true)), h: LABEL_BOX_H, force: true }],
-      lod === 'cards' ? labelObstacles(area) : [],
+      obstacles,
     ).get(v.e.key);
   };
   const hoverSpot = useCallback((v: EdgeView) => hoverSpotRef.current(v), []);
@@ -1143,7 +1165,7 @@ export function LayeredMap() {
             ))}
 
           <EdgeLabelLayer edges={labelEdges} spots={labelSpots} />
-          <HoverEdgeLabel edges={edgeViews} spots={labelSpots} spotFor={hoverSpot} />
+          <HoverEdgeLabel edges={edgeViews} spotFor={hoverSpot} />
         </div>
 
         <TeamChips
@@ -1155,6 +1177,7 @@ export function LayeredMap() {
             fitPendingRef.current = true;
             // The fit that follows picks the level of detail. Cards mounted for
             // the new graph at the old camera would be thrown away a frame later.
+            mergeAllFromRef.current = { view: viewRef.current };
             setView((v) => (v && v.lod === 'cards' ? { ...v, lod: 'canvas' } : v));
             setMergedTeams(allMerged ? [] : teams.map((t) => t.id));
           }}

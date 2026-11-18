@@ -297,6 +297,29 @@ describe('drawMap mesh bitmap', () => {
     const fewSick = edgeViews(2000, { bad: new Set([5, 900, 1200, 1300]) });
     expect(render({ edges: fewSick }, { edges: dense })).toBe(false);
   });
+
+  it('counts recovered edges themselves, not the change in how many are healthy', () => {
+    // 4,000 edges, half degraded; then every status swaps. As many are healthy
+    // as before, but the 2,000 that recovered are not in the bitmap.
+    const firstHalf = new Set(Array.from({ length: 2000 }, (_, i) => i));
+    const secondHalf = new Set(Array.from({ length: 2000 }, (_, i) => i + 2000));
+    const { cache, rec: meshRec } = meshFixture();
+    drawMap(recorder().ctx, sceneOf({ edges: edgeViews(4000, { bad: firstHalf }) }), AT_REST, 2000, 1000, 1, PAL, cache);
+    const before = curvesIn(meshRec.strokes);
+    expect(before).toBe(2000);
+    drawMap(recorder().ctx, sceneOf({ edges: edgeViews(4000, { bad: secondHalf }) }), AT_REST, 2000, 1000, 1, PAL, cache);
+    expect(curvesIn(meshRec.strokes)).toBe(before + 2000);
+  });
+
+  it('tells apart two dimming states exactly, with no hash to collide', () => {
+    // the two sets a 32-bit rolling hash of the flags could not tell apart
+    const dimming = (set: number[]): EdgeView[] => dense.map((v, i) => (set.includes(i) ? { ...v, dim: true } : v));
+    const { cache, rec: meshRec } = meshFixture();
+    drawMap(recorder().ctx, sceneOf({ edges: dimming([8, 10, 15, 18, 31]) }), AT_REST, 2000, 1000, 1, PAL, cache);
+    const before = meshRec.strokes.length;
+    drawMap(recorder().ctx, sceneOf({ edges: dimming([0, 1, 4, 7, 11, 14, 16, 19, 26]) }), AT_REST, 2000, 1000, 1, PAL, cache);
+    expect(meshRec.strokes.length).toBeGreaterThan(before);
+  });
 });
 
 describe('drawMap nodes', () => {

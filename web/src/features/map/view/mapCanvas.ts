@@ -112,19 +112,20 @@ export interface MapOverlay {
  * scaled and shifted instead; it is rendered again once it has drifted past
  * MESH_ZOOM_SLACK or MESH_PAN_SLACK, and when the camera rests.
  *
- * The bitmap outlives a live update. It is keyed on the edge curves and on
- * each edge's dimming, selection and focus, not on status: an edge that turns
- * unhealthy is drawn at full strength over its faint line in the bitmap, and
- * one that recovers is missing from it only until the next render (at most
- * MESH_MISSING_MAX of them, among thousands at a few percent opacity).
+ * The bitmap outlives a live update. It records each edge's dimming,
+ * selection, focus and health when it is rendered, and stays valid while the
+ * first three are unchanged for every edge. Health may change: an edge that
+ * turns unhealthy is drawn at full strength over its faint line in the
+ * bitmap, and one that recovers is missing from it until the next render.
+ * At most MESH_MISSING_MAX edges may be missing that way, among thousands at
+ * a few percent opacity.
  */
 export interface MeshCache {
   /** Makes the bitmap's canvas on first use. */
   create: () => HTMLCanvasElement;
   canvas: HTMLCanvasElement | null;
-  /** Hash of every edge's index and flags, and the healthy edge count, when the bitmap was rendered. */
-  sig: number;
-  healthy: number;
+  /** Every edge's flags (see edgeFlags) when the bitmap was rendered, by index. */
+  flags: Uint16Array | null;
   geomKey: unknown;
   pal: MapPalette | null;
   w: number;
@@ -136,8 +137,7 @@ export interface MeshCache {
 export const newMeshCache = (create: () => HTMLCanvasElement = () => document.createElement('canvas')): MeshCache => ({
   create,
   canvas: null,
-  sig: 0,
-  healthy: 0,
+  flags: null,
   geomKey: null,
   pal: null,
   w: 0,
@@ -192,6 +192,18 @@ const MESH_ZOOM_SLACK = 1.3;
 const MESH_PAN_SLACK = 0.12;
 /** Healthy edges that may be missing from the bitmap before it is rendered again. */
 const MESH_MISSING_MAX = 32;
+
+const FLAG_HEALTHY = 8;
+/** What the mesh bitmap shows of one edge: dim, selected, focused, healthy, and its fade-in in thousandths. */
+function edgeFlags(v: EdgeView): number {
+  return (
+    (v.dim ? 1 : 0) |
+    (v.isSel ? 2 : 0) |
+    (v.focused ? 4 : 0) |
+    (v.e.status === 'ok' ? FLAG_HEALTHY : 0) |
+    (Math.round(v.fadeIn * 1000) << 4)
+  );
+}
 
 /** World rect visible on a `w` x `h` canvas, grown by `margin` screen px. */
 function screenWorld(tf: Transform, w: number, h: number, margin: number): WorldRect {
@@ -356,14 +368,19 @@ export function drawMap(
   const edges = scene.edges;
   const healthy: number[] = [];
   const unhealthy: number[] = [];
-  // what the mesh bitmap depends on besides the curves, over every edge (not
-  // only the visible ones, or it would change with the camera)
-  let meshSig = edges.length;
-  let healthyAll = 0;
+  // Whether the mesh bitmap still shows these edges: compared over every edge
+  // (not only the visible ones, or it would change with the camera).
+  const had = mesh?.flags && mesh.flags.length === edges.length ? mesh.flags : null;
+  let meshDiffers = had == null;
+  let meshMissing = 0;
   for (let i = 0; i < edges.length; i++) {
     const v = edges[i];
-    meshSig = (Math.imul(meshSig, 31) + (v.dim ? 1 : 0) + (v.isSel ? 2 : 0) + (v.focused ? 4 : 0) + ((v.fadeIn * 1024) | 0) * 8) | 0;
-    if (v.e.status === 'ok') healthyAll++;
+    if (had) {
+      const now = edgeFlags(v);
+      const then = had[i];
+      if ((now ^ then) & ~FLAG_HEALTHY) meshDiffers = true;
+      else if (now & FLAG_HEALTHY && !(then & FLAG_HEALTHY)) meshMissing++;
+    }
     const c = v.curve;
     const x0 = Math.min(c.a.x, c.b.x, c.c1.x, c.c2.x);
     const x1 = Math.max(c.a.x, c.b.x, c.c1.x, c.c2.x);
@@ -427,9 +444,9 @@ export function drawMap(
     const same =
       m != null &&
       mesh.canvas != null &&
-      mesh.sig === meshSig &&
+      !meshDiffers &&
+      meshMissing <= MESH_MISSING_MAX &&
       mesh.geomKey === scene.geomKey &&
-      healthyAll <= mesh.healthy + MESH_MISSING_MAX &&
       mesh.pal === pal &&
       mesh.w === pw &&
       mesh.h === ph &&
@@ -463,8 +480,9 @@ export function drawMap(
       toWorld(mc);
       mc.lineCap = 'round';
       strokeEdges(mc, healthy);
-      mesh.sig = meshSig;
-      mesh.healthy = healthyAll;
+      const flags = mesh.flags?.length === edges.length ? mesh.flags : new Uint16Array(edges.length);
+      for (let i = 0; i < edges.length; i++) flags[i] = edgeFlags(edges[i]);
+      mesh.flags = flags;
       mesh.geomKey = scene.geomKey;
       mesh.pal = pal;
       mesh.w = pw;

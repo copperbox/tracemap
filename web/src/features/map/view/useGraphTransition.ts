@@ -25,7 +25,13 @@ export function useGraphTransition(
   const [animT, setAnimT] = useState(1);
   const animRef = useRef<GraphTransition | null>(null);
   const animRafRef = useRef(0);
-  const prevSnapRef = useRef<{ sig: string; graph: Graph; pos: (key: string) => Pos | undefined } | null>(null);
+  const prevSnapRef = useRef<{
+    sig: string;
+    graph: Graph;
+    posOf: (key: string) => Pos | undefined;
+    animT: number;
+    anim: GraphTransition | null;
+  } | null>(null);
 
   const finishAnim = useCallback(() => {
     cancelAnimationFrame(animRafRef.current);
@@ -67,12 +73,14 @@ export function useGraphTransition(
 
   // Remember what is on screen every render; when the structural signature
   // changes, diff that against the new targets and animate. Only references
-  // are kept per render (the previous graph and its position function): the
-  // position map and edge-key set for thousands of nodes are built when a
-  // structure change actually needs them.
+  // are kept per render: the position map and edge-key set for thousands of
+  // nodes are built when a structure change actually needs them. The
+  // transition and its progress are captured too, not read from animRef
+  // later, because a finishing animation clears that ref before its last
+  // render commits.
   useLayoutEffect(() => {
     const prev = prevSnapRef.current;
-    prevSnapRef.current = { sig: layoutSig, graph, pos: displayPos };
+    prevSnapRef.current = { sig: layoutSig, graph, posOf, animT, anim: animRef.current };
     if (prev && prev.sig !== layoutSig && prev.graph.nodes.length && graph.nodes.length) {
       // a large fleet always snaps, so there is nothing to diff
       if (graph.nodes.length > ANIMATE_MAX_NODES) {
@@ -80,9 +88,12 @@ export function useGraphTransition(
         return;
       }
       const shown = new Map<string, Pos>();
+      const e = easeOut(prev.animT);
       for (const n of prev.graph.nodes) {
-        const p = prev.pos(n.key);
-        if (p) shown.set(n.key, p);
+        const target = prev.posOf(n.key);
+        if (!target) continue;
+        const f = prev.animT < 1 ? prev.anim?.from.get(n.key) : undefined;
+        shown.set(n.key, f ? { x: f.x + (target.x - f.x) * e, y: f.y + (target.y - f.y) * e } : target);
       }
       const targets = new Map<string, Pos>();
       for (const n of graph.nodes) {

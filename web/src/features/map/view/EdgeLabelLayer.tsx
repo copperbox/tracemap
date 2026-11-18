@@ -33,6 +33,18 @@ function Label({ v, p, full }: { v: EdgeView; p: Pt; full: boolean }) {
 }
 
 /**
+ * One standing label. It steps aside while its edge is hovered: the hover
+ * label then shows the full triple, placed for that wider text. The selector
+ * is a boolean, so a hover re-renders the label it leaves and the one it
+ * reaches, not the layer.
+ */
+const StandingLabel = memo(function StandingLabel({ v, p }: { v: EdgeView; p: Pt }) {
+  const hovered = useStore((s) => s.hoverEdge === v.e.key);
+  // a selected edge already shows the full label and keeps it
+  return hovered && !v.isSel ? null : <Label v={v} p={p} full={v.isSel} />;
+});
+
+/**
  * Metric labels on edges that earn attention, at the spots chosen by
  * placeEdgeLabels (clear of cards). An edge without a spot gets no label.
  */
@@ -47,25 +59,23 @@ export const EdgeLabelLayer = memo(function EdgeLabelLayer({
     <>
       {edges.filter(wantsLabel).map((v) => {
         const p = spots.get(v.e.key);
-        return p ? <Label key={`label:${v.e.key}`} v={v} p={p} full={v.isSel} /> : null;
+        return p ? <StandingLabel key={`label:${v.e.key}`} v={v} p={p} /> : null;
       })}
     </>
   );
 });
 
 /**
- * The hovered edge's label. It is the only part of the map that subscribes to
- * the hovered edge, so a pointer move re-renders this one element and nothing
- * else. An edge that already carries a standing label gets the full triple at
- * that same spot.
+ * The hovered edge's label: the full triple, at a spot chosen for its own
+ * width, clear of cards and of the standing labels. Apart from the standing
+ * label it replaces, it is the only part of the map that follows the hovered
+ * edge.
  */
 export const HoverEdgeLabel = memo(function HoverEdgeLabel({
   edges,
-  spots,
   spotFor,
 }: {
   edges: EdgeView[];
-  spots: Map<string, Pt>;
   spotFor: (v: EdgeView) => Pt | undefined;
 }) {
   const key = useStore((s) => s.hoverEdge);
@@ -73,6 +83,6 @@ export const HoverEdgeLabel = memo(function HoverEdgeLabel({
   const v = edges.find((x) => x.e.key === key);
   // a selected edge already shows the full label
   if (!v || v.dim || v.isSel) return null;
-  const p = spots.get(key) ?? spotFor(v);
+  const p = spotFor(v);
   return p ? <Label v={v} p={p} full /> : null;
 });
