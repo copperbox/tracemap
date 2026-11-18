@@ -11,8 +11,8 @@ import type { WorldRect } from './viewport';
  * Canvas half of the layered map. Frames and edges always draw here; nodes
  * draw here only at the overview level of detail, where DOM cards would be
  * unreadable anyway. Drawing happens in world coordinates under the camera
- * transform, culled to the screen, with edges and small nodes batched into
- * one path per style so a fleet-wide overview is a few dozen draw calls.
+ * transform, culled to the screen, with small nodes batched into one path per
+ * style and edges into paths of 64 per style (see PATH_CHUNK_SHIFT).
  */
 
 export interface MapPalette {
@@ -101,6 +101,16 @@ export const FRAME_LABEL_PX = 11;
 const ARROW_MIN_K = 0.22;
 /** Smallest on-screen width of a degraded or critical node block. */
 const BAD_BLOCK_MIN_PX = 7;
+/**
+ * Edges per canvas path, as a shift (64). Firefox draws a small path on the
+ * GPU and caches it while it only moves, but rasterizes a path of a thousand
+ * curves in software: 150 to 600 ms a frame on a 4K canvas. Paths are cut by
+ * scene order, not by what is on screen, so a pan that culls a few edges
+ * leaves every other path identical to the previous frame's.
+ */
+const PATH_CHUNK_SHIFT = 6;
+/** Arrowheads fainter than this are not drawn: a dense mesh would double its geometry for nothing visible. */
+const ARROW_MIN_OP = 0.2;
 
 /** World rect visible on a `w` x `h` canvas, grown by `margin` screen px. */
 function screenWorld(tf: Transform, w: number, h: number, margin: number): WorldRect {
@@ -172,10 +182,13 @@ export function drawMap(
   // Healthy and unhealthy edges are drawn in separate passes so degraded and
   // critical ones always land on top, and healthy ones fade as the visible
   // edge count grows (see edgeDensity).
-  const healthy: EdgeView[] = [];
-  const unhealthy: EdgeView[] = [];
+  // indices into scene.edges, in scene order
+  const edges = scene.edges;
+  const healthy: number[] = [];
+  const unhealthy: number[] = [];
   let selected: EdgeView | null = null;
-  for (const v of scene.edges) {
+  for (let i = 0; i < edges.length; i++) {
+    const v = edges[i];
     const c = v.curve;
     const x0 = Math.min(c.a.x, c.b.x, c.c1.x, c.c2.x);
     const x1 = Math.max(c.a.x, c.b.x, c.c1.x, c.c2.x);
@@ -183,15 +196,17 @@ export function drawMap(
     const y1 = Math.max(c.a.y, c.b.y, c.c1.y, c.c2.y);
     if (outside(view, x0, y0, x1, y1)) continue;
     if (v.glow) selected = v;
-    (v.e.status === 'ok' ? healthy : unhealthy).push(v);
+    (v.e.status === 'ok' ? healthy : unhealthy).push(i);
   }
   const fade = healthyEdgeFade(healthy.length + unhealthy.length);
   ctx.lineCap = 'round';
-  const strokeEdges = (edges: EdgeView[]): void => {
+  const strokeEdges = (at: number[]): void => {
+    // one path per style and per run of 64 edges in scene order
     const buckets = new Map<string, { st: EdgeStroke; list: EdgeView[] }>();
-    for (const v of edges) {
+    for (const i of at) {
+      const v = edges[i];
       const st = edgeStroke(v, fade);
-      const key = `${v.stroke}|${st.op.toFixed(2)}|${v.w}|${st.arrowOp.toFixed(2)}|${st.minPx}|${st.maxPx}`;
+      const key = `${i >> PATH_CHUNK_SHIFT}|${v.stroke}|${st.op.toFixed(2)}|${v.w}|${st.arrowOp.toFixed(2)}|${st.minPx}|${st.maxPx}`;
       const b = buckets.get(key);
       if (b) b.list.push(v);
       else buckets.set(key, { st, list: [v] });
@@ -216,7 +231,7 @@ export function drawMap(
       }
       ctx.stroke();
       if (glow) ctx.shadowBlur = 0;
-      if (k >= ARROW_MIN_K) {
+      if (k >= ARROW_MIN_K && st.arrowOp >= ARROW_MIN_OP) {
         ctx.globalAlpha = st.arrowOp;
         ctx.fillStyle = resolveVar(pal, v0.arrowFill);
         ctx.beginPath();

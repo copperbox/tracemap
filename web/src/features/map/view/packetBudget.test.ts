@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_PACKETS_PER_FRAME, capPacketCounts, packetBudget } from './packetBudget';
+import { MAX_PACKET_PIXELS, MAX_PACKETS_PER_FRAME, capPacketCounts, packetBudget, packetScale } from './packetBudget';
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
@@ -46,5 +46,22 @@ describe('packetBudget', () => {
   it('shrinks when zoomed out, down to a quarter', () => {
     expect(packetBudget(0.25)).toBe(MAX_PACKETS_PER_FRAME / 2);
     expect(packetBudget(0.01)).toBe(MAX_PACKETS_PER_FRAME / 4);
+  });
+});
+
+describe('packetScale', () => {
+  it('uses the device ratio while the canvas fits the pixel budget', () => {
+    expect(packetScale(1280, 720, 2)).toBe(2);
+    expect(packetScale(1600, 1000, 1)).toBe(1);
+  });
+
+  it('lowers the scale so a large viewport stays within the budget', () => {
+    const scale = packetScale(2944, 1543, 1.25);
+    expect(scale).toBeLessThan(1.25);
+    expect(2944 * scale * 1543 * scale).toBeCloseTo(MAX_PACKET_PIXELS, -2);
+  });
+
+  it('falls back to the device ratio before the canvas has a size', () => {
+    expect(packetScale(0, 0, 1.5)).toBe(1.5);
   });
 });

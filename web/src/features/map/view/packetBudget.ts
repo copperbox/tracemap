@@ -65,3 +65,17 @@ export function capPacketCounts(want: readonly number[], cap: number): number[] 
   }
   return out;
 }
+
+/**
+ * Backing-store budget for the packet canvas. Glows are soft, so a 4K
+ * viewport does not need 4K of packet pixels, and every pixel is composited
+ * again on each animation frame.
+ */
+export const MAX_PACKET_PIXELS = 4_000_000;
+
+/** Backing-store scale for a `cssW` x `cssH` canvas: the device ratio, lowered to fit `maxPixels`. */
+export function packetScale(cssW: number, cssH: number, dpr: number, maxPixels = MAX_PACKET_PIXELS): number {
+  const area = cssW * cssH;
+  if (!(area > 0)) return dpr;
+  return Math.min(dpr, Math.sqrt(maxPixels / area));
+}

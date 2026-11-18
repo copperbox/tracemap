@@ -81,12 +81,9 @@ export const NodeCard = memo(function NodeCard({
   const selColor = node.status === 'crit' ? 'var(--crit)' : node.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
   const selSoft =
     node.status === 'crit' ? 'var(--critbg)' : node.status === 'warn' ? 'var(--warnbg)' : 'var(--accent-dim)';
-  const cardStyle: CSSProperties = {
-    /* critPulse lives in the global stylesheet; referencing it from the CSS
-       module would let the module's name scoping rename it away */
-    animation: node.status === 'crit' && !selected ? 'critPulse 2.4s ease-in-out infinite' : 'none',
-    ...(selected ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties) : null),
-  };
+  const cardStyle: CSSProperties | undefined = selected
+    ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties)
+    : undefined;
 
   // Kept lean on purpose: the map mounts a few hundred of these, so every
   // element here is multiplied (metrics are one text run, not five spans).

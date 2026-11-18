@@ -5,7 +5,7 @@ import { useStore } from '../../../state/store';
 import type { GraphEdge } from '../../../lib/grouping';
 import type { EdgeView } from './edgeViews';
 import { curveBox } from './hitTest';
-import { capPacketCounts, packetBudget } from './packetBudget';
+import { capPacketCounts, packetBudget, packetScale } from './packetBudget';
 import { packetSamples } from './packetAnim';
 import { buildArcLut, pointAtFraction, type ArcLut } from './packetPath';
 import type { Transform } from './usePanZoom';
@@ -33,7 +33,13 @@ const DOT_MIN = 2.5;
 const DOT_MAX = 8;
 const GLOW_SCALE = 2; // full sprite span as a multiple of the core diameter
 const PACKET_ALPHA = 0.62; // global opacity damp so packets stay unobtrusive
-
+/**
+ * Packets redraw at about 30 fps while the camera is still. Every redraw
+ * re-composites the whole map (and re-encodes the whole screen on a remote
+ * desktop), and soft dots drifting along an edge read the same at half the
+ * rate. A camera move redraws at once, so packets never trail the map.
+ */
+const IDLE_FRAME_MS = 30;
 /** The three flow colors (EdgeView.flowStroke) mapped to their CSS variable. */
 const VAR_OF: Record<string, string> = {
   'var(--accent)': '--accent',
@@ -125,8 +131,8 @@ export const PacketCanvas = memo(function PacketCanvas({
     [edges],
   );
 
-  // Canvas context + size tracking (device-pixel-ratio aware so packets are
-  // crisp); a ratio change (another display) re-runs it.
+  // Canvas context + size tracking (device-pixel-ratio aware, within the
+  // packetScale budget); a ratio change (another display) re-runs it.
   const dpr = usePixelRatio();
   useEffect(() => {
     const cv = canvasRef.current;
@@ -135,9 +141,10 @@ export const PacketCanvas = memo(function PacketCanvas({
     const resize = (): void => {
       const cssW = cv.clientWidth;
       const cssH = cv.clientHeight;
-      cv.width = Math.max(1, Math.round(cssW * dpr));
-      cv.height = Math.max(1, Math.round(cssH * dpr));
-      ctxRef.current?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const scale = packetScale(cssW, cssH, dpr);
+      cv.width = Math.max(1, Math.round(cssW * scale));
+      cv.height = Math.max(1, Math.round(cssH * scale));
+      ctxRef.current?.setTransform(scale, 0, 0, scale, 0, 0);
       sizeRef.current = { cssW, cssH };
     };
     resize();
@@ -232,8 +239,16 @@ export const PacketCanvas = memo(function PacketCanvas({
       return;
     }
     let raf = 0;
+    let drawnAt = -Infinity;
+    let drawnTf: Transform | null = null;
     const loop = (now: number): void => {
-      drawFrame(now);
+      // the camera replaces its transform object on every change
+      const tf = tfRef.current;
+      if (tf !== drawnTf || now - drawnAt >= IDLE_FRAME_MS) {
+        drawFrame(now);
+        drawnAt = now;
+        drawnTf = tf;
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -241,7 +256,7 @@ export const PacketCanvas = memo(function PacketCanvas({
       cancelAnimationFrame(raf);
       clear();
     };
-  }, [hasLive, drawFrame]);
+  }, [hasLive, drawFrame, tfRef]);
 
   return <canvas ref={canvasRef} className={styles.layer} />;
 });
