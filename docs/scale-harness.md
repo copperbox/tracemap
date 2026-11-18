@@ -115,6 +115,16 @@ API_PROXY_TARGET=http://127.0.0.1:4403 npm run dev --workspace web
 Run the server with `node --import tsx` rather than `npx tsx`: Ctrl-C and `kill` then
 reach the server process itself, not an npm wrapper that leaves it running.
 
+To judge how smooth the UI is, use the production bundle. The dev server runs React
+in development mode (with StrictMode's double renders), which makes every update two
+to three times slower: a live update that fits in one frame in production drops a
+frame in dev.
+
+```sh
+npm run build --workspace web
+API_PROXY_TARGET=http://127.0.0.1:4403 npm run preview --workspace web   # http://localhost:4173
+```
+
 ## 4. Load
 
 ```sh

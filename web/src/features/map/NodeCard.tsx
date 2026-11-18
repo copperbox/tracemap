@@ -1,10 +1,13 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { GraphNode } from '../../lib/grouping';
 import { GROUP_W, NODE_W } from '../../lib/layout';
 import { fmtErr, fmtMs, fmtRps, DOT } from '../../lib/format';
 import { GroupExpandIcon, TypeIcon, TYPE_LABELS } from '../../components/Icon';
 import styles from './NodeCard.module.css';
+
+/** Length of one critical-ring pulse (keep in step with critRing in NodeCard.module.css). */
+const CRIT_PULSE_MS = 2400;
 
 /**
  * Card callbacks. The map passes one stable object for every card, so a
@@ -81,9 +84,16 @@ export const NodeCard = memo(function NodeCard({
   const selColor = node.status === 'crit' ? 'var(--crit)' : node.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
   const selSoft =
     node.status === 'crit' ? 'var(--critbg)' : node.status === 'warn' ? 'var(--warnbg)' : 'var(--accent-dim)';
+  // Critical rings pulse in steps. Starting each one as if at a multiple of the
+  // cycle puts every ring's steps on the same instants, so the compositor
+  // wakes seven times a second for all of them, not for each.
+  const pulsing = node.status === 'crit' && !selected;
+  const critPhase = useMemo(() => (pulsing ? `${-(performance.now() % CRIT_PULSE_MS)}ms` : null), [pulsing]);
   const cardStyle: CSSProperties | undefined = selected
     ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties)
-    : undefined;
+    : critPhase
+      ? ({ '--crit-phase': critPhase } as CSSProperties)
+      : undefined;
 
   // Kept lean on purpose: the map mounts a few hundred of these, so every
   // element here is multiplied (metrics are one text run, not five spans).

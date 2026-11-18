@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { buildGraph, type Graph, type GraphEdge, type GraphNode } from '../../../lib/grouping';
 import { detectCommunities } from '../../../lib/community';
@@ -17,6 +17,9 @@ import { buildForceLinks, buildForceNodes } from './forceNodes';
 import { useForceSimulation } from './useForceSimulation';
 import { usePixelRatio } from '../view/pixelRatio';
 import styles from './ForceGraph.module.css';
+
+// the communities view has no team merging; a stable reference keeps the drawer memoized
+const NO_MERGE = (): void => {};
 
 const TAU = Math.PI * 2;
 const LABEL_ZOOM = 0.9;
@@ -73,7 +76,7 @@ export function ForceGraph() {
     accent: '#4ade80',
   });
 
-  const { tfRef, subscribe, dragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef);
+  const { tfRef, subscribe, isDragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef, styles.canvasDragging);
 
   // The communities view always works on the ungrouped service graph -- merging
   // teams into meganodes would defeat the topology-based community detection.
@@ -113,7 +116,9 @@ export function ForceGraph() {
     [graph, focus, search, teamFilter],
   );
 
-  const [hover, setHover] = useState<string | null>(null);
+  // The hovered node lives in a ref: a hover redraws the canvas and flips the
+  // cursor class, but never re-renders the view (or the drawer under it).
+  const hoverRef = useRef<string | null>(null);
 
   // ---- canvas drawing ----
   const drawRef = useRef<() => void>(() => {});
@@ -145,6 +150,7 @@ export function ForceGraph() {
   const draw = (): void => {
     const ctx = ctxRef.current;
     if (!ctx) return;
+    const hover = hoverRef.current;
     const { cssW, cssH } = sizeRef.current;
     ctx.clearRect(0, 0, cssW, cssH);
     const tfNow = tfRef.current;
@@ -399,11 +405,16 @@ export function ForceGraph() {
     }
   };
 
+  const setHover = (key: string | null): void => {
+    if (hoverRef.current === key) return;
+    hoverRef.current = key;
+    canvasRef.current?.classList.toggle(styles.canvasHover, key != null);
+    scheduleDraw();
+  };
   const onMouseMove = (e: ReactMouseEvent): void => {
-    if (dragRef.current || dragging) return;
+    if (dragRef.current || isDragging()) return;
     const w = worldAt(e);
-    const key = sim.pickNode(w.x, w.y);
-    setHover((prev) => (prev === key ? prev : key));
+    setHover(sim.pickNode(w.x, w.y));
   };
 
   const onClick = (e: ReactMouseEvent): void => {
@@ -430,13 +441,7 @@ export function ForceGraph() {
         onMouseMove={onMouseMove}
         onMouseLeave={() => setHover(null)}
         onClick={onClick}
-        className={[
-          styles.canvas,
-          dragging ? styles.canvasDragging : '',
-          hover && !dragging ? styles.canvasHover : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+        className={styles.canvas}
       >
         <canvas ref={surfaceRef} className={styles.surface} />
       </div>
@@ -452,7 +457,7 @@ export function ForceGraph() {
         onResetLayout={() => sim.reheat(0.9)}
       />
 
-      <MapDrawer graph={graph} onToggleMerge={() => {}} />
+      <MapDrawer graph={graph} onToggleMerge={NO_MERGE} />
     </div>
   );
 }

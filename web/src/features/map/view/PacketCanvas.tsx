@@ -120,9 +120,18 @@ export const PacketCanvas = memo(function PacketCanvas({
   const sizeRef = useRef({ cssW: 0, cssH: 0 });
   const spritesRef = useRef<Record<string, HTMLCanvasElement>>({});
   // arc-length tables cached per edge, rebuilt only when the edge's path changes
-  const lutRef = useRef<Map<string, { d: string; lut: ArcLut }>>(new Map());
+  const lutRef = useRef<Map<string, { curve: EdgeView['curve']; lut: ArcLut }>>(new Map());
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
+  const cullRef = useRef<{
+    edges: EdgeView[];
+    tf: Transform;
+    w: number;
+    h: number;
+    sprites: Record<string, HTMLCanvasElement>;
+    vis: EdgeView[];
+    budget: number[];
+  } | null>(null);
 
   // The loop only runs while at least one edge is actually carrying traffic, so
   // an idle (or fully dimmed/filtered) graph costs nothing.
@@ -178,26 +187,33 @@ export const PacketCanvas = memo(function PacketCanvas({
       const half = size / 2;
 
       // Cull to the screen first, then share the frame's packet budget among
-      // the edges that are actually visible.
-      const vis: EdgeView[] = [];
-      const want: number[] = [];
-      const pad = half / k;
-      const vx0 = (-tf.tx) / k - pad;
-      const vy0 = (-tf.ty) / k - pad;
-      const vx1 = (cssW - tf.tx) / k + pad;
-      const vy1 = (cssH - tf.ty) / k + pad;
-      for (const v of edgeList) {
-        if (v.flowOp <= 0) continue;
-        const e = v.e;
-        if (!(e.rps > 0) || e.stale) continue;
-        const b = curveBox(v.curve);
-        if (b.x1 < vx0 || b.x0 > vx1 || b.y1 < vy0 || b.y0 > vy1) continue;
-        const count = countOf(e);
-        if (!count || !sprites[v.flowStroke]) continue;
-        vis.push(v);
-        want.push(count);
+      // the edges that are actually visible. The result holds until the camera
+      // or the edge list changes, so a still map walks only its visible edges
+      // each frame, not every edge in the fleet.
+      let culled = cullRef.current;
+      if (!culled || culled.edges !== edgeList || culled.tf !== tf || culled.w !== cssW || culled.h !== cssH || culled.sprites !== sprites) {
+        const vis: EdgeView[] = [];
+        const want: number[] = [];
+        const pad = half / k;
+        const vx0 = (-tf.tx) / k - pad;
+        const vy0 = (-tf.ty) / k - pad;
+        const vx1 = (cssW - tf.tx) / k + pad;
+        const vy1 = (cssH - tf.ty) / k + pad;
+        for (const v of edgeList) {
+          if (v.flowOp <= 0) continue;
+          const e = v.e;
+          if (!(e.rps > 0) || e.stale) continue;
+          const b = curveBox(v.curve);
+          if (b.x1 < vx0 || b.x0 > vx1 || b.y1 < vy0 || b.y0 > vy1) continue;
+          const count = countOf(e);
+          if (!count || !sprites[v.flowStroke]) continue;
+          vis.push(v);
+          want.push(count);
+        }
+        culled = { edges: edgeList, tf, w: cssW, h: cssH, sprites, vis, budget: capPacketCounts(want, packetBudget(k)) };
+        cullRef.current = culled;
       }
-      const budget = capPacketCounts(want, packetBudget(k));
+      const { vis, budget } = culled;
 
       for (let i = 0; i < vis.length; i++) {
         const count = budget[i];
@@ -207,8 +223,8 @@ export const PacketCanvas = memo(function PacketCanvas({
         const sprite = sprites[v.flowStroke];
 
         let hit = cache.get(e.key);
-        if (!hit || hit.d !== v.d) {
-          hit = { d: v.d, lut: buildArcLut(v.curve) };
+        if (!hit || hit.curve !== v.curve) {
+          hit = { curve: v.curve, lut: buildArcLut(v.curve) };
           cache.set(e.key, hit);
         }
         const lut = hit.lut;

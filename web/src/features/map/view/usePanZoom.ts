@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { MouseEvent as ReactMouseEvent, MutableRefObject, RefObject } from 'react';
 import { centerTransform, clampZoom, fitZoom } from './camera';
 
@@ -22,8 +22,8 @@ export interface PanZoom {
   tfRef: MutableRefObject<Transform>;
   /** Called synchronously on every camera change; returns an unsubscribe. */
   subscribe: (fn: CameraListener) => () => void;
-  /** True while a pan drag is in progress (changes twice per drag). */
-  dragging: boolean;
+  /** True while a pan drag has actually moved. Not React state: a click must not re-render the map. */
+  isDragging: () => boolean;
   beginPan: (e: ReactMouseEvent) => void;
   wasPan: () => boolean;
   zoomBy: (f: number) => void;
@@ -44,11 +44,22 @@ export interface PanZoom {
  *
  * Node dragging lives in useNodeDrag; the two never run at once because node
  * mousedown handlers stop propagation before beginPan.
+ *
+ * `draggingClass` goes on the canvas element while a pan is moving it (the
+ * grabbing cursor).
  */
-export function usePanZoom(canvasRef: RefObject<HTMLDivElement>): PanZoom {
+export function usePanZoom(canvasRef: RefObject<HTMLDivElement>, draggingClass?: string): PanZoom {
   const tfRef = useRef<Transform>({ tx: 60, ty: 40, k: 0.5 });
   const listenersRef = useRef(new Set<CameraListener>());
-  const [dragging, setDragging] = useState(false);
+  const draggingRef = useRef(false);
+  const setDragging = useCallback(
+    (on: boolean) => {
+      if (draggingRef.current === on) return;
+      draggingRef.current = on;
+      if (draggingClass) canvasRef.current?.classList.toggle(draggingClass, on);
+    },
+    [canvasRef, draggingClass],
+  );
   const dragRef = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
 
   const setTf = useCallback((next: Transform) => {
@@ -95,7 +106,9 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>): PanZoom {
       const dx = e.clientX - d.x;
       const dy = e.clientY - d.y;
       if (Math.abs(dx) + Math.abs(dy) > 4) d.moved = true;
-      if (d.moved) setTf({ k: tfRef.current.k, tx: d.tx + dx, ty: d.ty + dy });
+      if (!d.moved) return;
+      setDragging(true);
+      setTf({ k: tfRef.current.k, tx: d.tx + dx, ty: d.ty + dy });
     };
     const onUp = () => {
       const d = dragRef.current;
@@ -113,13 +126,13 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>): PanZoom {
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
-  }, [setTf]);
+  }, [setTf, setDragging]);
 
   const beginPan = useCallback((e: ReactMouseEvent) => {
     if (e.button !== 0) return;
     dragRef.current = { x: e.clientX, y: e.clientY, tx: tfRef.current.tx, ty: tfRef.current.ty, moved: false };
-    setDragging(true);
   }, []);
+  const isDragging = useCallback(() => draggingRef.current, []);
 
   /** True while (or just after) a pan drag actually moved, so click handlers can ignore it. */
   const wasPan = useCallback(() => dragRef.current?.moved ?? false, []);
@@ -175,7 +188,7 @@ export function usePanZoom(canvasRef: RefObject<HTMLDivElement>): PanZoom {
     [setTf],
   );
 
-  return { tfRef, subscribe, dragging, beginPan, wasPan, zoomBy, zoomAt, fitBounds, centerOn, panBy };
+  return { tfRef, subscribe, isDragging, beginPan, wasPan, zoomBy, zoomAt, fitBounds, centerOn, panBy };
 }
 
 /**

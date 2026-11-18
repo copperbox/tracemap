@@ -71,8 +71,9 @@
   box-shadow: 0 0 0 5px rgba(248, 113, 113, .2);
   opacity: 0;
   pointer-events: none;
-  /* stepped: 16 opacity changes per cycle instead of a composite on every frame */
-  animation: critRing 2.4s steps(8, end) infinite;
+  /* stepped: 16 opacity changes per cycle instead of a composite on every frame;
+     --crit-phase (set per card) lines every ring's steps up on one clock */
+  animation: critRing 2.4s steps(8, end) var(--crit-phase, 0s) infinite;
 }
 
 @keyframes critRing {

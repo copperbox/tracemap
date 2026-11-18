@@ -19,9 +19,7 @@ const edge = (over: Partial<GraphEdge> = {}): GraphEdge => ({
 });
 
 const geom: EdgeGeometry = {
-  d: 'M0 0 L10 10',
   curve: { a: { x: 0, y: 0 }, c1: { x: 3, y: 3 }, c2: { x: 7, y: 7 }, b: { x: 10, y: 10 } },
-  arrow: '0,0 1,1 2,2',
   arrowPts: [
     { x: 0, y: 0 },
     { x: 1, y: 1 },
@@ -34,7 +32,6 @@ const geoms = new Map([['a=>b', geom]]);
 const base = {
   dimmed: () => false,
   selEdgeKey: null,
-  hoverEdge: null,
   fadeInOf: () => 1,
 };
 
@@ -45,9 +42,8 @@ describe('buildEdgeViews', () => {
 
   it('carries the geometry through', () => {
     const [v] = buildEdgeViews([edge()], geoms, base);
-    expect(v.d).toBe(geom.d);
     expect(v.curve).toBe(geom.curve);
-    expect(v.arrow).toBe(geom.arrow);
+    expect(v.arrowPts).toBe(geom.arrowPts);
     expect(v.mid).toEqual(geom.mid);
   });
 
@@ -92,21 +88,10 @@ describe('buildEdgeViews', () => {
     expect(v.arrowFill).toBe('var(--accent)');
   });
 
-  it('highlights the hovered edge slightly less than selection', () => {
-    const [v] = buildEdgeViews([edge()], geoms, { ...base, hoverEdge: 'a=>b' });
-    expect(v.isHov).toBe(true);
-    expect(v.w).toBe(1.8);
-    expect(v.op).toBeCloseTo(0.85);
-  });
-
-  it('keeps the status color when a degraded edge is selected or hovered', () => {
+  it('keeps the status color when a degraded edge is selected', () => {
     const [sel] = buildEdgeViews([edge({ status: 'warn' })], geoms, { ...base, selEdgeKey: 'a=>b' });
     expect(sel.stroke).toBe('var(--warn)');
     expect(sel.arrowFill).toBe('var(--warn)');
-
-    const [hov] = buildEdgeViews([edge({ status: 'crit' })], geoms, { ...base, hoverEdge: 'a=>b' });
-    expect(hov.stroke).toBe('var(--crit)');
-    expect(hov.arrowFill).toBe('var(--crit)');
   });
 
   it('glows the selected edge in its status color, and not otherwise', () => {
@@ -118,10 +103,6 @@ describe('buildEdgeViews', () => {
 
     const [critSel] = buildEdgeViews([edge({ status: 'crit' })], geoms, { ...base, selEdgeKey: 'a=>b' });
     expect(critSel.glow).toBe('var(--crit)');
-
-    // a hovered-but-not-selected edge does not glow
-    const [hov] = buildEdgeViews([edge()], geoms, { ...base, hoverEdge: 'a=>b' });
-    expect(hov.glow).toBeNull();
   });
 
   it('does not glow a dimmed selected edge', () => {
@@ -155,5 +136,50 @@ describe('buildEdgeViews', () => {
     expect(v.op).toBeCloseTo(0.5 * 0.5);
     expect(v.arrowOp).toBeCloseTo(0.6 * 0.5);
     expect(v.flowOp).toBeCloseTo(0.7 * 0.5);
+  });
+
+  describe('reuse of the previous result', () => {
+    const three = [edge({ key: 'a=>b' }), edge({ key: 'b=>c', sourceKey: 'b', targetKey: 'c' }), edge({ key: 'c=>d', sourceKey: 'c', targetKey: 'd' })];
+    const g3 = new Map(three.map((e) => [e.key, { ...geom, curve: { ...geom.curve } }]));
+
+    it('returns the same view objects when nothing changed', () => {
+      const first = buildEdgeViews(three, g3, base);
+      const again = buildEdgeViews(three, g3, base, first);
+      expect(again).toHaveLength(3);
+      again.forEach((v, i) => expect(v).toBe(first[i]));
+    });
+
+    it('rebuilds only the views a selection touches', () => {
+      const first = buildEdgeViews(three, g3, base);
+      const sel = buildEdgeViews(three, g3, { ...base, selEdgeKey: 'b=>c' }, first);
+      expect(sel[0]).toBe(first[0]);
+      expect(sel[1]).not.toBe(first[1]);
+      expect(sel[1].isSel).toBe(true);
+      expect(sel[2]).toBe(first[2]);
+    });
+
+    it('rebuilds a view whose edge object or geometry was replaced', () => {
+      const first = buildEdgeViews(three, g3, base);
+      const fresh = [three[0], { ...three[1], rps: 99 }, three[2]];
+      const afterMetrics = buildEdgeViews(fresh, g3, base, first);
+      expect(afterMetrics[0]).toBe(first[0]);
+      expect(afterMetrics[1]).not.toBe(first[1]);
+      expect(afterMetrics[1].e.rps).toBe(99);
+
+      const moved = new Map(g3);
+      moved.set('c=>d', { ...geom, curve: { ...geom.curve } });
+      const afterMove = buildEdgeViews(three, moved, base, first);
+      expect(afterMove[1]).toBe(first[1]);
+      expect(afterMove[2]).not.toBe(first[2]);
+    });
+
+    it('stays aligned when an edge without geometry is skipped', () => {
+      const partial = new Map(g3);
+      partial.delete('a=>b');
+      const first = buildEdgeViews(three, partial, base);
+      expect(first.map((v) => v.e.key)).toEqual(['b=>c', 'c=>d']);
+      const again = buildEdgeViews(three, partial, base, first);
+      again.forEach((v, i) => expect(v).toBe(first[i]));
+    });
   });
 });

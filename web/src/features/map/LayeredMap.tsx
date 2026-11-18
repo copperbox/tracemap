@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { startTransition, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { FocusEvent as ReactFocusEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react';
 import { useStore } from '../../state/store';
 import { ARROW } from '../../lib/format';
@@ -16,7 +16,7 @@ import {
 import { NodeCard, NOOP_CARD_HANDLERS, type CardHandlers } from './NodeCard';
 import { TeamFrameBar, type FrameHandlers } from './TeamFrame';
 import { MapDrawer } from './MapDrawer';
-import { EdgeLabelLayer, edgeLabelText, wantsLabel } from './view/EdgeLabelLayer';
+import { EdgeLabelLayer, HoverEdgeLabel, edgeLabelText, wantsLabel } from './view/EdgeLabelLayer';
 import { LABEL_BOX_H, labelBoxWidth, placeEdgeLabels } from './view/labelPlacement';
 import { GraphModeToggle } from './view/GraphModeToggle';
 import { Legend } from './view/Legend';
@@ -40,7 +40,17 @@ import { useNodeDrag } from './view/useNodeDrag';
 import { applyBackdrop, usePanZoom, type Transform } from './view/usePanZoom';
 import { containsRect, needsRecull, rectsOverlap, shouldMount, visibleWorldRect, type WorldRect } from './view/viewport';
 import { canvasLabelsOn, cardsCompact, chooseLod, type MapLod } from './view/lod';
-import { FRAME_LABEL_PX, drawMap, readPalette, type CanvasScene, type MapPalette } from './view/mapCanvas';
+import {
+  FRAME_LABEL_PX,
+  drawMap,
+  drawOverlay,
+  newMeshCache,
+  readPalette,
+  resetCanvasTextCache,
+  type CanvasScene,
+  type MapPalette,
+  type MeshCache,
+} from './view/mapCanvas';
 import { hitEdge, hitRect, type RectItem } from './view/hitTest';
 import { useEffectiveMergedTeams } from './view/autoCollapse';
 import { mapSummary } from './view/mapSummary';
@@ -54,6 +64,10 @@ const CULL_PAD_PX = 140;
 
 // Pointer tolerance for edges, in screen px (converted to world units per zoom).
 const EDGE_HIT_PX = 6;
+
+// A camera that has not moved for this long is at rest: the map is redrawn
+// once more at full quality (see MeshCache).
+const SETTLE_MS = 140;
 
 // Drawer width (keep in step with MapDrawer.module.css .drawer width). The
 // selection auto-center reserves it so the chosen node lands clear of the drawer.
@@ -80,7 +94,6 @@ export function LayeredMap() {
   const topology = useStore((s) => s.topology);
   const selection = useStore((s) => s.selection);
   const select = useStore((s) => s.select);
-  const hoverEdge = useStore((s) => s.hoverEdge);
   const setHoverEdge = useStore((s) => s.setHoverEdge);
   const focusId = useStore((s) => s.focusId);
   const setFocus = useStore((s) => s.setFocus);
@@ -106,7 +119,10 @@ export function LayeredMap() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const surfaceRef = useRef<HTMLCanvasElement>(null);
-  const { tfRef, subscribe, dragging, beginPan, wasPan, zoomBy, fitBounds, centerOn, panBy } = usePanZoom(canvasRef);
+  const { tfRef, subscribe, isDragging, beginPan, wasPan, zoomBy, fitBounds, centerOn, panBy } = usePanZoom(
+    canvasRef,
+    styles.canvasDragging,
+  );
 
   // Canvas size in CSS px. Defaults to the window so the first paint (before
   // the observer fires) errs toward mounting more rather than less.
@@ -247,9 +263,10 @@ export function LayeredMap() {
   // Fit on first data, and after the merge-all/unmerge-all shortcut (whose
   // graph change is too big to stay oriented without one). Individual team
   // toggles deliberately do NOT re-fit: they expand/collapse in place.
+  // A layout effect, so the new graph is never painted at the old camera.
   const fittedRef = useRef(false);
   const fitPendingRef = useRef(false);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!graph.nodes.length) return;
     if (!fittedRef.current || fitPendingRef.current) {
       fittedRef.current = true;
@@ -359,6 +376,7 @@ export function LayeredMap() {
   );
   // While a drag only moves pinned nodes, rebuild just the edges around them.
   const geomRef = useRef<{ sig: string; layout: unknown; pinned: NodePositions; state: GeometryState } | null>(null);
+  const geomCache = useRef(new Map<string, { layout: unknown; pinned: NodePositions; state: GeometryState }>());
   const geoms = useMemo(() => {
     const rectOf = (key: string) => {
       const p = displayPos(key);
@@ -367,7 +385,11 @@ export function LayeredMap() {
     };
     const prev = geomRef.current;
     let state: GeometryState | null = null;
-    if (prev && prev.sig === layoutSig && prev.layout === layout && !animating && prev.pinned !== pinned) {
+    // A structure seen before with the same pins (merge all, then unmerge all
+    // again) reuses its geometry outright.
+    const cached = animating ? undefined : geomCache.current.get(layoutSig);
+    if (cached && cached.layout === layout && cached.pinned === pinned) state = cached.state;
+    else if (prev && prev.sig === layoutSig && prev.layout === layout && !animating && prev.pinned !== pinned) {
       const moved = new Set<string>();
       for (const k of Object.keys(pinned)) if (pinned[k] !== prev.pinned[k]) moved.add(k);
       for (const k of Object.keys(prev.pinned)) if (!(k in pinned)) moved.add(k);
@@ -375,19 +397,32 @@ export function LayeredMap() {
     }
     state ??= computeEdgeGeometryState(edgeInputs, rectOf);
     geomRef.current = { sig: layoutSig, layout, pinned, state };
+    if (!animating) {
+      const cache = geomCache.current;
+      cache.delete(layoutSig);
+      cache.set(layoutSig, { layout, pinned, state });
+      if (cache.size > 4) cache.delete(cache.keys().next().value as string);
+    }
     return state.geoms;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on structure + positions by design
   }, [layoutSig, displayPos]);
+  const edgeViewsRef = useRef<EdgeView[]>([]);
   const edgeViews = useMemo(
-    () =>
-      buildEdgeViews(graph.edges, geoms, {
-        dimmed,
-        focusEdges: focus?.edges ?? null,
-        selEdgeKey,
-        hoverEdge,
-        fadeInOf: (key) => (animating && animRef.current?.newEdges.has(key) ? eased : 1),
-      }),
-    [graph.edges, geoms, dimmed, focus, selEdgeKey, hoverEdge, animating, eased, animRef],
+    () => {
+      edgeViewsRef.current = buildEdgeViews(
+        graph.edges,
+        geoms,
+        {
+          dimmed,
+          focusEdges: focus?.edges ?? null,
+          selEdgeKey,
+          fadeInOf: (key) => (animating && animRef.current?.newEdges.has(key) ? eased : 1),
+        },
+        edgeViewsRef.current,
+      );
+      return edgeViewsRef.current;
+    },
+    [graph.edges, geoms, dimmed, focus, selEdgeKey, animating, eased, animRef],
   );
 
   const teams = useMemo(() => topology?.teams ?? [], [topology?.teams]);
@@ -409,34 +444,138 @@ export function LayeredMap() {
   const lod: MapLod = view?.lod ?? 'canvas';
 
   // ---- canvas drawing ----
+  // Two canvases: the map (frames, edges, overview nodes) and an overlay for
+  // the hovered and selected edge or node. Pointer handlers draw the overlay
+  // directly from refs, so a hover neither renders React nor redraws the map.
   const paletteRef = useRef<MapPalette | null>(null);
-  const sceneRef = useRef<Omit<CanvasScene, 'labels'> | null>(null);
+  const sceneRef = useRef<Omit<CanvasScene, 'labels' | 'moving'> | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const overlayShownRef = useRef(false);
   const hoverNodeRef = useRef<string | null>(null);
+  const hoverEdgeRef = useRef<string | null>(null);
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
-  sceneRef.current = {
-    drawNodes: lod === 'canvas',
-    frameTitles: lod === 'canvas',
-    nodes: graph.nodes,
-    posOf: displayPos,
-    dimmed,
-    selKey: selNodeKey,
-    hoverKey: lod === 'canvas' ? hoverNodeRef.current : null,
-    frames: frameViews,
-    edges: edgeViews,
-  };
+  const meshRef = useRef<MeshCache | null>(null);
+  const movingRef = useRef(false);
+  const highlightRef = useRef({ selEdgeKey, selNodeKey, nodeById });
+  // What the canvases draw is set when a render commits, not while it runs.
+  // Card mounting renders as a transition, in slices across several frames;
+  // a camera frame drawn in between must still see the committed scene, or
+  // the canvas would drop its nodes before their cards exist.
+  useLayoutEffect(() => {
+    sceneRef.current = {
+      drawNodes: lod === 'canvas',
+      frameTitles: lod === 'canvas',
+      nodes: graph.nodes,
+      posOf: displayPos,
+      dimmed,
+      frames: frameViews,
+      edges: edgeViews,
+      geomKey: geoms,
+    };
+    highlightRef.current = { selEdgeKey, selNodeKey, nodeById };
+  });
 
+  const drawOverlayNow = useCallback(() => {
+    const cv = overlayRef.current;
+    const scene = sceneRef.current;
+    if (!cv || !scene) return;
+    const hide = (): void => {
+      if (!overlayShownRef.current) return;
+      overlayShownRef.current = false;
+      cv.style.display = 'none';
+    };
+    const hi = highlightRef.current;
+    // node highlights are the canvas's job only while it draws the nodes
+    const hoverNodeKey = scene.drawNodes ? hoverNodeRef.current : null;
+    const selNodeKey = scene.drawNodes ? hi.selNodeKey : null;
+    if (!hoverEdgeRef.current && !hi.selEdgeKey && !hoverNodeKey && !selNodeKey) return hide();
+    const ctx = cv.getContext('2d');
+    if (!ctx) return;
+    const { w, h, dpr } = sizeRef.current;
+    // the backing store is only allocated once something is highlighted
+    const pw = Math.max(1, Math.round(w * dpr));
+    const ph = Math.max(1, Math.round(h * dpr));
+    if (cv.width !== pw || cv.height !== ph) {
+      cv.width = pw;
+      cv.height = ph;
+    }
+    paletteRef.current ??= readPalette();
+    const edgeOf = (key: string | null): EdgeView | null =>
+      key ? (scene.edges.find((v) => v.e.key === key) ?? null) : null;
+    const tf = tfRef.current;
+    const drawn = drawOverlay(
+      ctx,
+      {
+        hoverEdge: edgeOf(hoverEdgeRef.current),
+        selEdge: edgeOf(hi.selEdgeKey),
+        hoverNode: (hoverNodeKey && hi.nodeById.get(hoverNodeKey)) || null,
+        selNode: (selNodeKey && hi.nodeById.get(selNodeKey)) || null,
+        posOf: scene.posOf,
+        dimmed: scene.dimmed,
+      },
+      tf,
+      w,
+      h,
+      dpr,
+      paletteRef.current,
+      canvasLabelsOn(tf.k, labelMinKRef.current, isolatedRef.current),
+    );
+    if (!drawn) return hide();
+    if (!overlayShownRef.current) {
+      overlayShownRef.current = true;
+      cv.style.display = 'block';
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reads refs only
+  }, []);
+
+  // What the map canvas last drew, so a render that changed nothing it shows
+  // (a new cull window, a drag starting) does not repaint thousands of edges.
+  const drawnRef = useRef<{
+    scene: Omit<CanvasScene, 'labels' | 'moving'>;
+    tf: Transform;
+    w: number;
+    h: number;
+    dpr: number;
+    pal: MapPalette;
+    labels: boolean;
+    meshStale: boolean;
+  } | null>(null);
   const drawNow = useCallback(() => {
     const cv = surfaceRef.current;
     const ctx = cv?.getContext('2d');
     const scene = sceneRef.current;
     if (!cv || !ctx || !scene) return;
-    paletteRef.current ??= readPalette();
+    const pal = (paletteRef.current ??= readPalette());
     const tf = tfRef.current;
     const { w, h, dpr } = sizeRef.current;
     const labels = canvasLabelsOn(tf.k, labelMinKRef.current, isolatedRef.current);
-    drawMap(ctx, { ...scene, hoverKey: scene.drawNodes ? hoverNodeRef.current : null, labels }, tf, w, h, dpr, paletteRef.current);
+    const moving = movingRef.current;
+    const d = drawnRef.current;
+    const unchanged =
+      d != null &&
+      d.tf === tf &&
+      d.w === w &&
+      d.h === h &&
+      d.dpr === dpr &&
+      d.pal === pal &&
+      d.labels === labels &&
+      d.scene.nodes === scene.nodes &&
+      d.scene.edges === scene.edges &&
+      d.scene.geomKey === scene.geomKey &&
+      d.scene.frames === scene.frames &&
+      d.scene.posOf === scene.posOf &&
+      d.scene.dimmed === scene.dimmed &&
+      d.scene.drawNodes === scene.drawNodes &&
+      d.scene.frameTitles === scene.frameTitles &&
+      // a mesh drawn from a drifted bitmap is redrawn once the camera rests
+      !(d.meshStale && !moving);
+    if (!unchanged) {
+      const res = drawMap(ctx, { ...scene, labels, moving }, tf, w, h, dpr, pal, (meshRef.current ??= newMeshCache()));
+      drawnRef.current = { scene, tf, w, h, dpr, pal, labels, meshStale: res.meshStale };
+    }
+    drawOverlayNow();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reads refs only
-  }, []);
+  }, [drawOverlayNow]);
   const labelMinKRef = useRef(labelMinK);
   labelMinKRef.current = labelMinK;
   const isolatedRef = useRef(isolated);
@@ -480,6 +619,7 @@ export function LayeredMap() {
     cv.width = Math.max(1, Math.round(viewport.w * dpr));
     cv.height = Math.max(1, Math.round(viewport.h * dpr));
     sizeRef.current = { w: viewport.w, h: viewport.h, dpr };
+    drawnRef.current = null; // setting the size cleared the canvas
     drawNow();
   }, [viewport, dpr, drawNow]);
 
@@ -491,12 +631,18 @@ export function LayeredMap() {
 
   // Web fonts arriving late would leave canvas text in the fallback face.
   useEffect(() => {
-    void document.fonts?.ready.then(() => scheduleDraw());
+    void document.fonts?.ready.then(() => {
+      resetCanvasTextCache();
+      drawnRef.current = null;
+      scheduleDraw();
+    });
   }, [scheduleDraw]);
 
   // The camera subscriber: move the DOM world and the backdrop, repaint the
   // canvas on the next frame, and re-render React only on a LOD/window change.
   const nodeCount = graph.nodes.length;
+  const settleRef = useRef(0);
+  useEffect(() => () => window.clearTimeout(settleRef.current), []);
   useEffect(() => {
     const onCamera = (tf: Transform): void => {
       const world = worldRef.current;
@@ -506,6 +652,12 @@ export function LayeredMap() {
         const tile = dotTilePx(tf.k);
         applyBackdrop(el, tf, tile, dotAlphaScale(tile / DOT_PITCH));
       }
+      movingRef.current = true;
+      window.clearTimeout(settleRef.current);
+      settleRef.current = window.setTimeout(() => {
+        movingRef.current = false;
+        scheduleDraw();
+      }, SETTLE_MS);
       scheduleDraw();
 
       const cur = viewRef.current;
@@ -528,7 +680,12 @@ export function LayeredMap() {
         canvasLabels,
       };
       viewRef.current = next;
-      setView(next);
+      // Mounting the cards for a new window is not urgent: as a transition
+      // React renders them in slices between frames, so a zoom that brings
+      // two hundred cards on screen does not stall the camera. Dropping to
+      // the canvas only unmounts, and happens at once.
+      if (nextLod === 'canvas') setView(next);
+      else startTransition(() => setView(next));
     };
     onCamera(tfRef.current);
     return subscribe(onCamera);
@@ -637,6 +794,7 @@ export function LayeredMap() {
       },
     },
   };
+  const drawerToggleMerge = useCallback((teamId: number) => handlersRef.current?.frame.merge(teamId), []);
   const cardHandlers = useMemo<CardHandlers>(
     () => ({
       click: (e, n) => handlersRef.current?.card.click(e, n),
@@ -667,16 +825,18 @@ export function LayeredMap() {
     if (!ev) return;
     const hit = onBackground(ev.target) ? pick(ev.x, ev.y) : null;
     const nodeKey = hit?.kind === 'node' ? hit.node.key : null;
-    if (hoverNodeRef.current !== nodeKey) {
-      hoverNodeRef.current = nodeKey;
-      scheduleDraw();
-    }
     const edgeKey = hit?.kind === 'edge' ? hit.key : null;
+    if (hoverNodeRef.current !== nodeKey || hoverEdgeRef.current !== edgeKey) {
+      hoverNodeRef.current = nodeKey;
+      hoverEdgeRef.current = edgeKey;
+      drawOverlayNow();
+    }
+    // only the hovered edge's label subscribes to this
     if (useStore.getState().hoverEdge !== edgeKey) setHoverEdge(edgeKey);
     setHoverClass(hit != null);
   };
   const onMouseMove = (e: ReactMouseEvent): void => {
-    if (dragging || wasNodeDrag()) return;
+    if (isDragging() || wasNodeDrag()) return;
     hoverEvRef.current = { x: e.clientX, y: e.clientY, target: e.target };
     if (hoverRafRef.current) return;
     hoverRafRef.current = requestAnimationFrame(() => {
@@ -686,9 +846,10 @@ export function LayeredMap() {
   };
   const clearHover = (): void => {
     hoverEvRef.current = null;
-    if (hoverNodeRef.current) {
+    if (hoverNodeRef.current || hoverEdgeRef.current) {
       hoverNodeRef.current = null;
-      scheduleDraw();
+      hoverEdgeRef.current = null;
+      drawOverlayNow();
     }
     if (useStore.getState().hoverEdge) setHoverEdge(null);
     setHoverClass(false);
@@ -780,12 +941,13 @@ export function LayeredMap() {
         : [],
     [showCards, rect, frameViews, draggedFrame],
   );
-  // Metric labels: unhealthy, selected or hovered edges in the window at card
-  // zoom; only the selected and hovered ones at overview zoom.
+  // Standing metric labels: unhealthy and selected edges in the window at card
+  // zoom; only the selected one at overview zoom. The hovered edge's label is
+  // HoverEdgeLabel.
   const labelEdges = useMemo(
     () =>
       edgeViews.filter((v) => {
-        if (v.isSel || v.isHov) return true;
+        if (v.isSel) return true;
         if (!showCards || !rect || v.dim || v.e.status === 'ok') return false;
         return v.mid.x >= rect.x0 && v.mid.x <= rect.x1 && v.mid.y >= rect.y0 && v.mid.y <= rect.y1;
       }),
@@ -812,14 +974,11 @@ export function LayeredMap() {
       changed = true;
     }
     if (changed) setCardSizeVersion((v) => v + 1);
-  });
+  }, [view, lod, graph.nodes, selNodeKey, focusedCard]);
 
   // Labels sit on a free part of their edge, never over a card or a team
   // title bar; one with no free spot hides unless selected or hovered.
-  const labelSpots = useMemo(() => {
-    const shown = labelEdges.filter(wantsLabel);
-    if (!shown.length) return new Map<string, { x: number; y: number }>();
-    const area = rect ?? visibleWorldRect(tfRef.current, viewport.w, viewport.h, CULL_PAD_PX);
+  const labelObstacles = (area: WorldRect): WorldRect[] => {
     const obstacles: WorldRect[] = [];
     for (const n of graph.nodes) {
       const p = displayPos(n.key);
@@ -832,6 +991,12 @@ export function LayeredMap() {
       const bar = { x0: f.x, y0: f.y, x1: f.x + f.w, y1: f.y + FRAME_TITLE_H };
       if (rectsOverlap(area, bar)) obstacles.push(bar);
     }
+    return obstacles;
+  };
+  const labelSpots = useMemo(() => {
+    const shown = labelEdges.filter(wantsLabel);
+    if (!shown.length) return new Map<string, { x: number; y: number }>();
+    const area = rect ?? visibleWorldRect(tfRef.current, viewport.w, viewport.h, CULL_PAD_PX);
     // critical edges claim free spots before degraded ones
     const rank = (v: EdgeView): number => (v.e.status === 'crit' ? 0 : 1);
     return placeEdgeLabels(
@@ -840,12 +1005,24 @@ export function LayeredMap() {
         curve: v.curve,
         w: labelBoxWidth(edgeLabelText(v)),
         h: LABEL_BOX_H,
-        force: v.isSel || v.isHov,
+        force: v.isSel,
       })),
-      obstacles,
+      labelObstacles(area),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tfRef/viewport only matter when rect is unset
   }, [labelEdges, rect, graph.nodes, displayPos, frameViews, cardSizeVersion]);
+  // The hovered edge's label, placed when the pointer reaches the edge.
+  const hoverSpotRef = useRef<(v: EdgeView) => { x: number; y: number } | undefined>(() => undefined);
+  hoverSpotRef.current = (v) => {
+    // At overview zoom nodes are a few pixels each and there can be thousands
+    // on screen: nothing there is worth routing a tooltip around.
+    const area = visibleWorldRect(tfRef.current, viewport.w, viewport.h, 0);
+    return placeEdgeLabels(
+      [{ key: v.e.key, curve: v.curve, w: labelBoxWidth(edgeLabelText(v, true)), h: LABEL_BOX_H, force: true }],
+      lod === 'cards' ? labelObstacles(area) : [],
+    ).get(v.e.key);
+  };
+  const hoverSpot = useCallback((v: EdgeView) => hoverSpotRef.current(v), []);
 
   const cards: JSX.Element[] = [];
   if (showCards && rect) {
@@ -920,13 +1097,15 @@ export function LayeredMap() {
         onMouseLeave={clearHover}
         onClick={onClick}
         onDoubleClick={onDoubleClick}
-        className={[styles.canvas, dragging ? styles.canvasDragging : ''].filter(Boolean).join(' ')}
+        className={styles.canvas}
       >
         {/* packet glow sits below the map canvas, so edges and nodes draw over
             it and packets read as "absorbed" arriving at a service */}
         <PacketCanvas edges={edgeViews} tfRef={tfRef} />
 
         <canvas ref={surfaceRef} className={styles.surface} role="img" aria-label={summary} />
+        {/* hover and selection highlights; hidden while it has nothing to show */}
+        <canvas ref={overlayRef} className={styles.surface} style={{ display: 'none' }} aria-hidden />
 
         <div ref={worldRef} className={styles.world} onFocus={onWorldFocus} onBlur={onWorldBlur}>
           {/* frame title bars stay DOM at card zoom: they carry drag and merge */}
@@ -964,6 +1143,7 @@ export function LayeredMap() {
             ))}
 
           <EdgeLabelLayer edges={labelEdges} spots={labelSpots} />
+          <HoverEdgeLabel edges={edgeViews} spots={labelSpots} spotFor={hoverSpot} />
         </div>
 
         <TeamChips
@@ -973,6 +1153,9 @@ export function LayeredMap() {
           showMerge={teamGrouping}
           onToggleMergeAll={() => {
             fitPendingRef.current = true;
+            // The fit that follows picks the level of detail. Cards mounted for
+            // the new graph at the old camera would be thrown away a frame later.
+            setView((v) => (v && v.lod === 'cards' ? { ...v, lod: 'canvas' } : v));
             setMergedTeams(allMerged ? [] : teams.map((t) => t.id));
           }}
           onFilter={setTeamFilter}
@@ -997,7 +1180,7 @@ export function LayeredMap() {
         />
       </div>
 
-      <MapDrawer graph={graph} onToggleMerge={toggleMerge} allowIsolate />
+      <MapDrawer graph={graph} onToggleMerge={drawerToggleMerge} allowIsolate />
     </div>
   );
 }

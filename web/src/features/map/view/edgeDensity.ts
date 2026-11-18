@@ -28,7 +28,7 @@ export interface EdgeStroke {
 
 /**
  * Stroke for one edge under fade `fade`. Healthy edges fade and stay one
- * screen pixel wide (unless selected, hovered or on the focus tree);
+ * screen pixel wide (unless selected or on the focus tree);
  * degraded and critical ones gain strength by as much, so the thinner the
  * healthy mesh gets the more the unhealthy edges stand out. At fade 1 (a
  * small fleet) every edge draws exactly as built.
@@ -39,13 +39,12 @@ export function edgeStroke(
     arrowOp: number;
     dim: boolean;
     isSel: boolean;
-    isHov: boolean;
     focused?: boolean;
     e: { status: string };
   },
   fade: number,
 ): EdgeStroke {
-  if (fade >= 1 || v.isSel || v.isHov || v.focused) return { op: v.op, arrowOp: v.arrowOp, minPx: 0.6, maxPx: null };
+  if (fade >= 1 || v.isSel || v.focused) return { op: v.op, arrowOp: v.arrowOp, minPx: 0.6, maxPx: null };
   if (v.e.status === 'ok') return { op: v.op * fade, arrowOp: v.arrowOp * fade, minPx: 0.6, maxPx: 1 };
   if (v.dim) return { op: v.op, arrowOp: v.arrowOp, minPx: 0.6, maxPx: null };
   const boost = 1 - fade;

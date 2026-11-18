@@ -48,6 +48,10 @@
   /* its own compositor layer: a pan only moves the layer, it does not repaint
      every mounted card */
   will-change: transform;
+  /* The canvas toggles its cursor (pointer over an edge, grabbing in a pan).
+     cursor is inherited, so without a value here each toggle would restyle
+     every mounted card. */
+  cursor: grab;
 }
 
 .canvas:focus-visible {

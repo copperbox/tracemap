@@ -25,7 +25,7 @@ export function useGraphTransition(
   const [animT, setAnimT] = useState(1);
   const animRef = useRef<GraphTransition | null>(null);
   const animRafRef = useRef(0);
-  const prevSnapRef = useRef<{ sig: string; snap: GraphSnapshot } | null>(null);
+  const prevSnapRef = useRef<{ sig: string; graph: Graph; pos: (key: string) => Pos | undefined } | null>(null);
 
   const finishAnim = useCallback(() => {
     cancelAnimationFrame(animRafRef.current);
@@ -65,31 +65,47 @@ export function useGraphTransition(
     [posOf, animT],
   );
 
-  // Snapshot what is on screen every render; when the structural signature
-  // changes, diff the previous snapshot against the new targets and animate.
+  // Remember what is on screen every render; when the structural signature
+  // changes, diff that against the new targets and animate. Only references
+  // are kept per render (the previous graph and its position function): the
+  // position map and edge-key set for thousands of nodes are built when a
+  // structure change actually needs them.
   useLayoutEffect(() => {
-    const shown = new Map<string, Pos>();
-    for (const n of graph.nodes) {
-      const p = displayPos(n.key);
-      if (p) shown.set(n.key, p);
-    }
-    const edgeKeys = new Set(graph.edges.map((e) => e.key));
     const prev = prevSnapRef.current;
-    prevSnapRef.current = { sig: layoutSig, snap: { nodes: graph.nodes, pos: shown, edgeKeys } };
-    if (prev && prev.sig !== layoutSig && prev.snap.nodes.length && graph.nodes.length) {
+    prevSnapRef.current = { sig: layoutSig, graph, pos: displayPos };
+    if (prev && prev.sig !== layoutSig && prev.graph.nodes.length && graph.nodes.length) {
+      // a large fleet always snaps, so there is nothing to diff
+      if (graph.nodes.length > ANIMATE_MAX_NODES) {
+        finishAnim();
+        return;
+      }
+      const shown = new Map<string, Pos>();
+      for (const n of prev.graph.nodes) {
+        const p = prev.pos(n.key);
+        if (p) shown.set(n.key, p);
+      }
       const targets = new Map<string, Pos>();
       for (const n of graph.nodes) {
         const p = posOf(n.key);
         if (p) targets.set(n.key, p);
       }
-      const tr = computeGraphTransition(prev.snap, { nodes: graph.nodes, pos: targets, edgeKeys });
+      const snap: GraphSnapshot = {
+        nodes: prev.graph.nodes,
+        pos: shown,
+        edgeKeys: new Set(prev.graph.edges.map((e) => e.key)),
+      };
+      const tr = computeGraphTransition(snap, {
+        nodes: graph.nodes,
+        pos: targets,
+        edgeKeys: new Set(graph.edges.map((e) => e.key)),
+      });
       // A structural glide only reads as a merge/split for an incremental change.
       // A wholesale swap -- entering/leaving isolation, or merge-all -- replaces
       // most of the graph at once: animating it is both disorienting and janky
       // (≈100 cards mounting while every card re-renders each of ~25 frames), so
       // snap straight to the target instead. Small team toggles still animate.
       const churn = tr.appear.size + tr.ghosts.length;
-      if (churn > WHOLESALE_CHURN || graph.nodes.length > ANIMATE_MAX_NODES) {
+      if (churn > WHOLESALE_CHURN) {
         finishAnim();
       } else if (tr.from.size || tr.appear.size || tr.ghosts.length) {
         startAnim(tr);

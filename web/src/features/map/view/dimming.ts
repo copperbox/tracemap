@@ -15,7 +15,7 @@ export function buildDimmer(
 ): (key: string) => boolean {
   const nodeById = new Map(graph.nodes.map((n) => [n.key, n]));
   const q = opts.query.trim().toLowerCase();
-  return (key: string): boolean => {
+  const decide = (key: string): boolean => {
     const n = nodeById.get(key);
     if (!n) return true;
     if (opts.focus && !opts.focus.nodes.has(key)) return true;
@@ -30,5 +30,18 @@ export function buildDimmer(
     // foreign team filter and under "Unassigned" (a team is never unassigned).
     if (!matchesTeamFilter(n.teamId, opts.teamFilter)) return true;
     return false;
+  };
+  // With nothing to dim by, every known node is lit.
+  if (!opts.focus && !q && opts.teamFilter === 'all') return (key) => !nodeById.has(key);
+  // Each edge asks about both of its ends on every rebuild, so a node's answer
+  // is kept (with a search active it costs a string build and a scan).
+  const memo = new Map<string, boolean>();
+  return (key: string): boolean => {
+    let d = memo.get(key);
+    if (d === undefined) {
+      d = decide(key);
+      memo.set(key, d);
+    }
+    return d;
   };
 }

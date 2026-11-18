@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, type ReactNode } from 'react';
 import type { TopologyEdge, TopologyService } from '../../api/types';
 import { HoverSync } from '../../components/hoverSync';
 import { TopErrors } from '../../components/TopErrors';
@@ -21,7 +21,11 @@ import { useSparklines } from './drawer/useSparklines';
 import { useTopErrors } from './drawer/useTopErrors';
 import styles from './MapDrawer.module.css';
 
-export function MapDrawer({
+/**
+ * Memoized: the map re-renders on every cull-window change while panning, and
+ * the drawer reads its own selection from the store.
+ */
+export const MapDrawer = memo(function MapDrawer({
   graph,
   onToggleMerge,
   allowIsolate = false,
@@ -68,7 +72,10 @@ export function MapDrawer({
     if (selection.kind === 'group' && !graph.nodes.some((n) => n.key === groupKey(selection.teamId))) select(null);
   }, [selection, graph, topology, select]);
 
-  const svcById = new Map<string, TopologyService>((topology?.services ?? []).map((s) => [s.id, s]));
+  const svcById = useMemo(
+    () => new Map<string, TopologyService>((topology?.services ?? []).map((s) => [s.id, s])),
+    [topology],
+  );
 
   const close = () => select(null);
 
@@ -304,4 +311,4 @@ export function MapDrawer({
   }
 
   return <div className={`${styles.drawer} ${open ? styles.open : ''}`}>{content}</div>;
-}
+});

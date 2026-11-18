@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { FADE_END, FADE_FLOOR, FADE_START, edgeStroke, healthyEdgeFade } from './edgeDensity';
 
-const view = (status: string, over: Partial<{ dim: boolean; isSel: boolean; isHov: boolean }> = {}) => ({
+const view = (status: string, over: Partial<{ dim: boolean; isSel: boolean }> = {}) => ({
   op: 0.5,
   arrowOp: 0.6,
   dim: false,
   isSel: false,
-  isHov: false,
   e: { status },
   ...over,
 });
@@ -45,9 +44,8 @@ describe('edgeStroke', () => {
     expect(bad.op).toBeCloseTo(0.95);
     expect(bad.minPx).toBeGreaterThan(1.1);
   });
-  it('never fades the selected or hovered edge, nor lifts a dimmed one', () => {
+  it('never fades the selected edge, nor lifts a dimmed one', () => {
     expect(edgeStroke(view('ok', { isSel: true }), 0.1).op).toBe(0.5);
-    expect(edgeStroke(view('ok', { isHov: true }), 0.1).op).toBe(0.5);
     expect(edgeStroke(view('crit', { dim: true }), 0.1).op).toBe(0.5);
   });
   it('keeps edges on the focus tree at full strength', () => {

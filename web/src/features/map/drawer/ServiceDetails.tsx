@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { Topology, TopologyEdge, TopologyService } from '../../../api/types';
 import { HoverSync } from '../../../components/hoverSync';
@@ -47,9 +48,12 @@ export function ServiceDetails({
 
   const m = s.metrics;
   const slo = sloView(s.sloTarget, s.sloAttain);
-  const { callers, dependencies } = serviceRelations(topology, s.id);
-  const svcById = new Map<string, TopologyService>(topology.services.map((x) => [x.id, x]));
-  const teamName = new Map<number, string>(topology.teams.map((t) => [t.id, t.name]));
+  const { callers, dependencies } = useMemo(() => serviceRelations(topology, s.id), [topology, s.id]);
+  const svcById = useMemo(
+    () => new Map<string, TopologyService>(topology.services.map((x) => [x.id, x])),
+    [topology.services],
+  );
+  const teamName = useMemo(() => new Map<number, string>(topology.teams.map((t) => [t.id, t.name])), [topology.teams]);
 
   const depRow = (e: TopologyEdge, otherId: string) => (
     <DepRow

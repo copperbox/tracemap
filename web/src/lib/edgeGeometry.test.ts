@@ -52,18 +52,15 @@ describe('computeEdgeGeometries', () => {
     const g = out.get('e');
     expect(g).toBeDefined();
     // exits a's bottom (y=50), enters b's top (y=300)
-    expect(g?.d).toMatch(/^M 50 50 C /);
-    expect(g?.d).toMatch(/ 50 300$/);
+    expect(g?.curve.a).toEqual({ x: 50, y: 50 });
+    expect(g?.curve.b).toEqual({ x: 50, y: 300 });
   });
 
   it('points the arrowhead into the dependent for backward (upward) edges', () => {
     const out = computeEdgeGeometries([{ key: 'e', fromKey: 'b', toKey: 'a' }], rectOf);
     const g = out.get('e');
     // enters a's bottom edge: tip at y=50, base 8px below (outside the node)
-    const pts = (g?.arrow ?? '').split(' ').map((p) => p.split(',').map(Number));
-    expect(pts[0][1]).toBe(50);
-    expect(pts[1][1]).toBe(58);
-    expect(pts[2][1]).toBe(58);
+    expect(g?.arrowPts.map((p) => p.y)).toEqual([50, 58, 58]);
   });
 
   it('spreads anchors that share a node side instead of stacking them', () => {
@@ -75,10 +72,7 @@ describe('computeEdgeGeometries', () => {
       ],
       rectOf,
     );
-    const entryX = (key: string): number => {
-      const m = (out.get(key)?.d ?? '').match(/ (\S+) (\S+)$/) as RegExpMatchArray;
-      return Number(m[1]);
-    };
+    const entryX = (key: string): number => out.get(key)?.curve.b.x ?? NaN;
     const xs = [entryX('e1'), entryX('e2'), entryX('e3')];
     expect(new Set(xs).size).toBe(3);
     // ordered by where the far endpoint sits: a (x=0), c (x=150), d (x=300)
@@ -110,11 +104,10 @@ describe('computeEdgeGeometries', () => {
     expect(fwd.get('e2')).toEqual(rev.get('e2'));
   });
 
-  it('exposes the arrowhead as points matching the polygon string', () => {
+  it('exposes the arrowhead as points, tip first', () => {
     const g = computeEdgeGeometries([{ key: 'a>b', fromKey: 'a', toKey: 'b' }], rectOf).get('a>b');
-    const fromString = (g?.arrow ?? '').split(' ').map((p) => p.split(',').map(Number));
-    expect(g?.arrowPts.map((p) => [p.x, p.y])).toEqual(fromString);
-    // tip first, on the curve's end point
+    expect(g?.arrowPts).toHaveLength(3);
+    // on the curve's end point
     expect(g?.arrowPts[0]).toEqual(g?.curve.b);
   });
 
@@ -147,7 +140,7 @@ describe('updateEdgeGeometryState', () => {
     const moved = new Set(['n22', 'n33']);
     const inc = updateEdgeGeometryState(prev, edges, (k) => movedRects[k], moved);
     const full = computeEdgeGeometryState(edges, (k) => movedRects[k]);
-    for (const e of edges) expect(inc.geoms.get(e.key)?.d).toBe(full.geoms.get(e.key)?.d);
+    for (const e of edges) expect(inc.geoms.get(e.key)).toEqual(full.geoms.get(e.key));
   });
 
   it('keeps the geometry objects of edges far from the move', () => {

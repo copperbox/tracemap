@@ -23,7 +23,6 @@
   letter-spacing: .03em;
   cursor: pointer;
   white-space: nowrap;
-  backdrop-filter: blur(6px);
 }
 
 .triggerActive {
@@ -41,7 +40,6 @@
   background: var(--panel2);
   font: 500 12px 'JetBrains Mono', monospace;
   letter-spacing: 0;
-  backdrop-filter: none;
 }
 
 .label {

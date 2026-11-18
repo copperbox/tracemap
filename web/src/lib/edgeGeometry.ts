@@ -42,13 +42,9 @@ export interface CubicCurve {
 }
 
 export interface EdgeGeometry {
-  /** bezier path running dependency -> dependent (matches dash/packet flow) */
-  d: string;
-  /** the same bezier as control points, for evaluating positions along it (packet canvas) */
+  /** bezier running dependency -> dependent (the way packets flow), as control points */
   curve: CubicCurve;
-  /** arrowhead polygon at the entry anchor, pointing into the dependent */
-  arrow: string;
-  /** the same arrowhead as points (tip first), for canvas drawing */
+  /** arrowhead at the entry anchor, pointing into the dependent (tip first) */
   arrowPts: [Pt, Pt, Pt];
   /** point on the curve at t=0.5, for the metric label */
   mid: Pt;
@@ -169,10 +165,10 @@ function buildGeometry(key: string, s: SidePick, fractions: Map<string, number>)
   const uy = nb.x;
   const l = { x: bx - ux * ARROW_HALF_W, y: by - uy * ARROW_HALF_W };
   const r = { x: bx + ux * ARROW_HALF_W, y: by + uy * ARROW_HALF_W };
+  // Points only. The map draws on a canvas, and formatting an SVG path and a
+  // polygon string per edge was a quarter of this function for nothing.
   return {
-    d: `M ${a.x} ${a.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${b.x} ${b.y}`,
     curve: { a, c1, c2, b },
-    arrow: `${b.x},${b.y} ${l.x},${l.y} ${r.x},${r.y}`,
     arrowPts: [b, l, r],
     mid: {
       x: (a.x + 3 * c1.x + 3 * c2.x + b.x) / 8,

@@ -209,6 +209,60 @@ describe('buildGraph', () => {
     });
   });
 
+  describe('rebuilding on an unchanged structure', () => {
+    // every service and edge gets new numbers, as a live frame does
+    const frame = (n: number, over: { status?: 'ok' | 'warn' | 'crit' } = {}): Topology =>
+      topo(
+        services.map((s, i) => ({ ...s, status: i === 2 && over.status ? over.status : s.status, metrics: { ...s.metrics, rps: s.metrics.rps + n } })),
+        edges.map((e, i) => ({ ...e, status: i === 1 && over.status ? over.status : e.status, metrics: { ...e.metrics, rps: e.metrics.rps + n } })),
+      );
+    const shape = (g: ReturnType<typeof buildGraph>) => ({ nodes: g.nodes, edges: g.edges });
+
+    it.each([[[]], [[1]], [[1, 2]]])('matches a build from scratch with merged teams %j', (mergedTeams) => {
+      let g = buildGraph(frame(0), { mergedTeams });
+      for (const [n, status] of [[1, 'warn'], [2, 'crit'], [3, 'ok']] as const) {
+        g = buildGraph(frame(n, { status }), { mergedTeams, prev: g });
+        expect(shape(g)).toEqual(shape(buildGraph(frame(n, { status }), { mergedTeams })));
+      }
+    });
+
+    it('keeps the node-key lookup, which still resolves folded and unknown services', () => {
+      const g1 = buildGraph(frame(0), { mergedTeams: [1] });
+      const g2 = buildGraph(frame(1), { mergedTeams: [1], prev: g1 });
+      expect(g2).not.toBe(g1);
+      expect(g2.nodeKeyOf).toBe(g1.nodeKeyOf);
+      expect(g2.nodeKeyOf('orders-svc')).toBe(groupKey(1));
+      expect(g2.nodeKeyOf('catalog-svc')).toBe('catalog-svc');
+      expect(g2.nodeKeyOf('never-seen')).toBe('never-seen');
+    });
+
+    it.each([
+      ['a service appears', (t: Topology): Topology => ({ ...t, services: [...t.services, svc('search-svc', 2)], edges: [...t.edges, edge('catalog-svc', 'search-svc')] })],
+      ['a service disappears', (t: Topology): Topology => ({ ...t, services: t.services.slice(0, 3), edges: t.edges.filter((e) => e.target !== 'api.stripe.com') })],
+      ['a service changes team', (t: Topology): Topology => ({ ...t, services: t.services.map((x) => (x.id === 'orders-svc' ? { ...x, teamId: 2 } : x)) })],
+      ['an edge appears', (t: Topology): Topology => ({ ...t, edges: [...t.edges, edge('catalog-svc', 'api.stripe.com')] })],
+      ['an edge is rerouted', (t: Topology): Topology => ({ ...t, edges: t.edges.map((e, i) => (i === 3 ? { ...e, target: 'api.stripe.com' } : e)) })],
+      ['a team is renamed', (t: Topology): Topology => ({ ...t, teams: [{ id: 1, name: 'Payments' }, t.teams[1]] })],
+      ['a team is deleted', (t: Topology): Topology => ({ ...t, teams: [t.teams[1]] })],
+    ])('starts over when %s', (_name, change) => {
+      for (const mergedTeams of [[], [1], [1, 2]]) {
+        const g1 = buildGraph(frame(0), { mergedTeams });
+        const g2 = buildGraph(frame(1), { mergedTeams, prev: g1 });
+        const next = change(frame(2));
+        expect(shape(buildGraph(next, { mergedTeams, prev: g2 }))).toEqual(shape(buildGraph(next, { mergedTeams })));
+      }
+    });
+
+    it('starts over when the merge state or team grouping changes', () => {
+      const g1 = buildGraph(frame(0), { mergedTeams: [1] });
+      const g2 = buildGraph(frame(1), { mergedTeams: [1], prev: g1 });
+      expect(shape(buildGraph(frame(2), { mergedTeams: [2], prev: g2 }))).toEqual(shape(buildGraph(frame(2), { mergedTeams: [2] })));
+      const flat = buildGraph(frame(2), { mergedTeams: [1], teamGrouping: false, prev: g2 });
+      expect(shape(flat)).toEqual(shape(buildGraph(frame(2), { mergedTeams: [1], teamGrouping: false })));
+      expect(flat.nodeKeyOf('orders-svc')).toBe('orders-svc');
+    });
+  });
+
   it('does not keep the previous graph reachable from the new one', async () => {
     // the live feed rebuilds every frame with `prev`, so a chain here grows
     // the heap by a whole graph per frame
