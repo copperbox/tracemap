@@ -37,6 +37,10 @@ const quiet = {
   compactIntervalMs: 1e9,
   lastStateMs: 1e9,
   heartbeatMs: 1e9,
+  // The lag gate depends on machine speed: decoding a 20,000-span export can
+  // hold the event loop past the default limit on a slow machine, and the next
+  // export would get 429. The overload test uses the in-flight limit instead.
+  overloadLagMs: 1e9,
   edgeResolvedCapacity: 1 << 16,
   traceDecidedCapacity: 1 << 16,
   keptBudgetInitialSpans: 60_000,

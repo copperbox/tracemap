@@ -167,15 +167,14 @@ describe('genNode', () => {
   });
 
   it('writes no coarse row at or past its watermark and no 1m row in the future', () => {
-    for (const r of rows) {
-      if (r.table.endsWith('_10m')) expect(r.bucket).toBeLessThan(plan.c10);
-      if (r.table.endsWith('_1h')) expect(r.bucket).toBeLessThan(plan.c1h);
-      if (r.table.endsWith('_1d')) expect(r.bucket).toBeLessThan(plan.c1d);
-      if (r.table.endsWith('_1m')) {
-        expect(r.bucket).toBeGreaterThanOrEqual(plan.m0);
-        expect(r.bucket).toBeLessThan(plan.anchorMs);
-      }
-    }
+    // Plain comparisons: an expect() per row takes seconds over this many rows.
+    const limit: Record<string, number> = { '10m': plan.c10, '1h': plan.c1h, '1d': plan.c1d, '1m': plan.anchorMs };
+    const bad = rows.filter((r) => {
+      const tier = r.table.slice(r.table.lastIndexOf('_') + 1);
+      return !(r.bucket < limit[tier]) || (tier === '1m' && r.bucket < plan.m0);
+    });
+    expect(rows.length).toBeGreaterThan(0);
+    expect(bad.slice(0, 5)).toEqual([]);
   });
 
   it('is repeatable: the same plan writes the same rows', () => {
