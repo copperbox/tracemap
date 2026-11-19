@@ -1,73 +1,57 @@
+import { memo } from 'react';
 import type { MouseEvent } from 'react';
 import { GroupExpandIcon } from '../../components/Icon';
 import styles from './TeamFrame.module.css';
 
 /**
- * Ownership frame drawn around an unmerged team's nodes, like a box on an
- * infrastructure diagram. It renders in two layers so edges sit between
- * them: the box goes UNDER the edges (and ignores the mouse entirely), while
- * the title bar goes OVER them, so its drag/merge interactions cannot be
- * stolen by an edge's fat invisible hit path crossing the frame.
+ * Title bar of the ownership frame drawn around an unmerged team's nodes, like
+ * a box on an infrastructure diagram. The frame box itself is drawn on the map
+ * canvas under the edges; the bar is DOM above them so its drag and merge
+ * interactions cannot be stolen by an edge crossing the frame.
  */
 
-export function TeamFrameBox({
-  x,
-  y,
-  w,
-  h,
-  dim,
-}: {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  dim: boolean;
-}) {
-  return (
-    <div
-      className={`${styles.box} ${dim ? styles.dimmed : ''}`}
-      style={{ transform: `translate(${x}px, ${y}px)`, width: w, height: h }}
-    />
-  );
+/** Frame bar callbacks, one stable object for every bar (keeps memo effective). */
+export interface FrameHandlers {
+  merge: (teamId: number) => void;
+  /** Begin dragging the frame; the map moves every member node with it. */
+  dragStart: (e: MouseEvent, teamId: number) => void;
 }
 
-export function TeamFrameBar({
+export const TeamFrameBar = memo(function TeamFrameBar({
+  teamId,
   name,
   memberCount,
   x,
   y,
   w,
   dim,
-  onMerge,
-  onDragStart,
+  handlers,
 }: {
+  teamId: number;
   name: string;
   memberCount: number;
   x: number;
   y: number;
   w: number;
   dim: boolean;
-  onMerge: () => void;
-  /** Begin dragging the frame; the caller moves every member node with it. */
-  onDragStart: (e: MouseEvent) => void;
+  handlers: FrameHandlers;
 }) {
   return (
     <div
       className={`${styles.bar} ${dim ? styles.dimmed : ''} hov-btn`}
-      onMouseDown={onDragStart}
+      onMouseDown={(e) => handlers.dragStart(e, teamId)}
       title="Drag to move the whole team"
       style={{ transform: `translate(${x}px, ${y}px)`, width: w }}
     >
       <span className={styles.teamLabel}>TEAM</span>
       <span className={styles.name}>{name}</span>
       <span className={styles.count}>{memberCount}</span>
-      <span className={styles.spacer} />
       <span
         className={`${styles.mergeBtn} hov-btn`}
         title="Merge team into one node"
         onClick={(e) => {
           e.stopPropagation();
-          onMerge();
+          handlers.merge(teamId);
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -76,4 +60,4 @@ export function TeamFrameBar({
       </span>
     </div>
   );
-}
+});

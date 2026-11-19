@@ -7,6 +7,9 @@ import { ANIM_MS, easeOut } from './animation';
 // the glide and snap. Team toggles (a team's worth of services, <= ~13) stay
 // animated; isolate enter/exit and merge-all (most of the graph) snap.
 const WHOLESALE_CHURN = 24;
+// Above this many nodes every transition snaps: each animation frame re-renders
+// the map and recomputes edge geometry, which a large fleet cannot do at 60 fps.
+const ANIMATE_MAX_NODES = 1500;
 
 /**
  * ---- structural transition animation ----
@@ -22,7 +25,13 @@ export function useGraphTransition(
   const [animT, setAnimT] = useState(1);
   const animRef = useRef<GraphTransition | null>(null);
   const animRafRef = useRef(0);
-  const prevSnapRef = useRef<{ sig: string; snap: GraphSnapshot } | null>(null);
+  const prevSnapRef = useRef<{
+    sig: string;
+    graph: Graph;
+    posOf: (key: string) => Pos | undefined;
+    animT: number;
+    anim: GraphTransition | null;
+  } | null>(null);
 
   const finishAnim = useCallback(() => {
     cancelAnimationFrame(animRafRef.current);
@@ -62,24 +71,45 @@ export function useGraphTransition(
     [posOf, animT],
   );
 
-  // Snapshot what is on screen every render; when the structural signature
-  // changes, diff the previous snapshot against the new targets and animate.
+  // Remember what is on screen every render; when the structural signature
+  // changes, diff that against the new targets and animate. Only references
+  // are kept per render: the position map and edge-key set for thousands of
+  // nodes are built when a structure change actually needs them. The
+  // transition and its progress are captured too, not read from animRef
+  // later, because a finishing animation clears that ref before its last
+  // render commits.
   useLayoutEffect(() => {
-    const shown = new Map<string, Pos>();
-    for (const n of graph.nodes) {
-      const p = displayPos(n.key);
-      if (p) shown.set(n.key, p);
-    }
-    const edgeKeys = new Set(graph.edges.map((e) => e.key));
     const prev = prevSnapRef.current;
-    prevSnapRef.current = { sig: layoutSig, snap: { nodes: graph.nodes, pos: shown, edgeKeys } };
-    if (prev && prev.sig !== layoutSig && prev.snap.nodes.length && graph.nodes.length) {
+    prevSnapRef.current = { sig: layoutSig, graph, posOf, animT, anim: animRef.current };
+    if (prev && prev.sig !== layoutSig && prev.graph.nodes.length && graph.nodes.length) {
+      // a large fleet always snaps, so there is nothing to diff
+      if (graph.nodes.length > ANIMATE_MAX_NODES) {
+        finishAnim();
+        return;
+      }
+      const shown = new Map<string, Pos>();
+      const e = easeOut(prev.animT);
+      for (const n of prev.graph.nodes) {
+        const target = prev.posOf(n.key);
+        if (!target) continue;
+        const f = prev.animT < 1 ? prev.anim?.from.get(n.key) : undefined;
+        shown.set(n.key, f ? { x: f.x + (target.x - f.x) * e, y: f.y + (target.y - f.y) * e } : target);
+      }
       const targets = new Map<string, Pos>();
       for (const n of graph.nodes) {
         const p = posOf(n.key);
         if (p) targets.set(n.key, p);
       }
-      const tr = computeGraphTransition(prev.snap, { nodes: graph.nodes, pos: targets, edgeKeys });
+      const snap: GraphSnapshot = {
+        nodes: prev.graph.nodes,
+        pos: shown,
+        edgeKeys: new Set(prev.graph.edges.map((e) => e.key)),
+      };
+      const tr = computeGraphTransition(snap, {
+        nodes: graph.nodes,
+        pos: targets,
+        edgeKeys: new Set(graph.edges.map((e) => e.key)),
+      });
       // A structural glide only reads as a merge/split for an incremental change.
       // A wholesale swap -- entering/leaving isolation, or merge-all -- replaces
       // most of the graph at once: animating it is both disorienting and janky

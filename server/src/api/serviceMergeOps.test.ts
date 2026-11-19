@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-// refreshMergeAggregates pulls the pool `query`; stub it so importing the module
-// under test never touches a real database.
+// Stub the pool so importing the module under test never touches a real database.
 vi.mock('../db/pool.js', () => ({ query: vi.fn(), pool: {} }));
 
 import { mergeServices, unmergeServices, type Runner } from './serviceMergeOps.js';
@@ -66,16 +65,14 @@ describe('mergeServices', () => {
     expect(rec[0].params[3]).toBe('[]'); // edges_snapshot
   });
 
-  it('re-points and tags telemetry with the merge id', async () => {
+  it('never rewrites telemetry: history is folded in at read time through the alias', async () => {
     const { run, calls } = stubRunner({ mergeId: 7 });
     await mergeServices(run, 'canonical', 'dup');
 
-    const svc = find(calls, 'UPDATE spans SET service_id');
-    expect(svc[0].params).toEqual(['dup', 'canonical', 7]);
-    const peer = find(calls, 'UPDATE spans SET peer_service_id');
-    expect(peer[0].params).toEqual(['dup', 'canonical', 7]);
-    expect(find(calls, 'UPDATE edge_events SET source_id')[0].params).toEqual(['dup', 'canonical', 7]);
-    expect(find(calls, 'UPDATE edge_events SET target_id')[0].params).toEqual(['dup', 'canonical', 7]);
+    const touched = /(?<!DO )\b(UPDATE|DELETE FROM|INSERT INTO)\s+(\w+)/g;
+    const tables = new Set(calls.flatMap((c) => [...c.sql.matchAll(touched)].map((m) => m[2])));
+    expect([...tables].sort()).toEqual(['edges', 'service_aliases', 'service_merges', 'services']);
+    expect(calls.some((c) => /refresh_continuous_aggregate|_rollup_|kept_|spans|edge_events/.test(c.sql))).toBe(false);
   });
 
   it('aliases the duplicate and deletes its service row', async () => {
@@ -105,9 +102,9 @@ describe('unmergeServices', () => {
     );
     expect(find(calls, 'INSERT INTO edges')[0].params[0]).toBe('[]');
 
-    expect(find(calls, 'UPDATE spans SET service_id')[0].params).toEqual(['dup', 7]);
-    expect(find(calls, 'svc_merge = NULL')[0].params).toEqual(['dup', 7]);
+    // Dropping the alias is what splits the history back out; no telemetry is touched.
     expect(find(calls, 'DELETE FROM service_aliases')[0].params).toEqual(['dup']);
+    expect(calls.some((c) => /_rollup_|kept_|spans|edge_events/.test(c.sql))).toBe(false);
     expect(find(calls, 'DELETE FROM service_merges')[0].params).toEqual([7]);
   });
 
@@ -117,6 +114,6 @@ describe('unmergeServices', () => {
 
     expect(result).toBe(false);
     expect(calls).toHaveLength(1); // only the lookup ran
-    expect(find(calls, 'UPDATE spans')).toHaveLength(0);
+    expect(find(calls, 'DELETE FROM service_aliases')).toHaveLength(0);
   });
 });

@@ -13,6 +13,11 @@ import { GROUP_H, GROUP_W, layoutGraph, NODE_H, NODE_W, type LayoutResult } from
 export const FRAME_PAD = 20;
 /** Vertical room reserved at the top of a frame for its title bar. */
 export const FRAME_TITLE_H = 36;
+/**
+ * Width:height the cluster arrangement wraps toward once it outgrows a strip,
+ * about a desktop viewport, so "Fit" can show the whole fleet.
+ */
+export const LAYOUT_ASPECT = 1.6;
 
 /**
  * The cluster a node belongs to. A team gets the SAME cluster key whether it
@@ -55,7 +60,7 @@ function layoutFlatGraph(nodes: GraphNode[], edges: GraphEdge[]): LayoutResult {
   const sortedEdges = [...edges].sort((a, b) => a.key.localeCompare(b.key));
   const deps = depsWithin(keys, sortedEdges);
   const dims = new Map(nodes.map((n) => [n.key, dimsOf(n)]));
-  return layoutGraph({ keys, deps, dims });
+  return layoutGraph({ keys, deps, dims, wrapAspect: LAYOUT_ASPECT });
 }
 
 export function layoutClusteredGraph(
@@ -118,6 +123,7 @@ export function layoutClusteredGraph(
     keys: [...members.keys()].sort(),
     deps: new Map([...clusterDeps].map(([k, v]) => [k, [...v]])),
     dims,
+    wrapAspect: LAYOUT_ASPECT,
   });
 
   const pos = new Map<string, { x: number; y: number }>();

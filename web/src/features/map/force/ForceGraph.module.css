@@ -15,12 +15,13 @@
   background-size: 22px 22px;
 }
 
-.canvasDragging {
-  cursor: grabbing;
-}
-
 .canvasHover {
   cursor: pointer;
+}
+
+/* after .canvasHover: a pan that starts over a node keeps the grabbing cursor */
+.canvasDragging {
+  cursor: grabbing;
 }
 
 .surface {
@@ -42,7 +43,6 @@
   border-radius: 10px;
   border: 1px solid var(--line);
   background: var(--bg2);
-  backdrop-filter: blur(6px);
   font: 500 10.5px 'JetBrains Mono', monospace;
   color: var(--dim);
   pointer-events: none;

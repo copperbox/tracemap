@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { Topology, TopologyEdge, TopologyService } from '../../../api/types';
 import { HoverSync } from '../../../components/hoverSync';
 import { SloRing } from '../../../components/SloRing';
 import { TopErrors } from '../../../components/TopErrors';
-import { DOT, fmtCount, fmtErr, fmtMs, fmtRps, jit } from '../../../lib/format';
+import { DOT, fmtCount, fmtErr, fmtMs, fmtRps } from '../../../lib/format';
 import { sloView, stColor } from '../../../lib/status';
 import { useStore } from '../../../state/store';
 import { Card } from './Card';
@@ -41,16 +42,18 @@ export function ServiceDetails({
   footer?: ReactNode;
 }) {
   const navigate = useStore((s) => s.navigate);
-  const tick = useStore((s) => s.tick);
 
   const sparks = useSparklines('service', s.id);
   const errors = useTopErrors('service', s.id);
 
   const m = s.metrics;
   const slo = sloView(s.sloTarget, s.sloAttain);
-  const { callers, dependencies } = serviceRelations(topology, s.id);
-  const svcById = new Map<string, TopologyService>(topology.services.map((x) => [x.id, x]));
-  const teamName = new Map<number, string>(topology.teams.map((t) => [t.id, t.name]));
+  const { callers, dependencies } = useMemo(() => serviceRelations(topology, s.id), [topology, s.id]);
+  const svcById = useMemo(
+    () => new Map<string, TopologyService>(topology.services.map((x) => [x.id, x])),
+    [topology.services],
+  );
+  const teamName = useMemo(() => new Map<number, string>(topology.teams.map((t) => [t.id, t.name])), [topology.teams]);
 
   const depRow = (e: TopologyEdge, otherId: string) => (
     <DepRow
@@ -91,8 +94,8 @@ export function ServiceDetails({
 
         <KpiGrid
           items={[
-            { label: 'REQ/S', value: fmtRps(m.rps * jit(s.id, tick)) },
-            { label: 'P95', value: fmtMs(m.p95 == null ? null : m.p95 * jit(s.id + 'l', tick, 0.06)) },
+            { label: 'REQ/S', value: fmtRps(m.rps) },
+            { label: 'P95', value: fmtMs(m.p95) },
             { label: 'ERRORS', value: fmtErr(m.errPct), color: s.status === 'ok' ? 'var(--text)' : stColor(s.status) },
           ]}
         />

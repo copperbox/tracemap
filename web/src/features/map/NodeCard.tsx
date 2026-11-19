@@ -1,30 +1,53 @@
-import type { CSSProperties, MouseEvent } from 'react';
+import { memo, useMemo } from 'react';
+import type { CSSProperties, KeyboardEvent, MouseEvent } from 'react';
 import type { GraphNode } from '../../lib/grouping';
 import { GROUP_W, NODE_W } from '../../lib/layout';
-import { fmtErr, fmtMs, fmtRps, jit, DOT } from '../../lib/format';
+import { fmtErr, fmtMs, fmtRps, DOT } from '../../lib/format';
 import { GroupExpandIcon, TypeIcon, TYPE_LABELS } from '../../components/Icon';
 import styles from './NodeCard.module.css';
 
-export function NodeCard({
+/** Length of one critical-ring pulse (keep in step with critRing in NodeCard.module.css). */
+const CRIT_PULSE_MS = 2400;
+
+/**
+ * Card callbacks. The map passes one stable object for every card, so a
+ * card's props only change when its node, position or highlight does and
+ * React.memo can skip the rest of the fleet.
+ */
+export interface CardHandlers {
+  click: (e: MouseEvent, node: GraphNode) => void;
+  open: (node: GraphNode) => void;
+  toggleGroup: (node: GraphNode) => void;
+  dragStart: (e: MouseEvent, node: GraphNode) => void;
+  /** Enter or Space on a focused card. */
+  activate: (node: GraphNode) => void;
+}
+
+export const NOOP_CARD_HANDLERS: CardHandlers = {
+  click: () => {},
+  open: () => {},
+  toggleGroup: () => {},
+  dragStart: () => {},
+  activate: () => {},
+};
+
+const STATUS_WORD = { ok: 'healthy', warn: 'degraded', crit: 'critical' } as const;
+
+export const NodeCard = memo(function NodeCard({
   node,
   x,
   y,
-  tick,
   dim,
   selected,
   teamLabel,
   compact,
   fade,
   ghost,
-  onClick,
-  onOpen,
-  onToggleGroup,
-  onDragStart,
+  handlers,
 }: {
   node: GraphNode;
   x: number;
   y: number;
-  tick: number;
   dim: boolean;
   selected: boolean;
   /** Owning team shown as a subtitle under the name (team grouping off only). */
@@ -36,17 +59,11 @@ export function NodeCard({
   fade?: number;
   /** Non-interactive leftover of a removed node, shown only while a transition runs. */
   ghost?: boolean;
-  onClick: (e: MouseEvent) => void;
-  onOpen: () => void;
-  onToggleGroup?: () => void;
-  /** Begin dragging this node to a pinned position. */
-  onDragStart?: (e: MouseEvent) => void;
+  handlers: CardHandlers;
 }) {
   const isGroup = node.kind === 'group';
   const dashed =
     node.isExternal || (node.type !== 'service' && node.type !== 'bff' && node.type !== 'gateway' && !isGroup);
-
-  const showToggle = isGroup && onToggleGroup;
 
   const cardCls = [
     styles.card,
@@ -67,18 +84,39 @@ export function NodeCard({
   const selColor = node.status === 'crit' ? 'var(--crit)' : node.status === 'warn' ? 'var(--warn)' : 'var(--accent)';
   const selSoft =
     node.status === 'crit' ? 'var(--critbg)' : node.status === 'warn' ? 'var(--warnbg)' : 'var(--accent-dim)';
-  const cardStyle: CSSProperties = {
-    /* critPulse lives in the global stylesheet; referencing it from the CSS
-       module would let the module's name scoping rename it away */
-    animation: node.status === 'crit' && !selected ? 'critPulse 2.4s ease-in-out infinite' : 'none',
-    ...(selected ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties) : null),
-  };
+  // Critical rings pulse in steps. Starting each one as if at a multiple of the
+  // cycle puts every ring's steps on the same instants, so the compositor
+  // wakes seven times a second for all of them, not for each.
+  const pulsing = node.status === 'crit' && !selected;
+  const critPhase = useMemo(() => (pulsing ? `${-(performance.now() % CRIT_PULSE_MS)}ms` : null), [pulsing]);
+  const cardStyle: CSSProperties | undefined = selected
+    ? ({ '--sel': selColor, '--sel-soft': selSoft } as CSSProperties)
+    : critPhase
+      ? ({ '--crit-phase': critPhase } as CSSProperties)
+      : undefined;
 
+  // Kept lean on purpose: the map mounts a few hundred of these, so every
+  // element here is multiplied (metrics are one text run, not five spans).
   return (
     <div
-      onClick={onClick}
-      onDoubleClick={onOpen}
-      onMouseDown={onDragStart}
+      data-node-key={ghost ? undefined : node.key}
+      role={ghost ? undefined : 'button'}
+      tabIndex={ghost ? -1 : 0}
+      aria-hidden={ghost || undefined}
+      aria-pressed={ghost ? undefined : selected}
+      aria-label={
+        ghost
+          ? undefined
+          : `${isGroup ? `Team ${node.label}, ${node.memberIds.length} services` : node.label}, ${STATUS_WORD[node.status]}`
+      }
+      onKeyDown={(e: KeyboardEvent) => {
+        if (ghost || e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        handlers.activate(node);
+      }}
+      onClick={(e) => handlers.click(e, node)}
+      onDoubleClick={() => handlers.open(node)}
+      onMouseDown={(e) => handlers.dragStart(e, node)}
       className={`${styles.root} ${fade != null ? styles.noTransition : ''} ${ghost ? styles.ghost : ''}`}
       style={{
         width: isGroup ? GROUP_W : NODE_W,
@@ -92,14 +130,13 @@ export function NodeCard({
           <span className={styles.typeLabel}>
             {isGroup ? `TEAM ${DOT} ${node.memberIds.length} SERVICES` : (TYPE_LABELS[node.type] ?? node.type.toUpperCase())}
           </span>
-          <span className={styles.spacer} />
-          {showToggle && (
+          {isGroup && (
             <span
               className={`${styles.toggleBtn} hov-btn`}
               title="Unmerge team"
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleGroup?.();
+                handlers.toggleGroup(node);
               }}
             >
               <GroupExpandIcon expanded={false} />
@@ -110,10 +147,7 @@ export function NodeCard({
         <div className={`${styles.name} ${isGroup ? styles.nameGroup : ''}`}>{node.label}</div>
         {teamLabel && <div className={styles.team}>{teamLabel}</div>}
         <div className={styles.metrics}>
-          <span>{fmtRps(node.rps * jit(node.key, tick))}/s</span>
-          <span className={styles.sep}>{DOT}</span>
-          <span>{fmtMs(node.p95 == null ? null : node.p95 * jit(node.key + 'l', tick, 0.06))}</span>
-          <span className={styles.sep}>{DOT}</span>
+          {`${fmtRps(node.rps)}/s  ${DOT}  ${fmtMs(node.p95)}  ${DOT}  `}
           <span className={node.status === 'ok' ? '' : node.status === 'crit' ? styles.errCrit : styles.errWarn}>
             {fmtErr(node.errPct)}
           </span>
@@ -131,4 +165,4 @@ export function NodeCard({
       </div>
     </div>
   );
-}
+});

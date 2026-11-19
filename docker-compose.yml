@@ -8,7 +8,8 @@ services:
       POSTGRES_USER: tracemap
       POSTGRES_PASSWORD: tracemap
     ports:
-      - "5433:5432"
+      # localhost only: the password above is a default
+      - "127.0.0.1:5433:5432"
     volumes:
       - tracemap-db-data:/home/postgres/pgdata/data
     healthcheck:

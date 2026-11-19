@@ -47,7 +47,6 @@ interface AppState {
    *  (user preference, persisted). Off draws every service individually with
    *  its owning team as a subtitle. */
   teamGrouping: boolean;
-  tick: number;
   range: TimeRange;
   openTraceId: string | null;
   ingesting: boolean;
@@ -77,7 +76,6 @@ interface AppState {
   setTheme: (t: Theme) => void;
   setLabelZoom: (l: LabelZoomLevel) => void;
   setTeamGrouping: (on: boolean) => void;
-  bumpTick: () => void;
   setRange: (r: TimeRange) => void;
   openTrace: (traceId: string | null) => void;
   setIngesting: (on: boolean) => void;
@@ -103,7 +101,6 @@ export const useStore = create<AppState>((set) => ({
   theme: prefs.theme,
   labelZoom: prefs.labelZoom,
   teamGrouping: prefs.teamGrouping,
-  tick: 0,
   range: DEFAULT_RANGE,
   openTraceId: null,
   ingesting: false,
@@ -180,7 +177,6 @@ export const useStore = create<AppState>((set) => ({
       savePrefs({ theme: s.theme, labelZoom: s.labelZoom, teamGrouping });
       return { teamGrouping };
     }),
-  bumpTick: () => set((s) => ({ tick: s.tick + 1 })),
   setRange: (range) => set({ range }),
   openTrace: (openTraceId) => set({ openTraceId }),
   setIngesting: (ingesting) => set({ ingesting }),

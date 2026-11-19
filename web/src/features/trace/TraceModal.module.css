@@ -174,3 +174,13 @@
   flex: 1;
   overflow-y: auto;
 }
+
+.gone {
+  margin: 18px 22px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line2);
+  border-radius: 10px;
+  font: 500 11px 'JetBrains Mono', monospace;
+  line-height: 1.6;
+  color: var(--dim);
+}

@@ -6,6 +6,12 @@
   transition: opacity .25s;
 }
 
+.root:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+
 .noTransition {
   transition: none;
 }
@@ -49,7 +55,42 @@
 }
 
 .crit {
+  position: relative;
   border-color: rgba(248, 113, 113, .65);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .3);
+}
+
+/* The pulse is a fixed ring whose opacity animates. Opacity runs on the
+   compositor; animating box-shadow itself repaints the whole map every frame
+   (in Firefox that is a display-list rebuild of every mounted card). */
+.crit::after {
+  content: '';
+  position: absolute;
+  inset: -1.4px;
+  border-radius: 12px;
+  box-shadow: 0 0 0 5px rgba(248, 113, 113, .2);
+  opacity: 0;
+  pointer-events: none;
+  /* stepped: 16 opacity changes per cycle instead of a composite on every frame;
+     --crit-phase (set per card) lines every ring's steps up on one clock */
+  animation: critRing 2.4s steps(8, end) var(--crit-phase, 0s) infinite;
+}
+
+@keyframes critRing {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crit::after {
+    animation: none;
+    opacity: .6;
+  }
 }
 
 /* selection wins the border and the glow over status and group variants.
@@ -74,11 +115,8 @@
   color: var(--faint);
 }
 
-.spacer {
-  flex: 1;
-}
-
 .toggleBtn {
+  margin-left: auto;
   width: 18px;
   height: 18px;
   border-radius: 5px;
@@ -90,6 +128,7 @@
 }
 
 .statusDot {
+  margin-left: auto;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -137,15 +176,10 @@
 }
 
 .metrics {
-  display: flex;
-  gap: 7px;
   font: 500 9.5px 'JetBrains Mono', monospace;
   color: var(--dim);
-  white-space: nowrap;
-}
-
-.sep {
-  color: var(--faint);
+  white-space: pre;
+  overflow: hidden;
 }
 
 .errWarn {
@@ -180,4 +214,9 @@
   font: 500 8.5px 'JetBrains Mono', monospace;
   color: var(--faint);
   padding: 1px 2px;
+}
+
+/* the toggle already pushed itself right; the dot sits next to it */
+.toggleBtn + .statusDot {
+  margin-left: 0;
 }

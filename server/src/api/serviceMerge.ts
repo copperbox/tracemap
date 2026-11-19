@@ -1,7 +1,18 @@
 import type { FastifyInstance } from 'fastify';
 import { pool, query } from '../db/pool.js';
 import { registry } from '../otlp/registry.js';
-import { mergeServices, refreshMergeAggregates, unmergeServices } from './serviceMergeOps.js';
+import { getLive } from '../live/index.js';
+import { aliases } from './aliases.js';
+import { mergeServices, unmergeServices } from './serviceMergeOps.js';
+
+/**
+ * After a merge or unmerge: the ingest registry resolves new telemetry, the
+ * read-side alias map regroups history, and the snapshot re-reads the catalog.
+ */
+async function afterMergeChange(): Promise<void> {
+  await Promise.all([registry.load(), aliases.load(query)]);
+  await getLive().snapshot.refreshNow();
+}
 
 /** Reversible service merges: POST /services/:id/merge and /unmerge. */
 export async function serviceMergeRoutes(app: FastifyInstance): Promise<void> {
@@ -35,10 +46,7 @@ export async function serviceMergeRoutes(app: FastifyInstance): Promise<void> {
       client.release();
     }
 
-    await registry.load();
-    // The aggregate rebuild can take many seconds; run it in the background so the
-    // modal isn't left spinning in a "saving" state waiting on it.
-    void refreshMergeAggregates();
+    await afterMergeChange();
     return { ok: true, mergedInto: id, alias: sourceId };
   });
 
@@ -62,8 +70,7 @@ export async function serviceMergeRoutes(app: FastifyInstance): Promise<void> {
     }
     if (!undone) return reply.code(404).send({ error: 'no reversible merge found for this duplicate' });
 
-    await registry.load();
-    void refreshMergeAggregates();
+    await afterMergeChange();
     return { ok: true, splitOut: sourceId };
   });
 }

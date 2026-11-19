@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DOT_MIN_ALPHA, DOT_REF_K, dotAlphaScale } from './dotGrid';
+import { DOT_MIN_ALPHA, DOT_MIN_TILE_PX, DOT_PITCH, DOT_REF_K, dotAlphaScale, dotTilePx } from './dotGrid';
 
 describe('dotAlphaScale', () => {
   it('leaves dots at full strength at the reference zoom', () => {
@@ -29,5 +29,21 @@ describe('dotAlphaScale', () => {
   it('never drops below the floor', () => {
     expect(dotAlphaScale(0.001)).toBe(DOT_MIN_ALPHA);
     expect(dotAlphaScale(0)).toBe(DOT_MIN_ALPHA);
+  });
+});
+
+describe('dotTilePx', () => {
+  it('is the world pitch times zoom when that is large enough', () => {
+    expect(dotTilePx(1)).toBe(DOT_PITCH);
+    expect(dotTilePx(0.5)).toBe(DOT_PITCH * 0.5);
+  });
+
+  it('doubles a sub-minimum tile until it reaches the minimum', () => {
+    const t = dotTilePx(0.03);
+    expect(t).toBeGreaterThanOrEqual(DOT_MIN_TILE_PX);
+    expect(t).toBeLessThan(DOT_MIN_TILE_PX * 2);
+    // still a power-of-two multiple of the world pitch, so dots stay on grid
+    const ratio = t / (DOT_PITCH * 0.03);
+    expect(Math.log2(ratio) % 1).toBeCloseTo(0);
   });
 });

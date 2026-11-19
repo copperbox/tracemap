@@ -32,13 +32,25 @@
   margin-top: 4px;
 }
 
+.body {
+  position: relative;
+}
+
+/* Windowed: row offset, card height and gap are mirrored in WallboardPage.tsx. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 14px;
 }
 
+.item {
+  min-width: 0;
+}
+
 .card {
+  box-sizing: border-box;
+  height: 150px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 7px;
@@ -48,6 +60,11 @@
   border: 1px solid var(--line);
   border-radius: 13px;
   cursor: pointer;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 /* Outline (not border) so it composes with the warn/crit status tint. */
@@ -134,4 +151,9 @@
   border-radius: 13px;
   font: 500 12px 'JetBrains Mono', monospace;
   color: var(--dim);
+}
+
+/* the list holds focus only while its active row is scrolled away; arrow keys bring the row (and its ring) back */
+.body:focus {
+  outline: none;
 }

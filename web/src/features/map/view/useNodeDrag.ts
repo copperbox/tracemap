@@ -26,33 +26,54 @@ export function useNodeDrag(
   } | null>(null);
 
   useEffect(() => {
+    // A mouse can report several moves per frame, and each pinned update
+    // re-renders the map: keep the latest position and apply it once a frame.
+    let raf = 0;
+    let last: { x: number; y: number } | null = null;
+    const apply = (): void => {
+      raf = 0;
+      const nd = nodeDragRef.current;
+      const at = last;
+      last = null;
+      if (!nd || !at) return;
+      const dx = (at.x - nd.clientX) / tfRef.current.k;
+      const dy = (at.y - nd.clientY) / tfRef.current.k;
+      setPinned((prev) => {
+        const next = { ...prev };
+        for (const it of nd.items) next[it.key] = { x: it.origX + dx, y: it.origY + dy };
+        return next;
+      });
+    };
     const onMove = (e: MouseEvent) => {
       const nd = nodeDragRef.current;
       if (!nd) return;
-      const dx = (e.clientX - nd.clientX) / tfRef.current.k;
-      const dy = (e.clientY - nd.clientY) / tfRef.current.k;
       if (Math.abs(e.clientX - nd.clientX) + Math.abs(e.clientY - nd.clientY) > 4) nd.moved = true;
-      if (nd.moved) {
-        setPinned((prev) => {
-          const next = { ...prev };
-          for (const it of nd.items) next[it.key] = { x: it.origX + dx, y: it.origY + dy };
-          return next;
-        });
-      }
+      if (!nd.moved) return;
+      last = { x: e.clientX, y: e.clientY };
+      raf ||= requestAnimationFrame(apply);
     };
     const onUp = () => {
-      if (!nodeDragRef.current) return;
+      const nd = nodeDragRef.current;
+      if (!nd) return;
+      // land on the last reported position before saving
+      if (raf) {
+        cancelAnimationFrame(raf);
+        apply();
+      }
       setPinned((prev) => {
         savePinnedPositions(prev);
         return prev;
       });
+      // cleared after the click that ends the drag; a drag that already began
+      // again in the meantime keeps its own state
       setTimeout(() => {
-        nodeDragRef.current = null;
+        if (nodeDragRef.current === nd) nodeDragRef.current = null;
       }, 0);
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
@@ -65,5 +86,8 @@ export function useNodeDrag(
   /** True while (or just after) a node drag actually moved, so click handlers can ignore it. */
   const wasNodeDrag = () => nodeDragRef.current?.moved ?? false;
 
-  return { beginDrag, wasNodeDrag };
+  /** Keys being dragged right now, or null. Read during render: every move re-renders via setPinned. */
+  const draggedKeys = (): string[] | null => nodeDragRef.current?.items.map((it) => it.key) ?? null;
+
+  return { beginDrag, wasNodeDrag, draggedKeys };
 }

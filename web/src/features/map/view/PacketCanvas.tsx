@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { RefObject } from 'react';
 import { packetCount, packetSeed, packetTravelMs } from '../../../lib/flow';
 import { useStore } from '../../../state/store';
+import type { GraphEdge } from '../../../lib/grouping';
 import type { EdgeView } from './edgeViews';
+import { curveBox } from './hitTest';
+import { capPacketCounts, packetBudget, packetScale } from './packetBudget';
 import { packetSamples } from './packetAnim';
 import { buildArcLut, pointAtFraction, type ArcLut } from './packetPath';
 import type { Transform } from './usePanZoom';
+import { usePixelRatio } from './pixelRatio';
 import styles from './PacketCanvas.module.css';
 
 /**
@@ -29,13 +33,31 @@ const DOT_MIN = 2.5;
 const DOT_MAX = 8;
 const GLOW_SCALE = 2; // full sprite span as a multiple of the core diameter
 const PACKET_ALPHA = 0.62; // global opacity damp so packets stay unobtrusive
-
+/**
+ * Packets redraw at about 30 fps while the camera is still. Every redraw
+ * re-composites the whole map (and re-encodes the whole screen on a remote
+ * desktop), and soft dots drifting along an edge read the same at half the
+ * rate. A camera move redraws at once, so packets never trail the map.
+ */
+const IDLE_FRAME_MS = 30;
 /** The three flow colors (EdgeView.flowStroke) mapped to their CSS variable. */
 const VAR_OF: Record<string, string> = {
   'var(--accent)': '--accent',
   'var(--warn)': '--warn',
   'var(--crit)': '--crit',
 };
+
+// Packets per edge from its rps, cached on the edge object (unchanged edges
+// keep their identity between frames).
+const counts = new WeakMap<GraphEdge, number>();
+function countOf(e: GraphEdge): number {
+  let n = counts.get(e);
+  if (n == null) {
+    n = packetCount(e.rps);
+    counts.set(e, n);
+  }
+  return n;
+}
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
   let h = hex.trim();
@@ -84,7 +106,13 @@ function buildSprites(): Record<string, HTMLCanvasElement> {
   return out;
 }
 
-export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefObject<Transform> }) {
+export const PacketCanvas = memo(function PacketCanvas({
+  edges,
+  tfRef,
+}: {
+  edges: EdgeView[];
+  tfRef: RefObject<Transform>;
+}) {
   const theme = useStore((s) => s.theme);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -92,9 +120,18 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
   const sizeRef = useRef({ cssW: 0, cssH: 0 });
   const spritesRef = useRef<Record<string, HTMLCanvasElement>>({});
   // arc-length tables cached per edge, rebuilt only when the edge's path changes
-  const lutRef = useRef<Map<string, { d: string; lut: ArcLut }>>(new Map());
+  const lutRef = useRef<Map<string, { curve: EdgeView['curve']; lut: ArcLut }>>(new Map());
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
+  const cullRef = useRef<{
+    edges: EdgeView[];
+    tf: Transform;
+    w: number;
+    h: number;
+    sprites: Record<string, HTMLCanvasElement>;
+    vis: EdgeView[];
+    budget: number[];
+  } | null>(null);
 
   // The loop only runs while at least one edge is actually carrying traffic, so
   // an idle (or fully dimmed/filtered) graph costs nothing.
@@ -103,25 +140,27 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
     [edges],
   );
 
-  // Canvas context + size tracking (device-pixel-ratio aware so packets are crisp).
+  // Canvas context + size tracking (device-pixel-ratio aware, within the
+  // packetScale budget); a ratio change (another display) re-runs it.
+  const dpr = usePixelRatio();
   useEffect(() => {
     const cv = canvasRef.current;
     if (!cv) return;
     ctxRef.current = cv.getContext('2d');
     const resize = (): void => {
-      const dpr = window.devicePixelRatio || 1;
       const cssW = cv.clientWidth;
       const cssH = cv.clientHeight;
-      cv.width = Math.max(1, Math.round(cssW * dpr));
-      cv.height = Math.max(1, Math.round(cssH * dpr));
-      ctxRef.current?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const scale = packetScale(cssW, cssH, dpr);
+      cv.width = Math.max(1, Math.round(cssW * scale));
+      cv.height = Math.max(1, Math.round(cssH * scale));
+      ctxRef.current?.setTransform(scale, 0, 0, scale, 0, 0);
       sizeRef.current = { cssW, cssH };
     };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(cv);
     return () => ro.disconnect();
-  }, []);
+  }, [dpr]);
 
   // Rebuild glow sprites for the active theme (colors come from CSS variables).
   useEffect(() => {
@@ -147,18 +186,45 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
       const size = dia * GLOW_SCALE;
       const half = size / 2;
 
-      for (const v of edgeList) {
-        if (v.flowOp <= 0) continue;
-        const e = v.e;
-        if (!(e.rps > 0) || e.stale) continue;
-        const count = packetCount(e.rps);
+      // Cull to the screen first, then share the frame's packet budget among
+      // the edges that are actually visible. The result holds until the camera
+      // or the edge list changes, so a still map walks only its visible edges
+      // each frame, not every edge in the fleet.
+      let culled = cullRef.current;
+      if (!culled || culled.edges !== edgeList || culled.tf !== tf || culled.w !== cssW || culled.h !== cssH || culled.sprites !== sprites) {
+        const vis: EdgeView[] = [];
+        const want: number[] = [];
+        const pad = half / k;
+        const vx0 = (-tf.tx) / k - pad;
+        const vy0 = (-tf.ty) / k - pad;
+        const vx1 = (cssW - tf.tx) / k + pad;
+        const vy1 = (cssH - tf.ty) / k + pad;
+        for (const v of edgeList) {
+          if (v.flowOp <= 0) continue;
+          const e = v.e;
+          if (!(e.rps > 0) || e.stale) continue;
+          const b = curveBox(v.curve);
+          if (b.x1 < vx0 || b.x0 > vx1 || b.y1 < vy0 || b.y0 > vy1) continue;
+          const count = countOf(e);
+          if (!count || !sprites[v.flowStroke]) continue;
+          vis.push(v);
+          want.push(count);
+        }
+        culled = { edges: edgeList, tf, w: cssW, h: cssH, sprites, vis, budget: capPacketCounts(want, packetBudget(k)) };
+        cullRef.current = culled;
+      }
+      const { vis, budget } = culled;
+
+      for (let i = 0; i < vis.length; i++) {
+        const count = budget[i];
         if (!count) continue;
+        const v = vis[i];
+        const e = v.e;
         const sprite = sprites[v.flowStroke];
-        if (!sprite) continue;
 
         let hit = cache.get(e.key);
-        if (!hit || hit.d !== v.d) {
-          hit = { d: v.d, lut: buildArcLut(v.curve) };
+        if (!hit || hit.curve !== v.curve) {
+          hit = { curve: v.curve, lut: buildArcLut(v.curve) };
           cache.set(e.key, hit);
         }
         const lut = hit.lut;
@@ -189,8 +255,16 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
       return;
     }
     let raf = 0;
+    let drawnAt = -Infinity;
+    let drawnTf: Transform | null = null;
     const loop = (now: number): void => {
-      drawFrame(now);
+      // the camera replaces its transform object on every change
+      const tf = tfRef.current;
+      if (tf !== drawnTf || now - drawnAt >= IDLE_FRAME_MS) {
+        drawFrame(now);
+        drawnAt = now;
+        drawnTf = tf;
+      }
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -198,7 +272,7 @@ export function PacketCanvas({ edges, tfRef }: { edges: EdgeView[]; tfRef: RefOb
       cancelAnimationFrame(raf);
       clear();
     };
-  }, [hasLive, drawFrame]);
+  }, [hasLive, drawFrame, tfRef]);
 
   return <canvas ref={canvasRef} className={styles.layer} />;
-}
+});

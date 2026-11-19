@@ -1,5 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/pool.js';
+import { getLive } from '../live/index.js';
+
+/** The map should show an edit on its next frame, not after the next catalog refresh. */
+const refreshLive = () => getLive().snapshot.invalidateCatalog();
 
 /** Service edits: metadata patch and manual dependency association. */
 export async function serviceEditRoutes(app: FastifyInstance): Promise<void> {
@@ -14,6 +18,14 @@ export async function serviceEditRoutes(app: FastifyInstance): Promise<void> {
       type?: string;
       sloTarget?: number;
     };
+
+    // Validate numbers here: a fraction or string would otherwise fail in SQL as a 500.
+    if (body.teamId != null && !(Number.isInteger(body.teamId) && body.teamId > 0 && body.teamId <= 0x7fff_ffff)) {
+      return reply.code(400).send({ error: 'teamId must be a positive integer or null' });
+    }
+    if (body.sloTarget != null && !(typeof body.sloTarget === 'number' && body.sloTarget > 0 && body.sloTarget <= 100)) {
+      return reply.code(400).send({ error: 'sloTarget must be a number above 0 and at most 100' });
+    }
 
     let teamId = body.teamId;
     if (body.teamName) {
@@ -40,6 +52,7 @@ export async function serviceEditRoutes(app: FastifyInstance): Promise<void> {
 
     const res = await query(`UPDATE services SET ${sets.join(', ')} WHERE id = $1 RETURNING id`, vals);
     if (!res.rowCount) return reply.code(404).send({ error: 'unknown service' });
+    refreshLive();
     return { ok: true };
   });
 
@@ -55,12 +68,14 @@ export async function serviceEditRoutes(app: FastifyInstance): Promise<void> {
        ON CONFLICT (source_id, target_id) DO UPDATE SET manual = TRUE`,
       [id, targetId],
     );
+    refreshLive();
     return { ok: true };
   });
 
   app.delete('/services/:id/dependencies/:targetId', async (req) => {
     const { id, targetId } = req.params as { id: string; targetId: string };
     await query('DELETE FROM edges WHERE source_id = $1 AND target_id = $2', [id, targetId]);
+    refreshLive();
     return { ok: true };
   });
 }

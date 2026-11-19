@@ -17,11 +17,28 @@
 // only the genuinely-too-bright zoomed-out range is dimmed.
 export const DOT_REF_K = 0.5;
 
-// Floor so the grid never vanishes entirely at extreme zoom-out. Sits below the
-// value the reachable min zoom (0.12) maps to, so it only guards, never brightens.
+// Floor so the grid never vanishes entirely at extreme zoom-out.
 export const DOT_MIN_ALPHA = 0.05;
 
 export function dotAlphaScale(k: number): number {
   const f = (k / DOT_REF_K) ** 2;
   return Math.max(DOT_MIN_ALPHA, Math.min(1, f));
+}
+
+/** World spacing of the backdrop dots, in px at zoom 1. */
+export const DOT_PITCH = 22;
+/** Smallest on-screen tile the backdrop may use. */
+export const DOT_MIN_TILE_PX = 11;
+
+/**
+ * On-screen tile size for the dot backdrop at zoom k: the world pitch scaled
+ * by k, doubled until it is at least DOT_MIN_TILE_PX. Without the doubling a
+ * far zoom tiles sub-pixel gradients across the canvas, which costs far more
+ * to paint than the whole map. Doubling keeps the dots on world positions.
+ */
+export function dotTilePx(k: number): number {
+  let t = DOT_PITCH * k;
+  if (!(t > 0)) return DOT_PITCH;
+  while (t < DOT_MIN_TILE_PX) t *= 2;
+  return t;
 }

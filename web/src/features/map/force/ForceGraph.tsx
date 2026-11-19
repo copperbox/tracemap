@@ -1,24 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { buildGraph, type Graph, type GraphEdge, type GraphNode } from '../../../lib/grouping';
 import { detectCommunities } from '../../../lib/community';
 import { LABEL_ZOOM_FACTOR } from '../../../lib/preferences';
 import { useStore } from '../../../state/store';
 import { MapDrawer } from '../MapDrawer';
 import { computeFocusSet } from '../view/focusSet';
-import { dotAlphaScale } from '../view/dotGrid';
+import { DOT_PITCH, dotAlphaScale, dotTilePx } from '../view/dotGrid';
 import { buildDimmer } from '../view/dimming';
 import { GraphModeToggle } from '../view/GraphModeToggle';
 import { ZoomControls } from '../view/ZoomControls';
-import { usePanZoom } from '../view/usePanZoom';
+import { applyBackdrop, usePanZoom, type Transform } from '../view/usePanZoom';
 import { communityColor } from './colors';
 import { ForceLegend } from './ForceLegend';
 import { buildForceLinks, buildForceNodes } from './forceNodes';
 import { useForceSimulation } from './useForceSimulation';
+import { usePixelRatio } from '../view/pixelRatio';
 import styles from './ForceGraph.module.css';
+
+// the communities view has no team merging; a stable reference keeps the drawer memoized
+const NO_MERGE = (): void => {};
 
 const TAU = Math.PI * 2;
 const LABEL_ZOOM = 0.9;
+// Above this many plain edges on screen they stroke as one-device-pixel
+// hairlines. Software rasterizers (no GPU) stroke a wider batched path about
+// 30x slower: at 10,000 edges that is ~400 ms a frame, which every live frame
+// and every settle slice paid.
+const HAIRLINE_EDGES = 1500;
 
 interface Palette {
   text: string;
@@ -67,7 +76,7 @@ export function ForceGraph() {
     accent: '#4ade80',
   });
 
-  const { tf, tfRef, dragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef);
+  const { tfRef, subscribe, isDragging, beginPan, wasPan, zoomBy, fitBounds } = usePanZoom(canvasRef, styles.canvasDragging);
 
   // The communities view always works on the ungrouped service graph -- merging
   // teams into meganodes would defeat the topology-based community detection.
@@ -107,7 +116,9 @@ export function ForceGraph() {
     [graph, focus, search, teamFilter],
   );
 
-  const [hover, setHover] = useState<string | null>(null);
+  // The hovered node lives in a ref: a hover redraws the canvas and flips the
+  // cursor class, but never re-renders the view (or the drawer under it).
+  const hoverRef = useRef<string | null>(null);
 
   // ---- canvas drawing ----
   const drawRef = useRef<() => void>(() => {});
@@ -120,12 +131,18 @@ export function ForceGraph() {
     });
   }, []);
 
+  // Fit when the settle finishes, unless the user has moved the camera since
+  // the provisional fit on the seeded positions.
+  const autoFitTfRef = useRef<Transform | null>(null);
+  const fitAfterSettleRef = useRef<() => void>(() => {});
+
   const sim = useForceSimulation({
     nodes: forceNodes,
     links: forceLinks,
     sig,
     communityCount: community.count,
     onTick: scheduleDraw,
+    onSettled: () => fitAfterSettleRef.current(),
   });
   const simApiRef = useRef(sim);
   simApiRef.current = sim;
@@ -133,6 +150,7 @@ export function ForceGraph() {
   const draw = (): void => {
     const ctx = ctxRef.current;
     if (!ctx) return;
+    const hover = hoverRef.current;
     const { cssW, cssH } = sizeRef.current;
     ctx.clearRect(0, 0, cssW, cssH);
     const tfNow = tfRef.current;
@@ -144,8 +162,12 @@ export function ForceGraph() {
     const selNodeKey = selection?.kind === 'node' ? selection.id : null;
     const focusEdges = focus?.edges ?? null;
 
-    // edges under the nodes
+    // edges under the nodes: the plain ones batched into one path per dim
+    // state, the lit ones (few) stroked on top
     ctx.lineCap = 'round';
+    const plain: Path2D[] = [new Path2D(), new Path2D()];
+    let plainCount = 0;
+    const lit: [number, number, number, number][] = [];
     for (const l of forceLinks) {
       const s = posByKey.get(l.source);
       const t = posByKey.get(l.target);
@@ -157,19 +179,36 @@ export function ForceGraph() {
       if (Math.max(x1, x2) < -10 || Math.min(x1, x2) > cssW + 10) continue;
       if (Math.max(y1, y2) < -10 || Math.min(y1, y2) > cssH + 10) continue;
       const dimEdge = dimmed(l.source) || dimmed(l.target) || (focusEdges != null && !focusEdges.has(l.key));
-      const lit =
+      const isLit =
         !dimEdge &&
         (l.key === selEdgeKey ||
           (hover != null && (l.source === hover || l.target === hover)) ||
           (selNodeKey != null && (l.source === selNodeKey || l.target === selNodeKey)));
-      ctx.beginPath();
+      if (isLit) {
+        lit.push([x1, y1, x2, y2]);
+        continue;
+      }
+      const path = plain[dimEdge ? 1 : 0];
+      path.moveTo(x1, y1);
+      path.lineTo(x2, y2);
+      plainCount++;
+    }
+    ctx.strokeStyle = pal.edge;
+    // getTransform().a is the device pixel ratio set on resize
+    ctx.lineWidth = plainCount > HAIRLINE_EDGES ? 1 / (ctx.getTransform().a || 1) : 1.2;
+    ctx.globalAlpha = 0.5;
+    ctx.stroke(plain[0]);
+    ctx.globalAlpha = 0.07;
+    ctx.stroke(plain[1]);
+    ctx.strokeStyle = pal.accent;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    for (const [x1, y1, x2, y2] of lit) {
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
-      ctx.strokeStyle = lit ? pal.accent : pal.edge;
-      ctx.globalAlpha = dimEdge ? 0.07 : lit ? 0.9 : 0.5;
-      ctx.lineWidth = lit ? 2 : 1.2;
-      ctx.stroke();
     }
+    ctx.stroke();
     ctx.globalAlpha = 1;
 
     // nodes
@@ -231,13 +270,13 @@ export function ForceGraph() {
   };
   drawRef.current = draw;
 
-  // Canvas context + DPR-aware sizing.
+  // Canvas context + DPR-aware sizing; a ratio change (another display) re-runs it.
+  const dpr = usePixelRatio();
   useEffect(() => {
     const cv = surfaceRef.current;
     if (!cv) return;
     ctxRef.current = cv.getContext('2d');
     const resize = (): void => {
-      const dpr = window.devicePixelRatio || 1;
       const w = cv.clientWidth;
       const h = cv.clientHeight;
       cv.width = Math.max(1, Math.round(w * dpr));
@@ -250,7 +289,7 @@ export function ForceGraph() {
     const ro = new ResizeObserver(resize);
     ro.observe(cv);
     return () => ro.disconnect();
-  }, [scheduleDraw]);
+  }, [scheduleDraw, dpr]);
 
   // Theme colors for the canvas (CSS variables resolve to concrete values).
   useEffect(() => {
@@ -265,10 +304,24 @@ export function ForceGraph() {
     scheduleDraw();
   }, [theme, scheduleDraw]);
 
-  // Redraw on any state change (pan/zoom, hover, selection, metrics, ...).
+  // Redraw on any state change (hover, selection, metrics, ...).
   useEffect(() => {
     scheduleDraw();
   });
+
+  // Pan/zoom never re-renders: move the backdrop and repaint directly.
+  useEffect(() => {
+    const el = canvasRef.current;
+    const apply = (t: Transform): void => {
+      if (el) {
+        const tile = dotTilePx(t.k);
+        applyBackdrop(el, t, tile, dotAlphaScale(tile / DOT_PITCH));
+      }
+      scheduleDraw();
+    };
+    apply(tfRef.current);
+    return subscribe(apply);
+  }, [subscribe, scheduleDraw, tfRef]);
 
   // Cancel any pending frame on teardown AND clear the ref. Without the reset,
   // a cancelled-but-non-zero id would make scheduleDraw's guard permanently
@@ -282,7 +335,8 @@ export function ForceGraph() {
     [],
   );
 
-  // Fit once per structural layout (the sim has settled by the time this runs).
+  // Fit once per structural layout: provisionally on the seeded positions as
+  // the settle starts, then again when it finishes if the camera is untouched.
   const fittedSigRef = useRef('');
   useEffect(() => {
     if (!graph.nodes.length || fittedSigRef.current === sig) return;
@@ -290,7 +344,15 @@ export function ForceGraph() {
     if (!b) return;
     fittedSigRef.current = sig;
     fitBounds(b);
-  }, [sig, graph, sim, fitBounds]);
+    autoFitTfRef.current = tfRef.current;
+  }, [sig, graph, sim, fitBounds, tfRef]);
+  fitAfterSettleRef.current = () => {
+    if (autoFitTfRef.current !== tfRef.current) return;
+    const b = sim.bounds();
+    if (!b) return;
+    fitBounds(b);
+    autoFitTfRef.current = tfRef.current;
+  };
 
   // ---- node dragging (world-space, reheats the simulation) ----
   const dragRef = useRef<{ moved: boolean; sx: number; sy: number } | null>(null);
@@ -343,11 +405,16 @@ export function ForceGraph() {
     }
   };
 
+  const setHover = (key: string | null): void => {
+    if (hoverRef.current === key) return;
+    hoverRef.current = key;
+    canvasRef.current?.classList.toggle(styles.canvasHover, key != null);
+    scheduleDraw();
+  };
   const onMouseMove = (e: ReactMouseEvent): void => {
-    if (dragRef.current || dragging) return;
+    if (dragRef.current || isDragging()) return;
     const w = worldAt(e);
-    const key = sim.pickNode(w.x, w.y);
-    setHover((prev) => (prev === key ? prev : key));
+    setHover(sim.pickNode(w.x, w.y));
   };
 
   const onClick = (e: ReactMouseEvent): void => {
@@ -374,18 +441,7 @@ export function ForceGraph() {
         onMouseMove={onMouseMove}
         onMouseLeave={() => setHover(null)}
         onClick={onClick}
-        className={[
-          styles.canvas,
-          dragging ? styles.canvasDragging : '',
-          hover && !dragging ? styles.canvasHover : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-        style={{
-          backgroundSize: `${22 * tf.k}px ${22 * tf.k}px`,
-          backgroundPosition: `${tf.tx}px ${tf.ty}px`,
-          ['--dot-k' as string]: dotAlphaScale(tf.k),
-        } as CSSProperties}
+        className={styles.canvas}
       >
         <canvas ref={surfaceRef} className={styles.surface} />
       </div>
@@ -401,7 +457,7 @@ export function ForceGraph() {
         onResetLayout={() => sim.reheat(0.9)}
       />
 
-      <MapDrawer graph={graph} onToggleMerge={() => {}} />
+      <MapDrawer graph={graph} onToggleMerge={NO_MERGE} />
     </div>
   );
 }

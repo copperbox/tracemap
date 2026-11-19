@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/pool.js';
+import { getLive } from '../live/index.js';
 
 export async function teamRoutes(app: FastifyInstance): Promise<void> {
   app.get('/teams', async () => {
@@ -20,6 +21,7 @@ export async function teamRoutes(app: FastifyInstance): Promise<void> {
        RETURNING id, name`,
       [name.trim()],
     );
+    getLive().snapshot.invalidateCatalog();
     return res.rows[0];
   });
 }

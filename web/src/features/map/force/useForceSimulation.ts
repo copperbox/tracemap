@@ -18,9 +18,12 @@ import type { ForceLinkInput, ForceNodeInput } from './forceNodes';
  * Owns the d3-force simulation behind the communities view. The simulation is
  * rebuilt only when the graph's STRUCTURE changes (the `sig`), warm-starting
  * surviving nodes from their last positions so the layout stays put across
- * metric polls. It is pre-settled synchronously (no "explode from origin"),
- * then left cooled until an interaction reheats it -- so a large idle graph
- * costs no CPU. Dragging a node reheats and re-cools the layout.
+ * metric polls. Settling runs a few ticks per animation frame within a time
+ * budget, so even thousands of nodes never block the main thread; the canvas
+ * repaints as it settles. Nodes start near their community's slot, so the
+ * settle reads as clusters tightening, not an explosion from the origin. Once
+ * settled it is left cooled until an interaction reheats it, so a large idle
+ * graph costs no CPU. Dragging a node reheats and re-cools the layout.
  */
 
 export interface SimNode extends SimulationNodeDatum {
@@ -38,6 +41,9 @@ interface SimLink extends SimulationLinkDatum<SimNode> {
 }
 
 const SETTLE_TICKS = 200;
+// Main-thread time spent ticking per frame while settling. One tick of a
+// 5,000-node graph can exceed it on its own; at least one tick always runs.
+const SETTLE_BUDGET_MS = 10;
 const CHARGE = -190;
 const LINK_DISTANCE = 64;
 const CLUSTER_STRENGTH = 0.14;
@@ -56,6 +62,8 @@ export function useForceSimulation(opts: {
   sig: string;
   communityCount: number;
   onTick: () => void;
+  /** Called once the initial settle finishes for a structure. */
+  onSettled?: () => void;
 }) {
   const { nodes, links, sig, communityCount } = opts;
 
@@ -66,6 +74,9 @@ export function useForceSimulation(opts: {
   const posRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const onTickRef = useRef(opts.onTick);
   onTickRef.current = opts.onTick;
+  const onSettledRef = useRef(opts.onSettled);
+  onSettledRef.current = opts.onSettled;
+  const settleRafRef = useRef(0);
 
   useEffect(() => {
     const prev = posRef.current;
@@ -101,14 +112,11 @@ export function useForceSimulation(opts: {
       .force('y', forceY<SimNode>(0).strength(CENTER_STRENGTH))
       .stop();
 
-    // Settle off-screen, then paint the resting layout.
-    sim.tick(SETTLE_TICKS);
     const savePositions = (): void => {
       const m = posRef.current;
       m.clear();
       for (const n of simNodes) m.set(n.key, { x: n.x ?? 0, y: n.y ?? 0 });
     };
-    savePositions();
 
     sim.on('tick', () => {
       savePositions();
@@ -119,7 +127,28 @@ export function useForceSimulation(opts: {
     nodesRef.current = simNodes;
     onTickRef.current();
 
+    // Settle in time-boxed slices, painting between them.
+    let done = 0;
+    const slice = (): void => {
+      const t0 = performance.now();
+      do {
+        sim.tick();
+        done++;
+      } while (done < SETTLE_TICKS && performance.now() - t0 < SETTLE_BUDGET_MS);
+      savePositions();
+      onTickRef.current();
+      if (done < SETTLE_TICKS) {
+        settleRafRef.current = requestAnimationFrame(slice);
+      } else {
+        settleRafRef.current = 0;
+        onSettledRef.current?.();
+      }
+    };
+    settleRafRef.current = requestAnimationFrame(slice);
+
     return () => {
+      cancelAnimationFrame(settleRafRef.current);
+      settleRafRef.current = 0;
       sim.on('tick', null);
       sim.stop();
     };
@@ -127,6 +156,7 @@ export function useForceSimulation(opts: {
   }, [sig]);
 
   const reheat = (alpha = 0.6): void => {
+    stopSlicing();
     simRef.current?.alpha(alpha).restart();
   };
 
@@ -164,9 +194,17 @@ export function useForceSimulation(opts: {
     return { x0, y0, x1, y1 };
   };
 
+  /** Hand the rest of the settle to d3's own timer (an interaction took over). */
+  const stopSlicing = (): void => {
+    if (!settleRafRef.current) return;
+    cancelAnimationFrame(settleRafRef.current);
+    settleRafRef.current = 0;
+  };
+
   const startDrag = (key: string, wx: number, wy: number): void => {
     const n = nodesRef.current.find((d) => d.key === key);
     if (!n) return;
+    stopSlicing();
     draggingRef.current = n;
     n.fx = wx;
     n.fy = wy;
@@ -190,5 +228,8 @@ export function useForceSimulation(opts: {
     simRef.current?.alphaTarget(0);
   };
 
-  return { nodesRef, pickNode, bounds, reheat, startDrag, dragTo, endDrag };
+  /** True while the initial settle is still running. */
+  const settling = (): boolean => settleRafRef.current !== 0;
+
+  return { nodesRef, pickNode, bounds, reheat, startDrag, dragTo, endDrag, settling };
 }

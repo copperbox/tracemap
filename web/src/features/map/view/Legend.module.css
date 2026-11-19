@@ -9,7 +9,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  backdrop-filter: blur(6px);
 }
 
 .row {

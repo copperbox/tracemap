@@ -1,14 +1,17 @@
 import type pg from 'pg';
-import { query } from '../db/pool.js';
 
 /**
  * The SQL orchestration behind reversible service merges, kept out of the route
  * so it can run against a transaction client and be unit-tested with a stub.
  *
- * A merge folds `sourceId` into `targetId`: future telemetry is aliased, all
- * historical telemetry is re-pointed and tagged with the merge id, the edge
- * graph is folded, and the source service row is deleted. Every step is recorded
- * in `service_merges` so `unmergeServices` can put it all back.
+ * A merge folds `sourceId` into `targetId`: future telemetry is aliased, the
+ * edge graph is folded, and the source service row is deleted. Every step is
+ * recorded in `service_merges` so `unmergeServices` can put it all back.
+ *
+ * Telemetry is never rewritten. Rollups and kept traces stay under the id they
+ * were recorded with; reads expand a canonical id to its aliases and group by
+ * canonical id (api/aliases.ts), so dropping the alias on unmerge is enough to
+ * split the history back out. Both operations touch only catalog tables.
  */
 export type Runner = (sql: string, params?: unknown[]) => Promise<pg.QueryResult>;
 
@@ -38,13 +41,11 @@ export async function mergeServices(q: Runner, targetId: string, sourceId: strin
     [sourceId, targetId],
   );
   const edgesSnapshot = edges.rows[0].rows;
-  const merge = await q(
+  await q(
     `INSERT INTO service_merges (source_id, target_id, source_service, edges_snapshot)
-     VALUES ($1, $2, $3, $4) RETURNING id`,
+     VALUES ($1, $2, $3, $4)`,
     [sourceId, targetId, jsonbParam(sourceService), jsonbParam(edgesSnapshot)],
   );
-  const mergeId = merge.rows[0].id as number;
-
   // Alias future telemetry arriving under the old name to the canonical service.
   await q(
     `INSERT INTO service_aliases (alias, service_id) VALUES ($1, $2)
@@ -54,12 +55,6 @@ export async function mergeServices(q: Runner, targetId: string, sourceId: strin
   // (Defensive: a valid source has no aliases of its own -- the chain guard in
   // the route ensures it -- but re-point any just in case.)
   await q('UPDATE service_aliases SET service_id = $2 WHERE service_id = $1', [sourceId, targetId]);
-
-  // Re-point historical telemetry, tagging each moved row with this merge.
-  await q('UPDATE spans SET service_id = $2, svc_merge = $3 WHERE service_id = $1', [sourceId, targetId, mergeId]);
-  await q('UPDATE spans SET peer_service_id = $2, peer_merge = $3 WHERE peer_service_id = $1', [sourceId, targetId, mergeId]);
-  await q('UPDATE edge_events SET source_id = $2, src_merge = $3 WHERE source_id = $1', [sourceId, targetId, mergeId]);
-  await q('UPDATE edge_events SET target_id = $2, tgt_merge = $3 WHERE target_id = $1', [sourceId, targetId, mergeId]);
 
   // Fold learned edges into the target (drop any that become self-edges).
   await q(
@@ -86,8 +81,8 @@ export async function mergeServices(q: Runner, targetId: string, sourceId: strin
 }
 
 /**
- * Undo the merge of `sourceId` into `targetId`, restoring the source service and
- * the telemetry/edges that merge moved. Returns false (writing nothing) when no
+ * Undo the merge of `sourceId` into `targetId`, restoring the source service,
+ * its alias-free history and the pre-merge edges. Returns false (writing nothing) when no
  * reversible merge is recorded. Caller owns the surrounding transaction.
  */
 export async function unmergeServices(q: Runner, targetId: string, sourceId: string): Promise<boolean> {
@@ -105,12 +100,8 @@ export async function unmergeServices(q: Runner, targetId: string, sourceId: str
      ON CONFLICT (id) DO NOTHING`,
     [jsonbParam(sourceService)],
   );
-  // Drop the alias and put the re-pointed telemetry back under the source id.
+  // Dropping the alias is what splits the history back out: reads stop folding the source id in.
   await q('DELETE FROM service_aliases WHERE alias = $1', [sourceId]);
-  await q('UPDATE spans SET service_id = $1, svc_merge = NULL WHERE svc_merge = $2', [sourceId, mergeId]);
-  await q('UPDATE spans SET peer_service_id = $1, peer_merge = NULL WHERE peer_merge = $2', [sourceId, mergeId]);
-  await q('UPDATE edge_events SET source_id = $1, src_merge = NULL WHERE src_merge = $2', [sourceId, mergeId]);
-  await q('UPDATE edge_events SET target_id = $1, tgt_merge = NULL WHERE tgt_merge = $2', [sourceId, mergeId]);
 
   // Restore the pre-merge edge graph from the snapshot (skip any edge whose other
   // endpoint has since been merged away).
@@ -127,17 +118,4 @@ export async function unmergeServices(q: Runner, targetId: string, sourceId: str
   );
   await q('DELETE FROM service_merges WHERE id = $1', [mergeId]);
   return true;
-}
-
-/**
- * Rebuild the per-minute aggregates over the affected window so chart history
- * follows a merge/unmerge. Runs as a fire-and-forget background step -- it can
- * take many seconds over a 30-day window and must never block the HTTP response.
- */
-export async function refreshMergeAggregates(): Promise<void> {
-  for (const cagg of ['service_op_metrics_1m', 'edge_metrics_1m', 'edge_op_metrics_1m']) {
-    await query(
-      `CALL refresh_continuous_aggregate('${cagg}', now() - INTERVAL '30 days', now())`,
-    ).catch((err) => console.warn(`cagg refresh ${cagg} failed:`, err.message));
-  }
 }

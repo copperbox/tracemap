@@ -1,74 +1,84 @@
 import type { FastifyInstance } from 'fastify';
 import { query } from '../db/pool.js';
-import { rangeMs } from './range.js';
+import { bigintToSpanHex, hexToUuid, uuidToHex } from '../rollup/schema.js';
+import { KEPT_TABLES } from '../rollup/tiers.js';
+import { aliases } from './aliases.js';
+import { parseIntParam, parseRange } from './range.js';
 
+/** A kept trace's spans start shortly before its row time and may arrive late; read this much around it. */
+const SPAN_WINDOW_BEFORE_MS = 60_000;
+const SPAN_WINDOW_AFTER_MS = 3_600_000;
+const MAX_SPANS = 2000;
+
+/**
+ * Traces come from the kept sample (errors, slow, baseline under a span
+ * budget), not every trace: list items carry the `reason` it was kept for.
+ * Trace ids are 32-hex on the wire, uuid in the database.
+ */
 export async function traceRoutes(app: FastifyInstance): Promise<void> {
-  // Recent traces touching a service within a time range.
+  // Recent kept traces touching a service (or a service merged into it) within a time range.
   app.get('/services/:id/traces', async (req) => {
     const id = (req.params as { id: string }).id;
     const q = req.query as Record<string, unknown>;
-    const { fromMs, toMs } = rangeMs(q);
-    const limit = Math.min(50, Number(q.limit ?? 25));
+    const { fromMs, toMs } = parseRange(q);
+    const limit = parseIntParam(q, 'limit', { def: 25, min: 1, max: 50 });
     // Optional: restrict to traces where this operation errored on the service.
     const op = typeof q.op === 'string' && q.op ? q.op : null;
 
-    const traceIds = await query<{ trace_id: string; latest: Date }>(
-      `WITH recent AS (
-         SELECT trace_id, time FROM spans
-         WHERE service_id = $1 AND time >= $2 AND time < $3
-           AND ($5::text IS NULL OR (name = $5 AND is_error))
-         ORDER BY time DESC LIMIT 2000
-       )
-       SELECT trace_id, max(time) AS latest FROM recent
-       GROUP BY trace_id ORDER BY latest DESC LIMIT $4`,
-      [id, new Date(fromMs), new Date(toMs), limit, op],
-    );
-    if (!traceIds.rowCount) return { traces: [] };
-
-    const ids = traceIds.rows.map((r) => r.trace_id);
-    const roots = await query<{
+    const res = await query<{
       trace_id: string;
-      name: string;
-      service_id: string;
-      duration_ms: number;
       time: Date;
-      span_count: string;
+      root_service: string | null;
+      root_operation: string | null;
+      duration_ms: number;
+      span_count: number;
       has_error: boolean;
+      reason: string;
     }>(
-      `SELECT DISTINCT ON (s.trace_id)
-              s.trace_id, s.name, s.service_id, s.duration_ms, s.time,
-              c.span_count, c.has_error
-       FROM spans s
-       JOIN (
-         SELECT trace_id, count(*) AS span_count, bool_or(is_error) AS has_error
-         FROM spans WHERE trace_id = ANY($1) GROUP BY trace_id
-       ) c ON c.trace_id = s.trace_id
-       WHERE s.trace_id = ANY($1)
-       ORDER BY s.trace_id, s.is_root DESC, s.time ASC`,
-      [ids],
+      `WITH hits AS (
+         SELECT DISTINCT ON (time, trace_id) time, trace_id
+         FROM kept_trace_services
+         WHERE service_id = ANY($1) AND time >= $2 AND time < $3
+           AND ($5::text IS NULL OR $5 = ANY(error_ops))
+         ORDER BY time DESC, trace_id
+         LIMIT $4
+       )
+       SELECT t.trace_id::text, t.time, t.root_service, t.root_operation, t.duration_ms, t.span_count, t.has_error, t.reason
+       FROM hits h JOIN kept_traces t ON t.trace_id = h.trace_id AND t.time = h.time
+       ORDER BY t.time DESC`,
+      [aliases.expand(id), new Date(fromMs), new Date(toMs), limit, op],
     );
-
-    const order = new Map(ids.map((t, i) => [t, i]));
     return {
-      traces: roots.rows
-        .sort((a, b) => (order.get(a.trace_id) ?? 0) - (order.get(b.trace_id) ?? 0))
-        .map((r) => ({
-          traceId: r.trace_id,
-          rootOperation: r.name,
-          rootService: r.service_id,
-          durationMs: Number(r.duration_ms),
-          time: r.time,
-          spanCount: Number(r.span_count),
-          status: r.has_error ? 'error' : 'ok',
-        })),
+      traces: res.rows.map((r) => ({
+        traceId: uuidToHex(r.trace_id),
+        rootOperation: r.root_operation ?? '',
+        rootService: r.root_service ? aliases.canonical(r.root_service) : '',
+        durationMs: Number(r.duration_ms),
+        time: r.time,
+        spanCount: r.span_count,
+        status: r.has_error ? 'error' : 'ok',
+        reason: r.reason,
+      })),
     };
   });
 
   // Full trace for the waterfall.
   app.get('/traces/:traceId', async (req, reply) => {
-    const traceId = (req.params as { traceId: string }).traceId;
+    const traceId = (req.params as { traceId: string }).traceId.toLowerCase();
+    const uuid = /^[0-9a-f]{32}$/.test(traceId) ? hexToUuid(traceId) : null;
+    if (!uuid) return reply.code(404).send({ error: 'unknown trace' });
+
+    // kept_traces gives the time range, so kept_spans is read from a few chunks only.
+    const head = await query<{ time: Date; reason: string }>(
+      `SELECT time, reason FROM kept_traces WHERE trace_id = $1 ORDER BY time LIMIT 1`,
+      [uuid],
+    );
+    const at = head.rows[0]?.time.getTime();
+    const [lo, hi] =
+      at != null
+        ? [new Date(at - SPAN_WINDOW_BEFORE_MS), new Date(at + SPAN_WINDOW_AFTER_MS)]
+        : [new Date(Date.now() - KEPT_TABLES.retentionMs), new Date(Date.now() + 60_000)];
     const spans = await query<{
-      trace_id: string;
       span_id: string;
       parent_span_id: string | null;
       service_id: string;
@@ -79,18 +89,21 @@ export async function traceRoutes(app: FastifyInstance): Promise<void> {
       is_error: boolean;
       attrs: Record<string, unknown> | null;
     }>(
-      `SELECT trace_id, span_id, parent_span_id, service_id, name, kind, time,
-              duration_ms, is_error, attrs
-       FROM spans WHERE trace_id = $1 ORDER BY time ASC LIMIT 500`,
-      [traceId],
+      `SELECT span_id::text, parent_span_id::text, service_id, name, kind, time, duration_ms, is_error, attrs
+       FROM kept_spans WHERE trace_id = $1 AND time >= $2 AND time < $3
+       ORDER BY time ASC LIMIT ${MAX_SPANS}`,
+      [uuid, lo, hi],
     );
     if (!spans.rowCount) return reply.code(404).send({ error: 'unknown trace' });
+    // Late spans are appended without updating kept_traces.span_count, so count what is here.
     return {
       traceId,
+      reason: head.rows[0]?.reason ?? null,
+      spanCount: spans.rowCount,
       spans: spans.rows.map((s) => ({
-        spanId: s.span_id,
-        parentSpanId: s.parent_span_id,
-        serviceId: s.service_id,
+        spanId: bigintToSpanHex(s.span_id),
+        parentSpanId: s.parent_span_id == null ? null : bigintToSpanHex(s.parent_span_id),
+        serviceId: aliases.canonical(s.service_id),
         name: s.name,
         kind: s.kind,
         startTime: s.time,
