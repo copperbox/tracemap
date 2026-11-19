@@ -1,0 +1,44 @@
+name: Pre-release
+
+# Every push to main runs the CI checks. When they pass, the commit is tagged
+# v<version>-pre.<n> and published as a GitHub pre-release.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  prerelease:
+    name: Tag and publish
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    # One at a time, so two merges cannot compute the same tag.
+    concurrency:
+      group: prerelease
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Every tag, to number this pre-release.
+          fetch-depth: 0
+      - name: Compute the tag
+        id: next
+        run: echo "tag=$(node .github/scripts/next-prerelease.mjs)" >> "$GITHUB_OUTPUT"
+      - name: Create the tag and the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.next.outputs.tag }}
+        run: |
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$TAG" \
+            --prerelease \
+            --generate-notes

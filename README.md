@@ -186,6 +186,16 @@ npm run preview --workspace web      # http://localhost:4173, proxies /api like 
 
 [Architecture](docs/architecture.md) has the project layout.
 
+Every pull request runs the type check, the tests against a TimescaleDB, and the
+builds, on Node 22 and Node 26. It also builds both Docker images.
+
+Every merge to `main` runs the same checks. When they pass, the commit is tagged
+`v<version>-pre.<n>` and published as a GitHub pre-release. `<version>` is the
+`version` in the root `package.json`, the release being worked toward, and `<n>`
+counts up from 1. To publish a release, create a GitHub release tagged
+`v<version>`, then raise the version in `package.json`. Until you raise it,
+pre-releases continue from the next patch version.
+
 ## Limits
 
 - Traces are a sample. Only kept traces can be listed or opened, so a trace id

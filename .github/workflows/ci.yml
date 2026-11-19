@@ -1,0 +1,63 @@
+name: CI
+
+# Runs on every pull request. The pre-release workflow calls it for pushes to
+# main, so both run exactly the same checks.
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A new push to a pull request replaces the run in progress for it.
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported Node, which the Docker images run, and the current LTS.
+        node: [22, 26]
+    services:
+      db:
+        # The image docker-compose.yml uses. The schema needs timescaledb_toolkit.
+        image: timescale/timescaledb-ha:pg16
+        env:
+          POSTGRES_DB: tm_test
+          POSTGRES_USER: tracemap
+          POSTGRES_PASSWORD: tracemap
+        ports:
+          - 5432:5432
+        options: >-
+          --shm-size=1gb
+          --health-cmd "pg_isready -U tracemap -d tm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 24
+    env:
+      # Turns on the server's database tests, which are skipped without it.
+      TEST_DATABASE_URL: postgres://tracemap:tracemap@127.0.0.1:5432/tm_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker compose build
