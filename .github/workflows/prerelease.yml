@@ -31,10 +31,21 @@ jobs:
           fetch-depth: 0
       - name: Compute the tag
         id: next
-        run: echo "tag=$(node .github/scripts/next-prerelease.mjs)" >> "$GITHUB_OUTPUT"
+        run: |
+          # A re-run of this workflow must not tag the same commit twice.
+          existing="$(git tag --points-at "$GITHUB_SHA" --list 'v*' | head -n 1)"
+          if [ -n "$existing" ]; then
+            echo "This commit is already tagged $existing. Nothing to publish."
+            exit 0
+          fi
+          tag="$(node .github/scripts/next-prerelease.mjs)"
+          echo "Next pre-release: $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
       - name: Create the tag and the pre-release
+        if: steps.next.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ steps.next.outputs.tag }}
         run: |
           gh release create "$TAG" \
