@@ -214,7 +214,7 @@ ignore the parameter.
 shared with other work, November 2026. Defaults unless stated.
 
 Seed, 5,000 services, 7 days, with the latency model above: 60.7 million rows in
-225 s (about 270,000 rows/s), measured while other agents ran a 20,000 spans/s load
+225 s (about 270,000 rows/s), measured while another 20,000 spans/s load ran
 against the same container. Before the latency model, a quiet container did 61.1 to
 61.5 million rows in 162 to 171 s (about 380,000 rows/s). 22.1 GiB written, 18.0 GiB
 after compressing the old chunks. The largest tables are `edge_op_rollup_10m`
@@ -247,6 +247,25 @@ Probe during that load (p50 / max over 5 requests, sizes raw / gzip):
 | live stream | one `metrics` event every 2.1 s | | | |
 
 The `services` max is the first request after start, which fills the sparkline cache.
+
+UI, on the map with every team unmerged (5,000 nodes, 10,300 edges) under the same
+load. Scripted pointer input, frame intervals from `requestAnimationFrame` with no
+profiler attached, dev build. Chrome at 2560x1440, Firefox 159 at 2944x1600. Worst
+frame in each run, in ms:
+
+| interaction | Chrome | Firefox |
+|---|---:|---:|
+| hover sweep across the overview | 17 | 18 |
+| pan the overview | 17 | 18 |
+| zoom in to card level and back out | 17 | 18 |
+| hover and pan at card level | 17 | 33 |
+| select a service or an edge | 17 | 33 |
+| deselect | 17 | 50 |
+| "Unmerge all teams" (lays out 5,000 nodes once) | 83 | 100 to 134 |
+
+At rest the dev build drops about one frame per live update in Firefox while cards
+are on screen. The production bundle (`npm run build`, then `npm run preview`) does
+not: over six live updates no frame took longer than 22 ms.
 
 ## Knobs worth turning
 
