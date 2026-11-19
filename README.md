@@ -216,5 +216,13 @@ to the internet. The Compose file sets a default database password and publishes
 the database on localhost only. Change the password before you put real data in
 it.
 
-[docs/saml-auth-plan.md](docs/saml-auth-plan.md) is a design for SAML sign-in and
-team-scoped editing. None of it is built yet.
+[docs/saml-auth-plan.md](docs/saml-auth-plan.md) is a design for SAML sign-in
+through Okta and team-scoped editing. None of it is built yet.
+
+## License
+
+TraceMap is source-available under the
+[PolyForm Shield License 1.0.0](LICENSE). You may use, change and share it for
+any purpose, including inside a company, except to provide a product or service
+that competes with TraceMap. A resold copy or a hosted version competes, whether
+paid or free. The [LICENSE](LICENSE) file has the exact terms.
