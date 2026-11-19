@@ -27,6 +27,12 @@ export function fmtClock(date: Date): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** `fmtAgo` as a phrase: "just now", "5m ago". */
+export function fmtAgoPhrase(iso: string): string {
+  const age = fmtAgo(iso);
+  return age === 'now' ? 'just now' : `${age} ago`;
+}
+
 export function fmtAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const m = Math.round(ms / 60000);

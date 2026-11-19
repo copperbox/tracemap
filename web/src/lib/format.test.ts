@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fmtErr, fmtMs, fmtRps, fmtCount } from './format';
+import { fmtAgoPhrase, fmtErr, fmtMs, fmtRps, fmtCount } from './format';
 import { QUICK_RANGES, isLiveRange, rangeLabel, resolveRange } from './timerange';
 
 describe('formatters', () => {
@@ -25,6 +25,16 @@ describe('formatters', () => {
     expect(fmtCount(1_500_000)).toBe('1.5M');
     expect(fmtCount(42_000)).toBe('42k');
     expect(fmtCount(12)).toBe('12');
+  });
+});
+
+describe('fmtAgoPhrase', () => {
+  const ago = (ms: number): string => new Date(Date.now() - ms).toISOString();
+  it('reads as a phrase at every age', () => {
+    expect(fmtAgoPhrase(ago(5_000))).toBe('just now');
+    expect(fmtAgoPhrase(ago(5 * 60_000))).toBe('5m ago');
+    expect(fmtAgoPhrase(ago(3 * 3_600_000))).toBe('3h ago');
+    expect(fmtAgoPhrase(ago(4 * 86_400_000))).toBe('4d ago');
   });
 });
 

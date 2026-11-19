@@ -1,7 +1,7 @@
 import type { ServiceDetail } from '../../../api/types';
 import { TYPE_LABELS } from '../../../components/Icon';
 import { SloRing } from '../../../components/SloRing';
-import { DOT, fmtAgo } from '../../../lib/format';
+import { DOT, fmtAgoPhrase } from '../../../lib/format';
 import { stLabel } from '../../../lib/status';
 import styles from './ServiceHeader.module.css';
 
@@ -33,7 +33,7 @@ export function ServiceHeader({
             s.runtime,
             s.region,
             `${downCount} downstream ${DOT} ${upCount} upstream`,
-            `last seen ${fmtAgo(s.lastSeen)} ago`,
+            `last seen ${fmtAgoPhrase(s.lastSeen)}`,
           ]
             .filter(Boolean)
             .join(` ${DOT} `)}

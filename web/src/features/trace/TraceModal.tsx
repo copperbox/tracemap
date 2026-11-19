@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import type { TraceDetail } from '../../api/types';
 import { CloseIcon } from '../../components/Icon';
-import { DOT, fmtAgo, fmtMs } from '../../lib/format';
+import { DOT, fmtAgoPhrase, fmtMs } from '../../lib/format';
 import { buildSpanColors } from '../../lib/spanPalette';
 import { useStore } from '../../state/store';
 import { buildRows } from './buildRows';
@@ -66,7 +66,7 @@ export function TraceModal({ traceId }: { traceId: string }) {
           <div className={styles.spacer} />
           <div className={styles.summary}>
             {built
-              ? `${fmtMs(built.totalMs)} total ${DOT} ${trace?.spans.length} spans ${DOT} ${spanColors.size} services ${DOT} ${firstStart ? fmtAgo(firstStart) : '--'} ago`
+              ? `${fmtMs(built.totalMs)} total ${DOT} ${trace?.spans.length} spans ${DOT} ${spanColors.size} services ${DOT} ${firstStart ? fmtAgoPhrase(firstStart) : '--'}`
               : gone
                 ? 'not stored'
                 : error ?? 'loading\u2026'}
